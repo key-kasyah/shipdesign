@@ -1,0 +1,351 @@
+{
+  "project_id": "PRJ-2026-",
+  "revisions": [
+    {
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "project_id": "PRJ-2026-",
+      "revision_number": 0,
+      "parent_revision_id": null,
+      "status": "WAITING_FOR_REVIEW",
+      "data_snapshot": {
+        "project_id": "PRJ-2026-",
+        "project_name": "al",
+        "owner": "ukas",
+        "organization": "uin",
+        "revision_number": 0,
+        "updated_at": "2026-07-22T10:01:19.224258+00:00",
+        "status": "ACTIVE",
+        "vessel_type": "BULK_CARRIER",
+        "vessel_function": "bajak laut",
+        "cargo_type": null,
+        "route_name": "1000",
+        "operating_area": "jawa",
+        "origin_port": "gowa",
+        "destination_port": "unhas",
+        "route_distance_nm": 4.0,
+        "target_dwt_ton": 1000.0,
+        "service_speed_knots": 2.0,
+        "max_speed_knots": 7.0,
+        "endurance_days": 2.0,
+        "payload_capacity_ton": null,
+        "crew_count": 2,
+        "passenger_count": 2,
+        "water_type": "SEAWATER",
+        "water_density_t_m3": 1.025,
+        "design_temperature_c": null,
+        "max_draft_m": 4.0,
+        "max_loa_m": 5.0,
+        "max_breadth_m": 5.0,
+        "max_air_draft_m": null,
+        "draft_constraint_type": "HARD_LIMIT",
+        "selected_classification": [],
+        "selected_regulations": [],
+        "is_complete": true
+      },
+      "created_by": "designer@ship.com",
+      "created_at": "2026-07-22T09:49:19.721467+00:00",
+      "revision_note": null,
+      "reason_for_change": null,
+      "updated_by": "designer@ship.com",
+      "updated_at": "2026-07-22T10:01:19.224258+00:00",
+      "submitted_by": "designer@ship.com",
+      "submitted_at": "2026-07-22T10:02:20.663742+00:00",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "approval_note": null
+    }
+  ],
+  "baselines": [],
+  "audit_trail": [
+    {
+      "event_id": "1e9f1672-674b-4db1-8053-717b7791726f",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "INITIAL_REVISION_CREATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:49:19.721467+00:00",
+      "old_value": null,
+      "new_value": null,
+      "reason": "Inisialisasi riwayat proyek pertama kali.",
+      "metadata": null
+    },
+    {
+      "event_id": "f02b20f9-973f-4c26-be6d-7349d86888dc",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "VesselType.GENERAL_CARGO",
+      "new_value": "VesselType.BULK_CARRIER",
+      "reason": "Update field vessel_type: Modifikasi parameter desain",
+      "metadata": {
+        "field": "vessel_type"
+      }
+    },
+    {
+      "event_id": "1ca75ab9-c79d-41be-8964-dd16b22fead6",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "bajak laut",
+      "reason": "Update field vessel_function: Modifikasi parameter desain",
+      "metadata": {
+        "field": "vessel_function"
+      }
+    },
+    {
+      "event_id": "f0821071-86e3-4701-814e-2047bff44350",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "5.0",
+      "reason": "Update field max_speed_knots: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_speed_knots"
+      }
+    },
+    {
+      "event_id": "51dd39bf-8bfd-41be-99b5-ffb8b6e5a7c1",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "1000",
+      "reason": "Update field route_name: Modifikasi parameter desain",
+      "metadata": {
+        "field": "route_name"
+      }
+    },
+    {
+      "event_id": "61f302be-1b69-4741-a2a9-8f08ad5de331",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "jawa",
+      "reason": "Update field operating_area: Modifikasi parameter desain",
+      "metadata": {
+        "field": "operating_area"
+      }
+    },
+    {
+      "event_id": "95715e06-bdb6-4dff-8713-d6b47d5ea9b2",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "gowa",
+      "reason": "Update field origin_port: Modifikasi parameter desain",
+      "metadata": {
+        "field": "origin_port"
+      }
+    },
+    {
+      "event_id": "bd087a57-212a-4926-9ddf-940d63e815e9",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "unhas",
+      "reason": "Update field destination_port: Modifikasi parameter desain",
+      "metadata": {
+        "field": "destination_port"
+      }
+    },
+    {
+      "event_id": "aa772907-0f7a-4c9b-be5d-20da555f9a83",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:51:21.020485+00:00",
+      "old_value": "None",
+      "new_value": "4.0",
+      "reason": "Update field route_distance_nm: Modifikasi parameter desain",
+      "metadata": {
+        "field": "route_distance_nm"
+      }
+    },
+    {
+      "event_id": "314614a4-ed7b-4f36-8983-d452e1b4f5a6",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:14.843814+00:00",
+      "old_value": "None",
+      "new_value": "2.0",
+      "reason": "Update field endurance_days: Modifikasi parameter desain",
+      "metadata": {
+        "field": "endurance_days"
+      }
+    },
+    {
+      "event_id": "63e0149d-e423-46a1-8f27-565c41af341a",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:14.843814+00:00",
+      "old_value": "None",
+      "new_value": "2",
+      "reason": "Update field crew_count: Modifikasi parameter desain",
+      "metadata": {
+        "field": "crew_count"
+      }
+    },
+    {
+      "event_id": "846c6288-fc5f-40d2-8993-4d32a7fc2337",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:14.843814+00:00",
+      "old_value": "None",
+      "new_value": "2",
+      "reason": "Update field passenger_count: Modifikasi parameter desain",
+      "metadata": {
+        "field": "passenger_count"
+      }
+    },
+    {
+      "event_id": "a122c14c-d8ba-4a2f-b5f0-94c09edc77e9",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:14.843814+00:00",
+      "old_value": "None",
+      "new_value": "4.0",
+      "reason": "Update field max_draft_m: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_draft_m"
+      }
+    },
+    {
+      "event_id": "43c54334-f115-4dff-8833-fadb0183a168",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:14.843814+00:00",
+      "old_value": "None",
+      "new_value": "5.0",
+      "reason": "Update field max_loa_m: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_loa_m"
+      }
+    },
+    {
+      "event_id": "8b2e1d9f-477b-40a0-a26d-5c34ef4132d6",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:14.843814+00:00",
+      "old_value": "None",
+      "new_value": "5.0",
+      "reason": "Update field max_breadth_m: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_breadth_m"
+      }
+    },
+    {
+      "event_id": "46d47fa6-40df-42a1-9816-788ec7b86f18",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:52:39.124724+00:00",
+      "old_value": "5.0",
+      "new_value": "12.0",
+      "reason": "Update field max_speed_knots: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_speed_knots"
+      }
+    },
+    {
+      "event_id": "e3c31fcb-2194-45a7-9d3c-397769de8ce0",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "REVISION_SUBMITTED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T09:53:24.483490+00:00",
+      "old_value": null,
+      "new_value": null,
+      "reason": "Mengajukan revisi untuk proses approval.",
+      "metadata": null
+    },
+    {
+      "event_id": "0f2a6b59-72bf-4676-88fe-dc87c8f05040",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T10:00:43.989641+00:00",
+      "old_value": "12.0",
+      "new_value": "4.0",
+      "reason": "Update field max_speed_knots: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_speed_knots"
+      }
+    },
+    {
+      "event_id": "36cb5c62-a445-4671-9168-c8efebf01e14",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T10:01:19.224258+00:00",
+      "old_value": "10.0",
+      "new_value": "2.0",
+      "reason": "Update field service_speed_knots: Modifikasi parameter desain",
+      "metadata": {
+        "field": "service_speed_knots"
+      }
+    },
+    {
+      "event_id": "964dea9b-2ffd-4f31-8a2b-a6ed985fe566",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T10:01:19.224258+00:00",
+      "old_value": "4.0",
+      "new_value": "7.0",
+      "reason": "Update field max_speed_knots: Modifikasi parameter desain",
+      "metadata": {
+        "field": "max_speed_knots"
+      }
+    },
+    {
+      "event_id": "cabf5d40-1148-4020-87c4-9fc49377a297",
+      "project_id": "PRJ-2026-",
+      "revision_id": "e72843b9-d2a9-4244-a9e7-cf72fce292e1",
+      "action": "REVISION_SUBMITTED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-22T10:02:20.663742+00:00",
+      "old_value": null,
+      "new_value": null,
+      "reason": "Mengajukan revisi untuk proses approval.",
+      "metadata": null
+    }
+  ],
+  "approval_records": [],
+  "schema_version": "1.0"
+}

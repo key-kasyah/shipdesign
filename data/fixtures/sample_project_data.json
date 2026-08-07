@@ -1,0 +1,41 @@
+{
+  "project_id": "PRJ-2026-001",
+  "project_name": "KM Nusantara Express 01",
+  "owner": "PT Pelayaran Nusantara",
+  "organization": "ITS Naval Architecture",
+  "revision_number": 1,
+  "updated_at": "2026-07-22T08:00:00Z",
+  "status": "ACTIVE",
+  "vessel_type": "GENERAL_CARGO",
+  "vessel_function": "Pengangkutan barang umum antar pulau",
+  "cargo_type": "Bagged Cargo & General Container",
+  "route_name": "Surabaya - Makassar",
+  "origin_port": "Tanjung Perak, Surabaya",
+  "destination_port": "Soekarno-Hatta, Makassar",
+  "route_distance_nm": 450.0,
+  "target_dwt_ton": 5000.0,
+  "service_speed_knots": 12.5,
+  "max_speed_knots": 14.0,
+  "endurance_days": 10.0,
+  "payload_capacity_ton": 4200.0,
+  "crew_count": 18,
+  "passenger_count": 0,
+  "water_type": "SEAWATER",
+  "water_density_t_m3": 1.025,
+  "design_temperature_c": 28.0,
+  "max_draft_m": 6.5,
+  "max_loa_m": 100.0,
+  "max_breadth_m": 18.0,
+  "max_air_draft_m": 25.0,
+  "draft_constraint_type": "HARD_LIMIT",
+  "selected_classification": [
+    "BKI",
+    "ABS"
+  ],
+  "selected_regulations": [
+    "SOLAS 74",
+    "MARPOL 73/78",
+    "NCVS Indonesia"
+  ],
+  "is_complete": true
+}

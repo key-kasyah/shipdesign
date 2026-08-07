@@ -1,0 +1,89 @@
+{
+  "project_id": "PRJ-2026-1",
+  "revisions": [
+    {
+      "revision_id": "0d7b3fb9-0c9f-4255-8d5d-678db026fa01",
+      "project_id": "PRJ-2026-1",
+      "revision_number": 0,
+      "parent_revision_id": null,
+      "status": "READY_FOR_REVIEW",
+      "data_snapshot": {
+        "project_id": "PRJ-2026-1",
+        "project_name": "Mega",
+        "owner": "Ukkasyah",
+        "organization": "Solvera",
+        "revision_number": 0,
+        "updated_at": "2026-07-26T07:24:39.224190+00:00",
+        "status": "ACTIVE",
+        "vessel_type": "TANKER",
+        "vessel_function": null,
+        "cargo_type": null,
+        "route_name": "Jakarta - Makassar - Manokwari",
+        "operating_area": null,
+        "origin_port": null,
+        "destination_port": null,
+        "route_distance_nm": 1376.0,
+        "target_dwt_ton": 5000.0,
+        "service_speed_knots": 12.0,
+        "max_speed_knots": null,
+        "endurance_days": null,
+        "payload_capacity_ton": null,
+        "crew_count": null,
+        "passenger_count": null,
+        "water_type": "SEAWATER",
+        "water_density_t_m3": 1.025,
+        "design_temperature_c": null,
+        "max_draft_m": null,
+        "max_loa_m": null,
+        "max_breadth_m": null,
+        "max_air_draft_m": null,
+        "draft_constraint_type": "HARD_LIMIT",
+        "selected_classification": [],
+        "selected_regulations": [],
+        "is_complete": true
+      },
+      "created_by": "designer@ship.com",
+      "created_at": "2026-07-25T07:06:49.107547+00:00",
+      "revision_note": null,
+      "reason_for_change": null,
+      "updated_by": "designer@ship.com",
+      "updated_at": "2026-07-26T07:24:39.224190+00:00",
+      "submitted_by": null,
+      "submitted_at": null,
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "approval_note": null
+    }
+  ],
+  "baselines": [],
+  "audit_trail": [
+    {
+      "event_id": "0d6ea91a-1d4a-4e44-8dd4-22bf104bbcb7",
+      "project_id": "PRJ-2026-1",
+      "revision_id": "0d7b3fb9-0c9f-4255-8d5d-678db026fa01",
+      "action": "INITIAL_REVISION_CREATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-25T07:06:49.107547+00:00",
+      "old_value": null,
+      "new_value": null,
+      "reason": "Inisialisasi riwayat proyek pertama kali.",
+      "metadata": null
+    },
+    {
+      "event_id": "729f6ff4-2159-4565-8f4f-76eda2d12722",
+      "project_id": "PRJ-2026-1",
+      "revision_id": "0d7b3fb9-0c9f-4255-8d5d-678db026fa01",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-07-25T07:07:18.428652+00:00",
+      "old_value": "4998.0",
+      "new_value": "5000.0",
+      "reason": "Update field target_dwt_ton: Modifikasi parameter desain",
+      "metadata": {
+        "field": "target_dwt_ton"
+      }
+    }
+  ],
+  "approval_records": [],
+  "schema_version": "1.0"
+}
