@@ -43,9 +43,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-PROJECTS_DIR = "data/projects"
-INDEX_PATH = "data/project_index.json"
-DB_PORTS_PATH = r"d:\SHIP V1\indonesia_ports_template.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECTS_DIR = os.path.join(BASE_DIR, "data", "projects")
+INDEX_PATH = os.path.join(BASE_DIR, "data", "project_index.json")
+DB_PORTS_PATH = os.path.join(BASE_DIR, "data", "indonesia_ports_template.db")
 
 if not os.path.exists(PROJECTS_DIR):
     os.makedirs(PROJECTS_DIR, exist_ok=True)
@@ -287,30 +288,52 @@ def calculate_route(payload: RouteCalculatePayload):
 @app.get("/api/projects")
 def list_projects():
     """Mendapatkan daftar semua proyek dari indeks lokal."""
-    if not os.path.exists(INDEX_PATH):
-        return []
     try:
-        with open(INDEX_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        
-        # Saring proyek yang file datanya benar-benar ada di disk
         valid_data = {}
-        changed = False
-        for pid, pinfo in data.items():
-            file_path = get_project_file_path(pid)
-            if os.path.exists(file_path):
-                valid_data[pid] = pinfo
-            else:
-                changed = True
-                
-        if changed:
-            # Perbarui file indeks jika ada data yang tidak valid (dangling)
+        if os.path.exists(INDEX_PATH):
+            try:
+                with open(INDEX_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, dict):
+                    for pid, pinfo in data.items():
+                        file_path = get_project_file_path(pid)
+                        if os.path.exists(file_path):
+                            pinfo["file_path"] = file_path
+                            valid_data[pid] = pinfo
+            except Exception:
+                valid_data = {}
+
+        # Scan folder projects jika index kosong tapi file proyek ada
+        if not valid_data and os.path.exists(PROJECTS_DIR):
+            for fname in os.listdir(PROJECTS_DIR):
+                if fname.endswith(".json") and not fname.endswith(".bak"):
+                    fpath = os.path.join(PROJECTS_DIR, fname)
+                    try:
+                        with open(fpath, "r", encoding="utf-8") as pf:
+                            pjson = json.load(pf)
+                            pid = pjson.get("project_id", fname.replace(".json", ""))
+                            pname = pjson.get("project_name", pid)
+                            valid_data[pid] = {
+                                "project_id": pid,
+                                "project_name": pname,
+                                "latest_revision": 0,
+                                "file_path": fpath,
+                                "last_updated": datetime.now(timezone.utc).isoformat()
+                            }
+                    except Exception:
+                        pass
+
+        # Simpan kembali index yang valid
+        try:
             with open(INDEX_PATH, "w", encoding="utf-8") as f:
                 json.dump(valid_data, f, indent=2)
-                
+        except Exception:
+            pass
+
         return list(valid_data.values())
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gagal membaca indeks proyek: {e}")
+        print(f"Error in list_projects: {e}")
+        return []
 
 
 @app.post("/api/projects")
