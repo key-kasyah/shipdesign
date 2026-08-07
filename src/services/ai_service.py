@@ -2,7 +2,7 @@ import os
 import re
 import json
 import urllib.request
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 from src.core.enums import RevisionStatus
 from src.domain.stage1_requirements.models import ProjectData, ValidationResult
 
