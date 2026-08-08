@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { api } from "../../../../services/api";
 import { SideProfileNurbsEditor } from "../../../../components/design/SideProfileNurbsEditor";
+import { WaterPlaneCalculationSheet } from "../../../../components/design/WaterPlaneCalculationSheet";
+import { MidshipBilgeCalculationSheet } from "../../../../components/design/MidshipBilgeCalculationSheet";
 import { CsaToBodyPlanProjection } from "../../../../components/design/CsaToBodyPlanProjection";
 import { LinesPlanThreeView } from "../../../../components/design/LinesPlanThreeView";
 import { DesignConstraintsSummary } from "../../../../components/design/DesignConstraintsSummary";
@@ -24,7 +26,7 @@ export default function Stage3BasicDesignPage() {
   const projectId = params.projectId as string;
 
   const [activeTab, setActiveTab] = useState<
-    "profile" | "csaProjection" | "linesplan3view" | "constraints" | "ai"
+    "profile" | "waterplane" | "midshipBilge" | "csaProjection" | "linesplan3view" | "constraints" | "ai"
   >("profile");
 
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,29 @@ export default function Stage3BasicDesignPage() {
 
     setTimeout(() => {
       let reply = "";
-      if (q.includes("CSA") || q.includes("Proyeksi") || q.includes("Body Plan")) {
+      if (q.includes("Garis Air") || q.includes("AWL") || q.includes("LCF") || q.includes("Water Plane")) {
+        reply =
+          `### 🌊 Penjelasan Perhitungan Garis Air (Waterplane Calculation):\n\n` +
+          `1. **Luas Bidang Garis Air (AWL)**:\n` +
+          `   - Rumus: AWL = (2 / 3) * l * Total_Sigma_1 (dengan l = Jarak Gading Utama = ${(lbp / 20).toFixed(4)} m).\n` +
+          `   - Menghitung luas permukaan bidang basah kapal di sarat T = ${draft} m.\n\n` +
+          `2. **Titik Apung Memanjang (LCF)**:\n` +
+          `   - Rumus: LCF = (l * Total_Sigma_2) / Total_Sigma_1 terhadap Midship (St 10).\n` +
+          `   - Titik berat luasan bidang garis air yang menjadi pusat rotasi trim kapal.\n\n` +
+          `3. **Momen Inersia Melintang & Memanjang**:\n` +
+          `   - IT = (2 / 3) * (1 / 3) * l * Total_Sigma_3 (inersia transversal penentu tinggi metasenter BM).\n` +
+          `   - IL = Iy - (AWL * (LCF^2)) (inersia longitudinal penentu metasenter BML).`;
+      } else if (q.includes("Bilga") || q.includes("Radius") || q.includes("Midship") || q.includes("Gading 10")) {
+        reply =
+          `### ⚙️ Penjelasan Geometri Radius Bilga & Luas Midship (Gading 10):\n\n` +
+          `1. **Formula Radius Bilga (R)**:\n` +
+          `   - Rumus: Radius_Bilga = Akar( (B * T * (1 - Cm)) / (2 - (pi / 2)) )\n` +
+          `   - Luas sudut terpotong bilga = B * T * (1 - Cm) = ${breadth} * ${draft} * (1 - ${cm}) = ${(breadth * draft * (1 - cm)).toFixed(3)} m².\n` +
+          `   - Nilai R yang dihasilkan memastikan luasan penampang tengah kapal presisi sebesar target Am = B * T * Cm = ${(breadth * draft * cm).toFixed(2)} m².\n\n` +
+          `2. **Integrasi Ordinat Gading 10**:\n` +
+          `   - Titik rata dasar (flat of bottom) berakhir pada jarak (0.5B - R).\n` +
+          `   - Di atas sarat z >= R, sisi lambung kapal naik tegak lurus sempurna selebar 0.5B = ${(breadth / 2).toFixed(2)} m.`;
+      } else if (q.includes("CSA") || q.includes("Proyeksi") || q.includes("Body Plan")) {
         reply =
           `### 🌊 Penjelasan Peran CSA & Proyeksi Body Plan:\n\n` +
           `1. **Fungsi CSA (Curve of Sectional Area)**:\n` +
@@ -146,11 +170,13 @@ export default function Stage3BasicDesignPage() {
   };
 
   const navTabs = [
-    { id: "profile", label: "Tampak Samping & NURBS", icon: <Compass size={15} /> },
-    { id: "csaProjection", label: "Proyeksi CSA ke Body Plan", icon: <Activity size={15} /> },
-    { id: "linesplan3view", label: "Lines Plan 3-View", icon: <Layers size={15} /> },
-    { id: "constraints", label: "Batasan Desain & PMB", icon: <Scale size={15} /> },
-    { id: "ai", label: "AI Assistant", icon: <Cpu size={15} /> }
+    { id: "profile", label: "1. Tampak Samping (Sheer & Profile)", icon: <Compass size={15} /> },
+    { id: "waterplane", label: "2. Kalkulasi Garis Air (AWL & LCF)", icon: <Layers size={15} /> },
+    { id: "midshipBilge", label: "3. Radius Bilga & Luas Midship (St 10)", icon: <Activity size={15} /> },
+    { id: "csaProjection", label: "4. Proyeksi CSA ke Body Plan", icon: <Activity size={15} /> },
+    { id: "linesplan3view", label: "5. Lines Plan 3-View", icon: <Layers size={15} /> },
+    { id: "constraints", label: "6. Batasan Desain & PMB", icon: <Scale size={15} /> },
+    { id: "ai", label: "7. AI Assistant", icon: <Cpu size={15} /> }
   ];
 
   return (
@@ -184,7 +210,7 @@ export default function Stage3BasicDesignPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                Studio perancangan rencana garis (Lines Plan), tampak samping NURBS, proyeksi luasan CSA gading, dan batasan desain.
+                Studio perancangan rencana garis (Lines Plan), kalkulasi garis air, radius bilga, proyeksi luasan CSA gading, dan batasan desain.
               </p>
             </div>
           </div>
@@ -242,7 +268,7 @@ export default function Stage3BasicDesignPage() {
 
       {/* Workspace Content */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
-        {/* TAB 1: TAMPAK SAMPING & NURBS EDITOR */}
+        {/* TAB 1: TAMPAK SAMPING & NURBS EDITOR (SHEER PLAN) */}
         {activeTab === "profile" && (
           <div className="space-y-6">
             <SideProfileNurbsEditor
@@ -259,7 +285,39 @@ export default function Stage3BasicDesignPage() {
           </div>
         )}
 
-        {/* TAB 2: PROYEKSI CSA KE BODY PLAN */}
+        {/* TAB 2: KALKULASI GARIS AIR (PAGE 1) */}
+        {activeTab === "waterplane" && (
+          <div className="space-y-6">
+            <WaterPlaneCalculationSheet
+              lbp_m={lbp}
+              lwl_m={currentLoa ? Number((currentLoa * 0.98).toFixed(2)) : undefined}
+              breadth_m={breadth}
+              draft_m={draft}
+              depth_m={depth}
+              cb={cb}
+              cm={cm}
+              csaOrdinates={csaOrdinates}
+              vesselType={vesselType}
+            />
+          </div>
+        )}
+
+        {/* TAB 3: RADIUS BILGA & LUAS MIDSHIP GADING 10 (PAGE 2) */}
+        {activeTab === "midshipBilge" && (
+          <div className="space-y-6">
+            <MidshipBilgeCalculationSheet
+              lbp_m={lbp}
+              breadth_m={breadth}
+              draft_m={draft}
+              depth_m={depth}
+              cb={cb}
+              cm={cm}
+              vesselType={vesselType}
+            />
+          </div>
+        )}
+
+        {/* TAB 4: PROYEKSI CSA KE BODY PLAN */}
         {activeTab === "csaProjection" && (
           <div className="space-y-6">
             <CsaToBodyPlanProjection
@@ -334,6 +392,8 @@ export default function Stage3BasicDesignPage() {
               </span>
               <div className="flex flex-wrap gap-2">
                 {[
+                  "Kalkulasi Garis Air (AWL & LCF) dan Rumus Integrasi",
+                  "Perhitungan Radius Bilga & Luas Midship Gading 10",
                   "Jelaskan bagaimana luasan CSA diproyeksikan ke Body Plan",
                   "Apa peran Parallel Middle Body (PMB) pada kapal ini?",
                   "Jelaskan perbedaan batasan konstan vs dimensi variabel (LOA)",
