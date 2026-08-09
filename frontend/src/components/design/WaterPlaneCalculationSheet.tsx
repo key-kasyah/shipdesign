@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Table as TableIcon,
   Download,
@@ -180,6 +180,51 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const [halfBreadths, setHalfBreadths] = useState<Record<number, number>>(() =>
     generateOptimizedHalfBreadths(AWL_rancangan)
   );
+
+  // --- SVG INTERACTIVE DRAG STATE & HANDLERS ---
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [draggingStation, setDraggingStation] = useState<number | null>(null);
+
+  const handlePointerDown = (e: React.PointerEvent<SVGCircleElement>, station: number) => {
+    // Kunci rentang Parallel Middle Body (PMB) Gading 7 s.d 13
+    if (station >= 7 && station <= 13) return;
+    
+    setDraggingStation(station);
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
+    if (draggingStation === null || !svgRef.current) return;
+    
+    const rect = svgRef.current.getBoundingClientRect();
+    const yClient = e.clientY - rect.top;
+    
+    // ViewBox is "-5 0 110 30"
+    const viewBoxHeight = 30;
+    const ySvg = (yClient / rect.height) * viewBoxHeight;
+    
+    const maxHalfB = BWL / 2;
+    // Calculation mapping from SVG Y to HalfBreadth:
+    // y = 26 - (newHalfB / maxHalfB) * 22
+    // newHalfB = maxHalfB * (26 - y) / 22
+    let newHalfB = maxHalfB * (26 - ySvg) / 22;
+    
+    // Clamp between 0 and maximum half breadth
+    newHalfB = Math.max(0, Math.min(maxHalfB, newHalfB));
+    
+    setHalfBreadths(prev => ({
+      ...prev,
+      [draggingStation]: Number(newHalfB.toFixed(3))
+    }));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<SVGCircleElement>) => {
+    if (draggingStation !== null) {
+      (e.target as Element).releasePointerCapture(e.pointerId);
+      setDraggingStation(null);
+    }
+  };
+  // ---------------------------------------------
 
   // Auto update when target dimensions change
   useEffect(() => {
@@ -465,8 +510,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
 
         {/* SVG Plot */}
-        <div className="w-full h-36 bg-slate-950/90 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center p-2">
-          <svg className="w-full h-full px-2" viewBox="-5 0 110 30" preserveAspectRatio="none">
+        <div className="w-full h-48 bg-slate-950/90 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center p-2">
+          <svg 
+            ref={svgRef}
+            className="w-full h-full px-2" 
+            viewBox="-5 0 110 30" 
+            preserveAspectRatio="none"
+          >
             {/* Centerline Baseline */}
             <line x1="-5" y1="26" x2="105" y2="26" stroke="#475569" strokeWidth="0.5" strokeDasharray="1,1" />
 
@@ -520,12 +570,31 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               strokeWidth="0.8"
             />
 
-            {/* Station Points */}
+            {/* Station Points (Draggable for non-PMB) */}
             {calculatedRows.map((r, idx) => {
               const x = ((r.station + 0.5) / 20.5) * 100;
               const maxHalfB = BWL / 2 || 1;
               const y = 26 - (r.halfBreadth / maxHalfB) * 22;
-              return <circle key={idx} cx={x} cy={y} r="0.6" fill="#38bdf8" />;
+              
+              const isLocked = r.station >= 7 && r.station <= 13;
+              const isDragging = draggingStation === r.station;
+              
+              return (
+                <circle 
+                  key={idx} 
+                  cx={x} 
+                  cy={y} 
+                  r={isDragging ? "1.5" : isLocked ? "0.6" : "1.2"} 
+                  fill={isLocked ? "#ef4444" : isDragging ? "#facc15" : "#38bdf8"} 
+                  stroke={isLocked ? "transparent" : "#fff"}
+                  strokeWidth={isDragging ? "0.2" : "0"}
+                  className={isLocked ? "cursor-not-allowed opacity-60" : "cursor-ns-resize hover:opacity-80 transition-all drop-shadow-md"}
+                  onPointerDown={(e) => handlePointerDown(e, r.station)}
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerCancel={handlePointerUp}
+                />
+              );
             })}
 
             {/* LCF Marker */}
