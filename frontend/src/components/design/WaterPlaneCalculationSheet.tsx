@@ -11,7 +11,9 @@ import {
   HelpCircle,
   TrendingUp,
   Sliders,
-  Wand2
+  Wand2,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 interface WaterPlaneCalculationProps {
@@ -184,6 +186,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   // --- SVG INTERACTIVE DRAG STATE & HANDLERS ---
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingStation, setDraggingStation] = useState<number | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const handlePointerDown = (e: React.PointerEvent<SVGCircleElement>, station: number) => {
     // Kunci rentang Parallel Middle Body (PMB) Gading 7 s.d 13
@@ -510,7 +513,17 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
 
         {/* SVG Plot */}
-        <div className="w-full h-48 bg-slate-950/90 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center p-2">
+        <div className="w-full h-48 bg-slate-950/90 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center p-2 group">
+          
+          {/* Floating Preview Toggle Button */}
+          <button
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            className="absolute top-3 right-3 z-10 p-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-slate-400 hover:text-cyan-300 transition-all opacity-0 group-hover:opacity-100 shadow-lg backdrop-blur-sm"
+            title={isPreviewMode ? "Tampilkan Titik Ordinat (Edit Mode)" : "Sembunyikan Titik Ordinat (Preview Mode)"}
+          >
+            {isPreviewMode ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+
           <svg 
             ref={svgRef}
             className="w-full h-full px-2" 
@@ -567,11 +580,11 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 .join(" ")} L 100,26 Z`}
               fill="rgba(6, 182, 212, 0.15)"
               stroke="#06b6d4"
-              strokeWidth="0.8"
+              strokeWidth="0.15"
             />
 
             {/* Station Points (Draggable for non-PMB) */}
-            {calculatedRows.map((r, idx) => {
+            {!isPreviewMode && calculatedRows.map((r, idx) => {
               const x = ((r.station + 0.5) / 20.5) * 100;
               const maxHalfB = BWL / 2 || 1;
               const y = 26 - (r.halfBreadth / maxHalfB) * 22;
@@ -584,7 +597,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   key={idx} 
                   cx={x} 
                   cy={y} 
-                  r={isDragging ? "1.5" : isLocked ? "0.6" : "1.2"} 
+                  r={isDragging ? "1.2" : isLocked ? "0.4" : "0.7"} 
                   fill={isLocked ? "#ef4444" : isDragging ? "#facc15" : "#38bdf8"} 
                   stroke={isLocked ? "transparent" : "#fff"}
                   strokeWidth={isDragging ? "0.2" : "0"}

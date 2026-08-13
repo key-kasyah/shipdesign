@@ -269,108 +269,95 @@ export default function Stage3BasicDesignPage() {
       {/* Workspace Content */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
         {/* TAB 1: TAMPAK SAMPING & NURBS EDITOR (SHEER PLAN) */}
-        {activeTab === "profile" && (
-          <div className="space-y-6">
-            <SideProfileNurbsEditor
-              lbp_m={lbp}
-              depth_m={depth}
-              draft_m={draft}
-              breadth_m={breadth}
-              cb={cb}
-              vesselType={vesselType}
-              onUpdateLoa={(newLoa) => {
-                setExactLoa(newLoa);
-              }}
-            />
-          </div>
-        )}
+        <div className={activeTab === "profile" ? "block space-y-6" : "hidden"}>
+          <SideProfileNurbsEditor
+            lbp_m={lbp}
+            depth_m={depth}
+            draft_m={draft}
+            breadth_m={breadth}
+            cb={cb}
+            vesselType={vesselType}
+            onUpdateLoa={(newLoa) => {
+              setExactLoa(newLoa);
+            }}
+          />
+        </div>
 
         {/* TAB 2: KALKULASI GARIS AIR (PAGE 1) */}
-        {activeTab === "waterplane" && (
-          <div className="space-y-6">
-            <WaterPlaneCalculationSheet
-              lbp_m={lbp}
-              lwl_m={currentLoa ? Number((currentLoa * 0.98).toFixed(2)) : undefined}
-              breadth_m={breadth}
-              draft_m={draft}
-              depth_m={depth}
-              cb={cb}
-              cm={cm}
-              csaOrdinates={csaOrdinates}
-              vesselType={vesselType}
-            />
-          </div>
-        )}
+        <div className={activeTab === "waterplane" ? "block space-y-6" : "hidden"}>
+          <WaterPlaneCalculationSheet
+            lbp_m={lbp}
+            lwl_m={currentLoa ? Number((currentLoa * 0.98).toFixed(2)) : undefined}
+            breadth_m={breadth}
+            draft_m={draft}
+            depth_m={depth}
+            cb={cb}
+            cm={cm}
+            csaOrdinates={csaOrdinates}
+            vesselType={vesselType}
+          />
+        </div>
 
         {/* TAB 3: RADIUS BILGA & LUAS MIDSHIP GADING 10 (PAGE 2) */}
-        {activeTab === "midshipBilge" && (
-          <div className="space-y-6">
-            <MidshipBilgeCalculationSheet
-              lbp_m={lbp}
-              breadth_m={breadth}
-              draft_m={draft}
-              depth_m={depth}
-              cb={cb}
-              cm={cm}
-              vesselType={vesselType}
-            />
-          </div>
-        )}
+        <div className={activeTab === "midshipBilge" ? "block space-y-6" : "hidden"}>
+          <MidshipBilgeCalculationSheet
+            lbp_m={lbp}
+            breadth_m={breadth}
+            draft_m={draft}
+            depth_m={depth}
+            cb={cb}
+            cm={cm}
+            vesselType={vesselType}
+          />
+        </div>
 
         {/* TAB 4: PROYEKSI CSA KE BODY PLAN */}
-        {activeTab === "csaProjection" && (
-          <div className="space-y-6">
-            <CsaToBodyPlanProjection
-              lbp_m={lbp}
-              breadth_m={breadth}
-              draft_m={draft}
-              depth_m={depth}
-              cb={cb}
-              cm={cm}
-              csaOrdinates={csaOrdinates}
-            />
-          </div>
-        )}
+        <div className={activeTab === "csaProjection" ? "block space-y-6" : "hidden"}>
+          <CsaToBodyPlanProjection
+            lbp_m={lbp}
+            breadth_m={breadth}
+            draft_m={draft}
+            depth_m={depth}
+            cb={cb}
+            cm={cm}
+            csaOrdinates={csaOrdinates}
+          />
+        </div>
 
         {/* TAB 3: RENCANA GARIS 3-VIEW & TABLE OF OFFSETS */}
-        {activeTab === "linesplan3view" && (
-          <div className="space-y-6">
-            <LinesPlanThreeView
-              lbp_m={lbp}
-              breadth_m={breadth}
-              draft_m={draft}
-              depth_m={depth}
-              cb={cb}
-              cm={cm}
-            />
-          </div>
-        )}
+        <div className={activeTab === "linesplan3view" ? "block space-y-6" : "hidden"}>
+          <LinesPlanThreeView
+            lbp_m={lbp}
+            breadth_m={breadth}
+            draft_m={draft}
+            depth_m={depth}
+            cb={cb}
+            cm={cm}
+          />
+        </div>
 
         {/* TAB 4: BATASAN DESAIN & PMB */}
-        {activeTab === "constraints" && (
-          <div className="space-y-6">
-            <DesignConstraintsSummary
-              lbp_m={lbp}
-              breadth_m={breadth}
-              draft_m={draft}
-              depth_m={depth}
-              cb={cb}
-              cm={cm}
-              calculatedLoa={currentLoa}
-              foreOverhang={foreOverhang || undefined}
-              aftOverhang={aftOverhang || undefined}
-              vesselType={vesselType}
-            />
-          </div>
-        )}
+        <div className={activeTab === "constraints" ? "block space-y-6" : "hidden"}>
+          <DesignConstraintsSummary
+            lbp_m={lbp}
+            breadth_m={breadth}
+            draft_m={draft}
+            depth_m={depth}
+            cb={cb}
+            cm={cm}
+            calculatedLoa={currentLoa}
+            foreOverhang={foreOverhang || undefined}
+            aftOverhang={aftOverhang || undefined}
+            vesselType={vesselType}
+          />
+        </div>
 
         {/* TAB 5: AI BASIC DESIGN ASSISTANT */}
-        {activeTab === "ai" && (
-          <div
-            className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl flex flex-col space-y-4 backdrop-blur-xl shadow-2xl"
-            style={{ height: "calc(100vh - 210px)", minHeight: "520px" }}
-          >
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+        <div
+          className={activeTab === "ai" ? "flex flex-col bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl space-y-4 backdrop-blur-xl shadow-2xl" : "hidden"}
+          style={{ height: "calc(100vh - 210px)", minHeight: "520px" }}
+        >
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
               <div className="flex items-center space-x-2.5">
                 <div className="p-1.5 rounded-lg bg-cyan-600/20 border border-cyan-500/30 text-cyan-400">
                   <Cpu size={18} />
@@ -500,7 +487,7 @@ export default function Stage3BasicDesignPage() {
               </button>
             </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
