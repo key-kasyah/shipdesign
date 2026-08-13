@@ -487,7 +487,6 @@ export default function Stage3BasicDesignPage() {
               </button>
             </div>
           </div>
-        </div>
       </main>
     </div>
   );
