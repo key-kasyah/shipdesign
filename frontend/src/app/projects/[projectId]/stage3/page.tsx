@@ -16,9 +16,7 @@ import { api } from "../../../../services/api";
 import { SideProfileNurbsEditor } from "../../../../components/design/SideProfileNurbsEditor";
 import { WaterPlaneCalculationSheet } from "../../../../components/design/WaterPlaneCalculationSheet";
 import { MidshipBilgeCalculationSheet } from "../../../../components/design/MidshipBilgeCalculationSheet";
-import { CsaToBodyPlanProjection } from "../../../../components/design/CsaToBodyPlanProjection";
 import { LinesPlanThreeView } from "../../../../components/design/LinesPlanThreeView";
-import { DesignConstraintsSummary } from "../../../../components/design/DesignConstraintsSummary";
 
 export default function Stage3BasicDesignPage() {
   const params = useParams();
@@ -26,7 +24,7 @@ export default function Stage3BasicDesignPage() {
   const projectId = params.projectId as string;
 
   const [activeTab, setActiveTab] = useState<
-    "profile" | "waterplane" | "midshipBilge" | "csaProjection" | "linesplan3view" | "constraints" | "ai"
+    "profile" | "waterplane" | "midshipBilge" | "csaProjection" | "ai"
   >("profile");
 
   const [loading, setLoading] = useState(true);
@@ -173,10 +171,8 @@ export default function Stage3BasicDesignPage() {
     { id: "profile", label: "1. Tampak Samping (Sheer & Profile)", icon: <Compass size={15} /> },
     { id: "waterplane", label: "2. Kalkulasi Garis Air (AWL & LCF)", icon: <Layers size={15} /> },
     { id: "midshipBilge", label: "3. Radius Bilga & Luas Midship (St 10)", icon: <Activity size={15} /> },
-    { id: "csaProjection", label: "4. Proyeksi CSA ke Body Plan", icon: <Activity size={15} /> },
-    { id: "linesplan3view", label: "5. Lines Plan 3-View", icon: <Layers size={15} /> },
-    { id: "constraints", label: "6. Batasan Desain & PMB", icon: <Scale size={15} /> },
-    { id: "ai", label: "7. AI Assistant", icon: <Cpu size={15} /> }
+    { id: "csaProjection", label: "4. Proyeksi", icon: <Activity size={15} /> },
+    { id: "ai", label: "5. AI Assistant", icon: <Cpu size={15} /> }
   ];
 
   return (
@@ -311,21 +307,8 @@ export default function Stage3BasicDesignPage() {
           />
         </div>
 
-        {/* TAB 4: PROYEKSI CSA KE BODY PLAN */}
+        {/* TAB 4: PROYEKSI */}
         <div className={activeTab === "csaProjection" ? "block space-y-6" : "hidden"}>
-          <CsaToBodyPlanProjection
-            lbp_m={lbp}
-            breadth_m={breadth}
-            draft_m={draft}
-            depth_m={depth}
-            cb={cb}
-            cm={cm}
-            csaOrdinates={csaOrdinates}
-          />
-        </div>
-
-        {/* TAB 3: RENCANA GARIS 3-VIEW & TABLE OF OFFSETS */}
-        <div className={activeTab === "linesplan3view" ? "block space-y-6" : "hidden"}>
           <LinesPlanThreeView
             lbp_m={lbp}
             breadth_m={breadth}
@@ -333,22 +316,7 @@ export default function Stage3BasicDesignPage() {
             depth_m={depth}
             cb={cb}
             cm={cm}
-          />
-        </div>
-
-        {/* TAB 4: BATASAN DESAIN & PMB */}
-        <div className={activeTab === "constraints" ? "block space-y-6" : "hidden"}>
-          <DesignConstraintsSummary
-            lbp_m={lbp}
-            breadth_m={breadth}
-            draft_m={draft}
-            depth_m={depth}
-            cb={cb}
-            cm={cm}
-            calculatedLoa={currentLoa}
-            foreOverhang={foreOverhang || undefined}
-            aftOverhang={aftOverhang || undefined}
-            vesselType={vesselType}
+            csaOrdinates={csaOrdinates}
           />
         </div>
 

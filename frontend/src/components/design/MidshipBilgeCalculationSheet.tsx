@@ -15,7 +15,10 @@ import {
   Info,
   Plus,
   Eye,
-  EyeOff
+  EyeOff,
+  ZoomIn,
+  ZoomOut,
+  Maximize
 } from "lucide-react";
 
 /**
@@ -127,6 +130,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const [draggingDraft, setDraggingDraft] = useState<number | null>(null);
   const [hoverDraft, setHoverDraft] = useState<number | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   // Ensure draftSteps is always sorted
   const sortedDraftSteps = useMemo(() => [...draftSteps].sort((a, b) => a - b), [draftSteps]);
@@ -563,29 +567,64 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
 
           {/* SVG Blueprint Canvas */}
-          <div className="w-full flex-1 min-h-[280px] bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800/90 flex items-center justify-center p-3">
-              <svg 
-                ref={svgRef}
-                className="w-full h-full cursor-crosshair" 
-                viewBox="0 0 160 90" 
-                preserveAspectRatio="xMidYMid meet"
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerLeave}
+          <div className="w-full flex-1 min-h-[280px] bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800/90 flex items-center justify-center p-3 group">
+            
+            {/* Zoom Controls Overlay */}
+            <div className="absolute right-4 top-4 flex flex-col bg-slate-900/80 p-1 rounded-lg border border-slate-700 backdrop-blur-md z-10 opacity-50 group-hover:opacity-100 transition-opacity shadow-lg">
+              <button 
+                onClick={() => setZoomLevel(z => Math.min(z + 0.5, 4))}
+                className="p-1.5 hover:bg-slate-700 text-slate-300 rounded transition-colors flex justify-center items-center"
+                title="Zoom In"
               >
-                <defs>
-                  {/* CAD Grid Pattern */}
-                  <pattern id="cadGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1e293b" strokeWidth="0.3" />
-                  </pattern>
-                  {/* Water Hatch */}
-                  <pattern id="waterHatch" width="4" height="4" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                    <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
-                  </pattern>
-                </defs>
+                <ZoomIn size={16} />
+              </button>
+              <button 
+                onClick={() => setZoomLevel(1)}
+                className="p-1 hover:bg-slate-700 text-slate-300 rounded transition-colors text-[10px] font-bold text-center"
+                title="Reset Zoom"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </button>
+              <button 
+                onClick={() => setZoomLevel(z => Math.max(z - 0.5, 1))}
+                className="p-1.5 hover:bg-slate-700 text-slate-300 rounded transition-colors flex justify-center items-center"
+                title="Zoom Out"
+              >
+                <ZoomOut size={16} />
+              </button>
+            </div>
 
-                {/* Background Grid */}
-                {!isPreviewMode && <rect x="0" y="0" width="160" height="90" fill="url(#cadGrid)" />}
+            {(() => {
+              const vbWidth = 160 / zoomLevel;
+              const vbHeight = 90 / zoomLevel;
+              // To zoom into the bilge, we shift the origin.
+              // If preview mode, zoom to center. Otherwise, zoom to bottom right.
+              const vbX = isPreviewMode ? (160 - vbWidth) / 2 : (160 - vbWidth) * 0.8;
+              const vbY = isPreviewMode ? (90 - vbHeight) / 2 : (90 - vbHeight) * 0.95;
+
+              return (
+                <svg 
+                  ref={svgRef}
+                  className="w-full h-full cursor-crosshair transition-all duration-300 ease-in-out" 
+                  viewBox={`${vbX} ${vbY} ${vbWidth} ${vbHeight}`} 
+                  preserveAspectRatio="xMidYMid meet"
+                  onPointerMove={handlePointerMove}
+                  onPointerUp={handlePointerUp}
+                  onPointerLeave={handlePointerLeave}
+                >
+                  <defs>
+                    {/* CAD Grid Pattern */}
+                    <pattern id="cadGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1e293b" strokeWidth="0.3" />
+                    </pattern>
+                    {/* Water Hatch */}
+                    <pattern id="waterHatch" width="4" height="4" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                      <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
+                    </pattern>
+                  </defs>
+
+                  {/* Background Grid */}
+                  {!isPreviewMode && <rect x="0" y="0" width="160" height="90" fill="url(#cadGrid)" />}
 
                 {/* COORDINATE MAPPING */}
                 {(() => {
@@ -674,21 +713,21 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                           {/* Interactive Drag Points on Bilge Curve */}
                           {curvePts.filter(p => p.isBilge).map((p, idx) => (
                             <g key={`drag-${p.z}`}>
-                              <line x1={p.x} y1={p.y} x2={outerX} y2={p.y} stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="1,1" opacity="0.5" />
+                              <line x1={p.x} y1={p.y} x2={outerX} y2={p.y} stroke="#f59e0b" strokeWidth={0.2 / zoomLevel} strokeDasharray={`${1 / zoomLevel},${1 / zoomLevel}`} opacity="0.5" />
                               <circle
                                 cx={p.x}
                                 cy={p.y}
-                                r={draggingDraft === p.z || hoverDraft === p.z ? "1.2" : "0.7"}
+                                r={(draggingDraft === p.z || hoverDraft === p.z ? 1.2 : 0.7) / zoomLevel}
                                 fill={draggingDraft === p.z ? "#fbbf24" : "#f59e0b"}
                                 stroke="#ffffff"
-                                strokeWidth="0.3"
+                                strokeWidth={0.3 / zoomLevel}
                                 className="cursor-pointer hover:fill-amber-300 transition-all"
                                 onPointerDown={(e) => handlePointerDown(e, p.z)}
                                 onPointerEnter={() => setHoverDraft(p.z)}
                                 onPointerLeave={() => setHoverDraft(null)}
                               />
                               {(draggingDraft === p.z || hoverDraft === p.z) && (
-                                <text x={p.x - 4} y={p.y - 3} fill="#fbbf24" fontSize="2.5" fontFamily="monospace" textAnchor="end" fontWeight="bold">
+                                <text x={p.x - (4 / zoomLevel)} y={p.y - (3 / zoomLevel)} fill="#fbbf24" fontSize={2.5 / zoomLevel} fontFamily="monospace" textAnchor="end" fontWeight="bold">
                                   y = {(draftOrdinates[p.z] || 0).toFixed(3)}
                                 </text>
                               )}
@@ -716,6 +755,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   );
               })()}
             </svg>
+          )
+        })()}
           </div>
         </div>
       </div>

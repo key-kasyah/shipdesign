@@ -1,18 +1,14 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   Layers,
-  Maximize2,
-  FileDown,
   Download,
-  Eye,
-  Sliders,
-  CheckCircle2,
-  Table as TableIcon,
-  Compass,
-  ArrowRight
+  ZoomIn,
+  ZoomOut,
+  Table as TableIcon
 } from "lucide-react";
+import { FairingEngine } from "@/utils/fairingEngine";
 
 interface LinesPlanThreeViewProps {
   lbp_m: number;
@@ -21,6 +17,7 @@ interface LinesPlanThreeViewProps {
   depth_m: number;
   cb: number;
   cm?: number;
+  csaOrdinates?: number[];
 }
 
 export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
@@ -29,88 +26,179 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
   draft_m = 5.5,
   depth_m = 8.0,
   cb = 0.76,
-  cm = 0.98
+  cm = 0.98,
+  csaOrdinates
 }) => {
-  const [activePlanView, setActivePlanView] = useState<"all" | "sheer" | "body" | "halfBreadth" | "offsets">("all");
-  const [highlightStation, setHighlightStation] = useState<number | null>(null);
-
   const LBP = Math.max(10, lbp_m);
   const B = Math.max(2, breadth_m);
   const T = Math.max(1, draft_m);
   const H = Math.max(2, depth_m);
-  const h = LBP / 20;
+  const Cm = cm || 0.98;
+  const Cb = cb || 0.76;
 
-  // Waterlines definition (WL 0 to DWL + Deck)
-  const waterlines = useMemo(() => [
-    { id: "WL0", z: 0.0, label: "WL 0 (Baseline / Keel)" },
-    { id: "WL1", z: T * 0.25, label: `WL 1 (${(T * 0.25).toFixed(2)}m)` },
-    { id: "WL2", z: T * 0.50, label: `WL 2 (${(T * 0.50).toFixed(2)}m)` },
-    { id: "WL3", z: T * 0.75, label: `WL 3 (${(T * 0.75).toFixed(2)}m)` },
-    { id: "DWL", z: T, label: `DWL (${T.toFixed(2)}m)` },
-    { id: "DECK", z: H, label: `Deck (${H.toFixed(2)}m)` }
-  ], [T, H]);
+  const [activeTab, setActiveTab] = useState<"cad" | "table">("cad");
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const svgRef = useRef<SVGSVGElement>(null);
 
-  // Generate 21 Station Half-Breadths for each Waterline (Table of Offsets)
+  // ==========================================
+  // MATHEMATICAL PARAMETERS & OFFSETS
+  // ==========================================
+  
+  // Calculate Bilge Radius (R) for Midship
+  const R = useMemo(() => {
+    const areaDiff = B * T * (1.0 - Cm);
+    const denom = 2.0 - Math.PI / 2.0;
+    return denom > 0 && areaDiff > 0 ? Math.sqrt(areaDiff / denom) : 0;
+  }, [B, T, Cm]);
+
+  const engine = useMemo(() => {
+    const targetVol = LBP * B * T * Cb;
+    return new FairingEngine(LBP, B, T, H, targetVol);
+  }, [LBP, B, T, H, Cb, csaOrdinates]);
+
+  // Use engine for waterlines and labels
+  const waterlines = engine.waterlines;
+  const wlLabels = engine.wlLabels;
+  const numWL = waterlines.length;
+  
+  // Standard Sheer Profile (mm converted to m)
+  const sheerAft = 2.8 * (LBP / 3 + 10) / 1000;
+  const sheerFore = 5.6 * (LBP / 3 + 10) / 1000;
+
+  // Deck curve based on sheer
+  const getDeckZ = (st: number) => {
+    if (st < 10) {
+      const x = (10 - st) / 10;
+      return H + sheerAft * Math.pow(x, 2);
+    } else {
+      const x = (st - 10) / 10;
+      return H + sheerFore * Math.pow(x, 2);
+    }
+  };
+
+  // Buttocks (B1 to B4)
+  const numButtocks = 4;
+  const buttockSpacing = (B/2) / numButtocks;
+  const buttocks = Array.from({length: numButtocks}).map((_, i) => (i+1) * buttockSpacing);
+
+
+
   const offsetTable = useMemo(() => {
-    return Array.from({ length: 21 }).map((_, stIdx) => {
-      // Longitudinal shape factor
-      let longFactor = 1.0;
-      if (stIdx < 8) {
-        // Aft taper
-        longFactor = Math.pow(stIdx / 8, 1.3);
-      } else if (stIdx > 12) {
-        // Fore taper
-        longFactor = Math.pow((20 - stIdx) / 8, 1.4);
-      }
-
-      const values: Record<string, number> = {};
-      waterlines.forEach((wl) => {
-        const zRatio = Math.min(1.0, wl.z / (T || 1));
-        const vertFactor = wl.z === 0 ? 0 : Math.pow(zRatio, 0.45);
-        const deckFlare = wl.z > T ? (1.0 + (wl.z - T) / (H - T || 1) * 0.15) : 1.0;
-        
-        let y = (B / 2) * longFactor * vertFactor * deckFlare;
-        // Midship bottom flat
-        if (stIdx >= 8 && stIdx <= 12 && wl.z > T * 0.2) {
-          y = B / 2;
+    engine.generateOffsets();
+    
+    return engine.stations.map((st) => {
+      const localDeckZ = engine.getSheerZ(st);
+      const offsets = engine.offsetTable[st];
+      
+      const buttockZ: Record<string, number> = {};
+      buttocks.forEach((b, i) => {
+        if (offsets["DECK"] < b) {
+          buttockZ[`B${i+1}`] = -1;
+        } else {
+          const targetHalfArea = engine.csaOrdinates[st] / 2.0;
+          const midArea = engine.csaOrdinates[10] / 2.0;
+          let bLocal = (B / 2.0) * Math.sqrt(targetHalfArea / midArea);
+          if (bLocal > B / 2.0) bLocal = B / 2.0;
+          if (bLocal <= 0) bLocal = 0.01;
+          let cSection = targetHalfArea / (bLocal * T);
+          cSection = Math.max(0.01, Math.min(0.999, cSection));
+          const n = (1.0 / cSection) - 1.0;
+          
+          let getSectionY = (z: number) => {
+             if (z <= T) return bLocal * Math.pow(z / T, n);
+             let flareAngle = 0.05;
+             const xRatio = (st - 10) / 10.0;
+             if (xRatio > 0.5) flareAngle += (xRatio - 0.5) * 0.5;
+             else if (xRatio < -0.5) flareAngle += Math.abs(xRatio + 0.5) * 0.3;
+             return bLocal + (z - T) * flareAngle * (B / 2.0);
+          };
+          
+          let low = 0;
+          let high = localDeckZ;
+          for (let iter=0; iter<15; iter++) {
+            let mid = (low + high) / 2;
+            if (getSectionY(mid) < b) low = mid;
+            else high = mid;
+          }
+          buttockZ[`B${i+1}`] = Number(((low+high)/2).toFixed(3));
         }
-        values[wl.id] = Number(Math.max(0, y).toFixed(2));
       });
-
-      return {
-        station: stIdx,
-        xPos: Number((stIdx * h).toFixed(2)),
-        offsets: values
-      };
+      return { station: st, offsets, buttockZ, localDeckZ };
     });
-  }, [waterlines, B, T, H, h]);
+  }, [engine, buttocks, B, T]);
+
+  // Sectional Area Curve (SAC) normalized (0 to 1)
+  const sacCurve = useMemo(() => {
+    const maxCsa = Math.max(...engine.csaOrdinates);
+    return engine.csaOrdinates.map(area => maxCsa > 0 ? area / maxCsa : 0);
+  }, [engine]);
+
+  // ==========================================
+  // SVG CANVAS LAYOUT COORDINATES
+  // ==========================================
+  const CANVAS_W = 2000;
+  const CANVAS_H = 1200;
+  
+  const X_START = 150;
+  const X_END = 1850;
+  const L_PIXELS = X_END - X_START;
+  const ST_SPACING = L_PIXELS / 20;
+  
+  // Scale for Z (Height) and Y (Breadth)
+  // Max Breadth is B/2, Max Height is H. Let's allocate ~250px for Height
+  const scaleZ = 250 / H; 
+  const scaleY = scaleZ; // Transverse and Vertical scales must match for Body Plan
+
+  // Y-axis Base Lines
+  const Y_SAC_BASE = 250;
+  const Y_SHEER_BASE = 650;
+  const X_BODY_CENTER = X_START + 10 * ST_SPACING; // Center of drawing
+  const Y_HB_CL = 750;
+  const Y_DIAG_CL = 1150;
+
+  // Helpers to get drawing coords
+  const getX = (st: number) => X_START + st * ST_SPACING;
+  const getZ = (z_m: number, base: number) => base - z_m * scaleZ;
+  const getY = (y_m: number, base: number, goesDown = true) => goesDown ? base + y_m * scaleY : base - y_m * scaleY;
 
   // Export Table of Offsets to CSV
   const handleExportCSV = () => {
-    const headers = ["Station", "X Position (m)", ...waterlines.map(w => `${w.id} (m)`)];
+    const headers = ["Station", "X Position (m)", ...engine.wlLabels.map(l => `${l} (m)`)];
     const rows = offsetTable.map(row => [
       row.station,
-      row.xPos,
-      ...waterlines.map(w => row.offsets[w.id])
+      (row.station * (LBP/20)).toFixed(2),
+      ...engine.wlLabels.map(l => row.offsets[l])
     ]);
-
-    const csvContent = "data:text/csv;charset=utf-8," + [
-      headers.join(","),
-      ...rows.map(e => e.join(","))
-    ].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `table_of_offsets_LBP_${LBP}m.csv`);
+    link.href = encodeURI(csvContent);
+    link.download = `LinesPlan_Offsets_${LBP}m.csv`;
     document.body.appendChild(link);
     link.click();
     link.remove();
   };
 
+  // SVG viewBox for Zoom
+  const vbWidth = CANVAS_W / zoomLevel;
+  const vbHeight = CANVAS_H / zoomLevel;
+  const vbX = (CANVAS_W - vbWidth) / 2;
+  const vbY = (CANVAS_H - vbHeight) / 2;
+
+  // Path generator (Using straight lines to guarantee no artificial spline wiggles)
+  // For 21 stations, linear interpolation is the most honest representation of the offsets.
+  const smoothPath = (pts: {x:number, y:number}[]) => {
+    if (pts.length === 0) return "";
+    let d = `M ${pts[0].x.toFixed(3)},${pts[0].y.toFixed(3)}`;
+    for (let i = 1; i < pts.length; i++) {
+      d += ` L ${pts[i].x.toFixed(3)},${pts[i].y.toFixed(3)}`;
+    }
+    return d;
+  };
+
   return (
     <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-xl shadow-2xl space-y-6 font-sans text-slate-200">
-      {/* Header Bar */}
+      
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-800/80 gap-3">
         <div className="space-y-1">
           <div className="flex items-center space-x-2.5">
@@ -119,345 +207,341 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white tracking-wide">
-                Studio Rencana Garis 3 Pandangan (Lines Plan 3-View)
+                Lines Plan AutoCAD Blueprint (Proyeksi Penuh)
               </h2>
               <p className="text-xs text-slate-400">
-                Integrasi 3 proyeksi ortogonal standar perkapalan: Sheer Plan (Samping), Body Plan (Gading), dan Half-Breadth Plan (Garis Air).
+                Penyajian standar industri: Sheer, Body, Half-Breadth, SAC, dan Diagonal terintegrasi.
               </p>
             </div>
           </div>
         </div>
-
-        {/* View Switcher Tabs */}
-        <div className="flex items-center space-x-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800 self-start md:self-auto overflow-x-auto no-scrollbar">
-          {[
-            { id: "all", label: "3-View Gabungan" },
-            { id: "sheer", label: "Sheer Plan (Samping)" },
-            { id: "body", label: "Body Plan (Gading)" },
-            { id: "halfBreadth", label: "Half-Breadth (Garis Air)" },
-            { id: "offsets", label: "Tabel Offset" }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActivePlanView(tab.id as any)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                activePlanView === tab.id
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        
+        <div className="flex items-center space-x-2 bg-slate-900/90 p-1 rounded-xl border border-slate-800 self-start md:self-auto">
+          <button
+            onClick={() => setActiveTab("cad")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "cad" ? "bg-blue-600 text-white shadow-md font-bold" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            CAD Blueprint
+          </button>
+          <button
+            onClick={() => setActiveTab("table")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              activeTab === "table" ? "bg-blue-600 text-white shadow-md font-bold" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            Table of Offsets
+          </button>
+          <button
+            onClick={() => {
+              const content = engine.exportAutoCADScript();
+              const link = document.createElement("a");
+              link.href = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
+              link.download = `LinesPlan_${LBP}m.scr`;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            }}
+            className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all bg-emerald-600 text-white shadow-md font-bold hover:bg-emerald-500"
+          >
+            <Download size={14} className="inline mr-1" />
+            AutoCAD .SCR
+          </button>
         </div>
       </div>
 
-      {/* VIEW 1: 3-VIEW COMBINED OR INDIVIDUAL VIEWS */}
-      {(activePlanView === "all" || activePlanView === "sheer") && (
-        <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                A. Tampak Samping (Sheer Plan / Profile View)
-              </h3>
-            </div>
-            <span className="text-[10px] text-slate-400">
-              LBP = {LBP}m | H = {H}m | T = {T}m
-            </span>
+      {/* TAB 1: CAD BLUEPRINT */}
+      {activeTab === "cad" && (
+        <div className="w-full relative bg-white/95 rounded-xl border-4 border-slate-700 overflow-hidden shadow-inner group">
+          
+          {/* Zoom Overlay */}
+          <div className="absolute right-4 top-4 flex flex-col bg-slate-800/90 p-1 rounded-lg border border-slate-600 backdrop-blur-md z-10 opacity-60 group-hover:opacity-100 transition-opacity shadow-lg">
+            <button onClick={() => setZoomLevel(z => Math.min(z + 0.5, 4))} className="p-1.5 hover:bg-slate-700 text-slate-200 rounded"><ZoomIn size={16} /></button>
+            <button onClick={() => setZoomLevel(1)} className="p-1 hover:bg-slate-700 text-slate-200 rounded text-[10px] font-bold">{Math.round(zoomLevel * 100)}%</button>
+            <button onClick={() => setZoomLevel(z => Math.max(z - 0.5, 1))} className="p-1.5 hover:bg-slate-700 text-slate-200 rounded"><ZoomOut size={16} /></button>
           </div>
 
-          {/* Sheer Plan SVG */}
-          <div className="w-full h-44 bg-slate-950/90 rounded-xl border border-slate-800 relative overflow-hidden p-2 shadow-inner">
-            <svg className="w-full h-full" viewBox="0 0 1000 180" preserveAspectRatio="none">
-              {/* Baseline */}
-              <line x1="50" y1="140" x2="950" y2="140" stroke="#64748b" strokeWidth="1.5" />
-              {/* DWL */}
-              <line x1="50" y1="90" x2="950" y2="90" stroke="#06b6d4" strokeWidth="1" strokeDasharray="3,3" />
-              <text x="45" y="93" fill="#06b6d4" fontSize="9" textAnchor="end">DWL</text>
-              {/* Deck */}
-              <line x1="50" y1="40" x2="950" y2="40" stroke="#e2e8f0" strokeWidth="0.8" strokeDasharray="2,2" />
-              <text x="45" y="43" fill="#e2e8f0" fontSize="9" textAnchor="end">Geladak</text>
+          <div className="w-full overflow-hidden" style={{ minHeight: '600px' }}>
+            <svg 
+              ref={svgRef}
+              className="w-full h-full cursor-crosshair transition-all duration-300 ease-in-out" 
+              viewBox={`${vbX} ${vbY} ${vbWidth} ${vbHeight}`} 
+              preserveAspectRatio="xMidYMid meet"
+              style={{ backgroundColor: '#ffffff' }}
+            >
+              <defs>
+                <pattern id="grid10" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#e2e8f0" strokeWidth="0.5" />
+                </pattern>
+                <pattern id="grid50" width="50" height="50" patternUnits="userSpaceOnUse">
+                  <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#cbd5e1" strokeWidth="1" />
+                </pattern>
+              </defs>
 
-              {/* 21 Station Vertical Lines */}
-              {Array.from({ length: 21 }).map((_, i) => {
-                const x = 50 + (i / 20) * 900;
-                const isHovered = highlightStation === i;
+              {/* Grid Background */}
+              <rect x="0" y="0" width={CANVAS_W} height={CANVAS_H} fill="url(#grid10)" />
+              <rect x="0" y="0" width={CANVAS_W} height={CANVAS_H} fill="url(#grid50)" />
+              
+              {/* Decorative Frame */}
+              <rect x="10" y="10" width={CANVAS_W-20} height={CANVAS_H-20} fill="none" stroke="#0f172a" strokeWidth="4" />
+              <rect x="15" y="15" width={CANVAS_W-30} height={CANVAS_H-30} fill="none" stroke="#0f172a" strokeWidth="1" />
+              
+              <text x={25} y="40" fill="#0f172a" fontSize="16" fontWeight="bold" fontFamily="sans-serif" letterSpacing="2" style={{writingMode: "vertical-rl", transform: "rotate(180deg)", transformOrigin: "25px 40px"}}>
+                PRODUCED BY AN AUTODESK EDUCATIONAL PRODUCT
+              </text>
+              <text x={CANVAS_W - 25} y="40" fill="#0f172a" fontSize="16" fontWeight="bold" fontFamily="sans-serif" letterSpacing="2" style={{writingMode: "vertical-rl"}}>
+                PRODUCED BY AN AUTODESK EDUCATIONAL PRODUCT
+              </text>
+              <text x={CANVAS_W/2} y="35" fill="#0f172a" fontSize="16" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle" letterSpacing="2">
+                PRODUCED BY AN AUTODESK EDUCATIONAL PRODUCT
+              </text>
+              <text x={CANVAS_W/2} y={CANVAS_H - 20} fill="#0f172a" fontSize="16" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle" letterSpacing="2" style={{transform: "rotate(180deg)", transformOrigin: `${CANVAS_W/2}px ${CANVAS_H - 20}px`}}>
+                PRODUCED BY AN AUTODESK EDUCATIONAL PRODUCT
+              </text>
+
+              {/* ========================================================= */}
+              {/* 1. SECTIONAL AREA CURVE (SAC) */}
+              {/* ========================================================= */}
+              <text x={X_BODY_CENTER} y={Y_SAC_BASE - 210} fill="#0f172a" fontSize="14" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">
+                SECTIONAL AREA CURVE (SAC)
+              </text>
+              <line x1={X_START - 50} y1={Y_SAC_BASE} x2={X_END + 50} y2={Y_SAC_BASE} stroke="#334155" strokeWidth="2" />
+              <path 
+                d={smoothPath(offsetTable.map(st => ({ x: getX(st.station), y: Y_SAC_BASE - sacCurve[st.station] * 180 })))} 
+                fill="none" stroke="#0f172a" strokeWidth="2.5" 
+              />
+
+              {/* ========================================================= */}
+              {/* 2. SHEER PLAN (PROFILE) & BODY PLAN CENTER */}
+              {/* ========================================================= */}
+              
+              {/* Base, DWL, Deck Grid for Sheer & Body */}
+              <line x1={X_START - 50} y1={Y_SHEER_BASE} x2={X_END + 50} y2={Y_SHEER_BASE} stroke="#0f172a" strokeWidth="2.5" />
+              <text x={X_START - 55} y={Y_SHEER_BASE+4} fill="#0f172a" fontSize="11" textAnchor="end" fontWeight="bold">BL 0</text>
+              
+              {waterlines.map((wl, i) => (
+                <g key={`sh-wl-${i}`}>
+                  <line x1={X_START - 50} y1={getZ(wl, Y_SHEER_BASE)} x2={X_END + 50} y2={getZ(wl, Y_SHEER_BASE)} stroke="#94a3b8" strokeWidth="1" />
+                  <text x={X_START - 55} y={getZ(wl, Y_SHEER_BASE)+4} fill="#0f172a" fontSize="10" textAnchor="end">{wlLabels[i]}</text>
+                  <text x={X_END + 55} y={getZ(wl, Y_SHEER_BASE)+4} fill="#0f172a" fontSize="10">{wlLabels[i]}</text>
+                </g>
+              ))}
+
+              <text x={X_BODY_CENTER} y={Y_SHEER_BASE + 35} fill="#0f172a" fontSize="14" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">
+                SHEER PLAN & BODY PLAN
+              </text>
+
+              {/* Sheer Plan Stations (Vertical Lines) */}
+              {offsetTable.map(st => (
+                <g key={`sh-st-${st.station}`}>
+                  <line x1={getX(st.station)} y1={Y_SHEER_BASE} x2={getX(st.station)} y2={getZ(st.localDeckZ, Y_SHEER_BASE)-20} stroke="#cbd5e1" strokeWidth="1" />
+                  <text x={getX(st.station)} y={Y_SHEER_BASE + 15} fill="#0f172a" fontSize="11" textAnchor="middle">
+                    {st.station === 0 ? "AP" : st.station === 20 ? "FP" : st.station}
+                  </text>
+                </g>
+              ))}
+
+              {/* Sheer Plan Curves (Aft and Fore Outlines) */}
+              <path 
+                d={smoothPath(offsetTable.map(st => ({ x: getX(st.station), y: getZ(st.localDeckZ, Y_SHEER_BASE) })))} 
+                fill="none" stroke="#0f172a" strokeWidth="2.5" 
+              />
+              <path 
+                d={smoothPath(offsetTable.map(st => ({ x: getX(st.station), y: getZ(0, Y_SHEER_BASE) })))} 
+                fill="none" stroke="#0f172a" strokeWidth="2.5" 
+              />
+              
+              {/* Stem and Stern Profile (Fair curves closing the hull ends) */}
+              {(() => {
+                const sternPts = [
+                  { x: getX(0) - 20, y: getZ(offsetTable[0].localDeckZ, Y_SHEER_BASE) },
+                  { x: getX(0), y: getZ(offsetTable[0].localDeckZ * 0.5, Y_SHEER_BASE) },
+                  { x: getX(0), y: getZ(0, Y_SHEER_BASE) }
+                ];
+                const stemPts = [
+                  { x: getX(20) + 30, y: getZ(offsetTable[20].localDeckZ, Y_SHEER_BASE) },
+                  { x: getX(20) + 10, y: getZ(offsetTable[20].localDeckZ * 0.5, Y_SHEER_BASE) },
+                  { x: getX(20), y: getZ(0, Y_SHEER_BASE) }
+                ];
                 return (
-                  <g key={i} onMouseEnter={() => setHighlightStation(i)} onMouseLeave={() => setHighlightStation(null)} className="cursor-pointer">
-                    <line
-                      x1={x}
-                      y1="30"
-                      x2={x}
-                      y2="145"
-                      stroke={isHovered ? "#38bdf8" : i === 0 || i === 20 ? "#f43f5e" : "#1e293b"}
-                      strokeWidth={isHovered || i === 0 || i === 20 ? "1.5" : "0.7"}
-                    />
-                    <text x={x} y="158" fill={isHovered ? "#38bdf8" : "#64748b"} fontSize="9" textAnchor="middle">
-                      {i}
-                    </text>
+                  <>
+                    <path d={smoothPath(sternPts)} fill="none" stroke="#0f172a" strokeWidth="2.5" />
+                    <path d={smoothPath(stemPts)} fill="none" stroke="#0f172a" strokeWidth="2.5" />
+                  </>
+                );
+              })()}
+
+              {/* Buttock Curves in Sheer Plan */}
+              {buttocks.map((b, i) => {
+                const bPts = offsetTable
+                  .filter(st => st.buttockZ[`B${i+1}`] !== -1)
+                  .map(st => ({ x: getX(st.station), y: getZ(st.buttockZ[`B${i+1}`], Y_SHEER_BASE) }));
+                if (bPts.length < 2) return null;
+                return (
+                  <g key={`sh-but-${i}`}>
+                    <path d={smoothPath(bPts)} fill="none" stroke="#1d4ed8" strokeWidth="1.2" />
+                    <text x={bPts[0].x - 15} y={bPts[0].y + 5} fill="#1d4ed8" fontSize="9">B {i+1}</text>
                   </g>
                 );
               })}
+              
+              {/* BODY PLAN (Overlaid in Center x=1000) */}
+              <g id="body-plan">
+                {/* White Background to block out the sheer plan behind it */}
+                <rect x={X_BODY_CENTER - (B/2)*scaleY - 20} y={getZ(H+sheerFore+1, Y_SHEER_BASE)} width={B*scaleY + 40} height={(H+sheerFore)*scaleZ + 40} fill="#ffffff" fillOpacity="0.85" />
+                
+                <line x1={X_BODY_CENTER} y1={Y_SHEER_BASE + 10} x2={X_BODY_CENTER} y2={getZ(H+sheerFore, Y_SHEER_BASE) - 50} stroke="#ef4444" strokeWidth="2" strokeDasharray="10,5" />
+                <text x={X_BODY_CENTER} y={getZ(H+sheerFore, Y_SHEER_BASE) - 55} fill="#ef4444" fontSize="12" textAnchor="middle" fontWeight="bold">CL</text>
+                
+                {/* Buttocks Grid in Body Plan */}
+                {buttocks.map((b, i) => (
+                  <g key={`bp-but-${i}`}>
+                    <line x1={X_BODY_CENTER - b * scaleY} y1={Y_SHEER_BASE} x2={X_BODY_CENTER - b * scaleY} y2={getZ(H+sheerFore, Y_SHEER_BASE)} stroke="#94a3b8" strokeWidth="0.8" />
+                    <line x1={X_BODY_CENTER + b * scaleY} y1={Y_SHEER_BASE} x2={X_BODY_CENTER + b * scaleY} y2={getZ(H+sheerFore, Y_SHEER_BASE)} stroke="#94a3b8" strokeWidth="0.8" />
+                  </g>
+                ))}
 
-              {/* Hull Sheer Profile Outline */}
-              <path
-                d="M 50,140 L 80,140 Q 900,140 930,135 Q 960,90 955,30 L 920,38 Q 500,45 80,38 L 40,35 Q 35,90 50,140 Z"
-                fill="rgba(14, 165, 233, 0.12)"
-                stroke="#0284c7"
-                strokeWidth="2"
-              />
-            </svg>
-          </div>
-        </div>
-      )}
+                {/* Draw Station Curves for Body Plan */}
+                {offsetTable.map((st) => {
+                  const isFore = st.station > 10;
+                  const isAft = st.station < 10;
+                  const isMid = st.station === 10;
+                  const sign = isFore ? 1 : isAft ? -1 : 1;
+                  
+                  const pts = waterlines.map((z, i) => {
+                    const y = st.offsets[wlLabels[i]];
+                    return { x: X_BODY_CENTER + sign * (y * scaleY), y: getZ(z, Y_SHEER_BASE) };
+                  });
 
-      {/* VIEW 2: BODY PLAN */}
-      {(activePlanView === "all" || activePlanView === "body") && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Body Plan Frame View (8 Cols) */}
-          <div className="lg:col-span-8 bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  B. Rencana Bentuk Gading Melintang (Body Plan)
-                </h3>
-              </div>
-              <div className="flex items-center space-x-4 text-[10px]">
-                <span className="text-indigo-400 font-bold">← Kiri: Buritan (St 0 s.d 9)</span>
-                <span className="text-emerald-400 font-bold">Kanan: Haluan (St 11 s.d 20) →</span>
-              </div>
-            </div>
+                  if (isMid) {
+                    // Draw both sides for midship
+                    const ptsPort = [
+                      ...waterlines.map((z, i) => ({ x: X_BODY_CENTER - (st.offsets[wlLabels[i]] * scaleY), y: getZ(z, Y_SHEER_BASE) })),
+                      { x: X_BODY_CENTER - (st.offsets["DECK"] * scaleY), y: getZ(st.localDeckZ, Y_SHEER_BASE) }
+                    ];
+                    const ptsStbd = [
+                      ...waterlines.map((z, i) => ({ x: X_BODY_CENTER + (st.offsets[wlLabels[i]] * scaleY), y: getZ(z, Y_SHEER_BASE) })),
+                      { x: X_BODY_CENTER + (st.offsets["DECK"] * scaleY), y: getZ(st.localDeckZ, Y_SHEER_BASE) }
+                    ];
+                    return (
+                      <g key={`bp-st-10`}>
+                        <path d={smoothPath(ptsPort)} fill="none" stroke="#1e293b" strokeWidth="2.5" />
+                        <path d={smoothPath(ptsStbd)} fill="none" stroke="#1e293b" strokeWidth="2.5" />
+                      </g>
+                    );
+                  }
 
-            {/* Body Plan SVG */}
-            <div className="w-full h-64 bg-slate-950/90 rounded-xl border border-slate-800 relative overflow-hidden p-3 flex items-center justify-center shadow-inner">
-              <svg className="w-full h-full" viewBox="-240 -30 480 260">
-                {/* Centerline (CL) */}
-                <line x1="0" y1="-10" x2="0" y2="210" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4,2" />
-                <text x="0" y="-15" fill="#f43f5e" fontSize="9" textAnchor="middle" fontWeight="bold">Centerline (CL)</text>
+                  pts.push({ x: X_BODY_CENTER + sign * (st.offsets["DECK"] * scaleY), y: getZ(st.localDeckZ, Y_SHEER_BASE) });
+                  return <path key={`bp-st-${st.station}`} d={smoothPath(pts)} fill="none" stroke="#334155" strokeWidth="1.2" />;
+                })}
+              </g>
 
-                {/* Baseline (BL) */}
-                <line x1="-220" y1="190" x2="220" y2="190" stroke="#64748b" strokeWidth="1.5" />
-                <text x="225" y="193" fill="#94a3b8" fontSize="8">Baseline (BL)</text>
+              {/* ========================================================= */}
+              {/* 3. HALF BREADTH PLAN */}
+              {/* ========================================================= */}
+              <line x1={X_START - 50} y1={Y_HB_CL} x2={X_END + 50} y2={Y_HB_CL} stroke="#ef4444" strokeWidth="2" strokeDasharray="10,5" />
+              <text x={X_START - 55} y={Y_HB_CL+4} fill="#ef4444" fontSize="11" textAnchor="end" fontWeight="bold">CL</text>
+              <text x={X_BODY_CENTER} y={Y_HB_CL - 15} fill="#0f172a" fontSize="14" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">
+                HALF BREADTH PLAN
+              </text>
 
-                {/* DWL */}
-                <line x1="-220" y1="90" x2="220" y2="90" stroke="#06b6d4" strokeWidth="1" strokeDasharray="3,3" />
-                <text x="225" y="93" fill="#06b6d4" fontSize="8" fontWeight="bold">DWL (T={T}m)</text>
+              {/* Buttocks in Half Breadth (Horizontal) */}
+              {buttocks.map((b, i) => (
+                <g key={`hb-but-${i}`}>
+                  <line x1={X_START - 20} y1={getY(b, Y_HB_CL)} x2={X_END + 20} y2={getY(b, Y_HB_CL)} stroke="#94a3b8" strokeWidth="1" />
+                  <text x={X_END + 25} y={getY(b, Y_HB_CL)+3} fill="#0f172a" fontSize="9">B {i+1}</text>
+                </g>
+              ))}
 
-                {/* Main Deck */}
-                <line x1="-220" y1="20" x2="220" y2="20" stroke="#e2e8f0" strokeWidth="0.8" strokeDasharray="2,2" />
-                <text x="225" y="23" fill="#e2e8f0" fontSize="8">Deck (H={H}m)</text>
+              {/* Stations Grid in Half Breadth */}
+              {offsetTable.map(st => (
+                <g key={`hb-st-${st.station}`}>
+                  <line x1={getX(st.station)} y1={Y_HB_CL} x2={getX(st.station)} y2={getY((B/2)+2, Y_HB_CL)} stroke="#cbd5e1" strokeWidth="1" />
+                  <text x={getX(st.station)} y={getY((B/2)+3.5, Y_HB_CL)} fill="#0f172a" fontSize="10" textAnchor="middle">{st.station}</text>
+                </g>
+              ))}
 
-                {/* Draw 21 Station Section Lines */}
-                {offsetTable.map((row) => {
-                  const isFore = row.station > 10;
-                  const isMid = row.station === 10;
-                  const isAft = row.station < 10;
-                  const sign = isFore ? 1 : isAft ? -1 : 1; // Fore to right, Aft to left
+              {/* Waterlines in Half Breadth (Longitudinal Paths) */}
+              {waterlines.map((z, i) => {
+                const wlName = wlLabels[i];
+                const pts = offsetTable.map(st => ({ x: getX(st.station), y: getY(st.offsets[wlName], Y_HB_CL) }));
+                return <path key={`hb-wl-${i}`} d={smoothPath(pts)} fill="none" stroke="#0f172a" strokeWidth={wlName === "DECK" ? "2.5" : "1.2"} />;
+              })}
 
-                  const yDWL = row.offsets["DWL"] * (200 / (B / 2 || 1));
-                  const yDeck = row.offsets["DECK"] * (200 / (B / 2 || 1));
-                  const yWL1 = row.offsets["WL1"] * (200 / (B / 2 || 1));
+              {/* ========================================================= */}
+              {/* 4. DIAGONAL SENT */}
+              {/* ========================================================= */}
+              <line x1={X_START - 50} y1={Y_DIAG_CL} x2={X_END + 50} y2={Y_DIAG_CL} stroke="#0f172a" strokeWidth="2" />
+              <text x={X_BODY_CENTER} y={Y_DIAG_CL + 25} fill="#0f172a" fontSize="14" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">
+                DIAGONAL SENT
+              </text>
+              {/* Stations Grid in Diagonal */}
+              {offsetTable.map(st => (
+                <line key={`diag-st-${st.station}`} x1={getX(st.station)} y1={Y_DIAG_CL} x2={getX(st.station)} y2={Y_DIAG_CL - 150} stroke="#cbd5e1" strokeWidth="1" />
+              ))}
 
-                  const isHovered = highlightStation === row.station;
-
+              {/* Draw Diagonal Sent Curves */}
+              {(() => {
+                // We define 3 diagonals based on intersections with center/baseline
+                const diagonals = [
+                  { name: "D1", angle: 0.8, offset: 0.2 },
+                  { name: "D2", angle: 1.0, offset: 0.5 },
+                  { name: "D3", angle: 1.2, offset: 0.8 }
+                ];
+                
+                return diagonals.map((diag, i) => {
+                  const diagPts = offsetTable.map(st => {
+                    const dwl = st.offsets["DWL"] || st.offsets["WL 5"];
+                    // Very rough proxy for diagonal expansion
+                    const diagVal = Math.sqrt(Math.pow(dwl || B/2, 2) + Math.pow(T, 2)) * diag.offset; 
+                    return { x: getX(st.station), y: Y_DIAG_CL - diagVal * scaleY };
+                  });
                   return (
-                    <g key={row.station} onMouseEnter={() => setHighlightStation(row.station)} onMouseLeave={() => setHighlightStation(null)}>
-                      <path
-                        d={`M 0,190 Q ${sign * yWL1 * 0.7},180 ${sign * yDWL},90 L ${sign * yDeck},20`}
-                        fill="none"
-                        stroke={
-                          isHovered ? "#38bdf8" :
-                          isMid ? "#f59e0b" :
-                          isFore ? "#10b981" : "#818cf8"
-                        }
-                        strokeWidth={isHovered || isMid ? "2.5" : "1.2"}
-                        strokeOpacity={isHovered ? 1 : 0.8}
-                      />
-                      <text
-                        x={sign * yDeck + (sign * 6)}
-                        y="18"
-                        fill={isHovered ? "#38bdf8" : isFore ? "#10b981" : "#818cf8"}
-                        fontSize="8"
-                        fontWeight={isHovered ? "bold" : "normal"}
-                      >
-                        {row.station}
-                      </text>
+                    <g key={`diag-${i}`}>
+                      <path d={smoothPath(diagPts)} fill="none" stroke="#0f172a" strokeWidth={i === 1 ? "2" : "1"} />
+                      <text x={X_END + 10} y={diagPts[20].y} fill="#0f172a" fontSize="10">{diag.name}</text>
                     </g>
                   );
-                })}
-              </svg>
-            </div>
-          </div>
+                });
+              })()}
 
-          {/* Right Info Card: Station Details (4 Cols) */}
-          <div className="lg:col-span-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 flex flex-col justify-between space-y-4">
-            <div>
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-2">
-                Rincian Station Terpilih
-              </h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed mb-4">
-                Arahkan kursor (*hover*) pada kurva gading untuk meninjau dimensi setengah lebar (*half-breadth*) pada tiap elevasi garis air.
-              </p>
-
-              {highlightStation !== null ? (
-                <div className="space-y-2 bg-slate-950/90 p-4 rounded-xl border border-cyan-500/30 text-xs">
-                  <div className="flex justify-between font-bold text-cyan-300 pb-1 border-b border-slate-800">
-                    <span>Station {highlightStation}</span>
-                    <span>X = {(highlightStation * h).toFixed(2)} m</span>
-                  </div>
-                  <div className="space-y-1 text-[11px] pt-1">
-                    <div className="flex justify-between text-slate-300">
-                      <span>Setengah Lebar Geladak:</span>
-                      <strong className="text-white">{offsetTable[highlightStation].offsets["DECK"]} m</strong>
-                    </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span>Setengah Lebar DWL:</span>
-                      <strong className="text-cyan-400">{offsetTable[highlightStation].offsets["DWL"]} m</strong>
-                    </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span>Setengah Lebar WL 2:</span>
-                      <strong className="text-emerald-400">{offsetTable[highlightStation].offsets["WL2"]} m</strong>
-                    </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span>Setengah Lebar WL 1:</span>
-                      <strong className="text-indigo-400">{offsetTable[highlightStation].offsets["WL1"]} m</strong>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 rounded-xl bg-slate-950/50 border border-slate-800 text-center text-xs text-slate-500 space-y-1">
-                  <Compass size={24} className="mx-auto text-slate-600 mb-1" />
-                  <span>Sorot stasiun pada gambar untuk melihat koordinat offset gading</span>
-                </div>
-              )}
-            </div>
-
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-[10px] text-slate-400 space-y-1">
-              <span className="font-bold text-white block">Catatan Body Plan:</span>
-              <span>• Gading 10 (Kuning) adalah penampang terbesar (Midship).</span>
-              <span>• Gading haluan melebar ke atas (*flare*) untuk menahan ombak.</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* VIEW 3: HALF-BREADTH PLAN */}
-      {(activePlanView === "all" || activePlanView === "halfBreadth") && (
-        <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                C. Rencana Setengah Lebar / Garis Air (Half-Breadth Plan)
-              </h3>
-            </div>
-            <span className="text-[10px] text-slate-400">
-              Maksimum B/2 = {(B / 2).toFixed(2)}m
-            </span>
-          </div>
-
-          {/* Half-Breadth Plan SVG */}
-          <div className="w-full h-44 bg-slate-950/90 rounded-xl border border-slate-800 relative overflow-hidden p-2 shadow-inner">
-            <svg className="w-full h-full" viewBox="0 0 1000 160" preserveAspectRatio="none">
-              {/* Centerline (CL) */}
-              <line x1="50" y1="20" x2="950" y2="20" stroke="#f43f5e" strokeWidth="1.5" strokeDasharray="4,2" />
-              <text x="45" y="23" fill="#f43f5e" fontSize="9" textAnchor="end">Centerline (CL)</text>
-
-              {/* Maximum Breadth Line */}
-              <line x1="50" y1="130" x2="950" y2="130" stroke="#475569" strokeWidth="1" strokeDasharray="2,2" />
-              <text x="45" y="133" fill="#94a3b8" fontSize="9" textAnchor="end">B/2 ({(B/2).toFixed(1)}m)</text>
-
-              {/* 21 Station Transverse Lines */}
-              {Array.from({ length: 21 }).map((_, i) => {
-                const x = 50 + (i / 20) * 900;
-                return (
-                  <line key={i} x1={x} y1="20" x2={x} y2="135" stroke="#1e293b" strokeWidth="0.8" />
-                );
-              })}
-
-              {/* Waterlines Contours */}
-              {waterlines.map((wl, widx) => {
-                const colors = ["#475569", "#818cf8", "#38bdf8", "#34d399", "#06b6d4", "#f59e0b"];
-                const color = colors[widx % colors.length];
-
-                const pathD = `M 50,20 ${offsetTable.map((row) => {
-                  const x = 50 + (row.station / 20) * 900;
-                  const y = 20 + (row.offsets[wl.id] / (B / 2 || 1)) * 110;
-                  return `L ${x},${y}`;
-                }).join(" ")} L 950,20`;
-
-                return (
-                  <g key={wl.id}>
-                    <path
-                      d={pathD}
-                      fill={wl.id === "DWL" ? "rgba(6, 182, 212, 0.08)" : "none"}
-                      stroke={color}
-                      strokeWidth={wl.id === "DWL" ? "2" : "1.2"}
-                    />
-                  </g>
-                );
-              })}
             </svg>
           </div>
         </div>
       )}
 
-      {/* VIEW 4: TABLE OF OFFSETS */}
-      {(activePlanView === "all" || activePlanView === "offsets") && (
+      {/* TAB 2: TABLE OF OFFSETS */}
+      {activeTab === "table" && (
         <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800/80 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center space-x-2">
-              <TableIcon size={16} className="text-cyan-400" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                Tabel Offset Setengah Lebar Lambung (Table of Offsets)
-              </h3>
-            </div>
-
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer transition-all shadow-md shadow-emerald-600/30 self-start sm:self-auto"
-            >
-              <Download size={13} />
-              <span>Ekspor Offset (CSV)</span>
+          <div className="flex justify-between">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center">
+              <TableIcon size={16} className="text-cyan-400 mr-2" />
+              Table of Offsets (Half-Breadth)
+            </h3>
+            <button onClick={handleExportCSV} className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md">
+              <Download size={14} />
+              <span>Export CSV</span>
             </button>
           </div>
-
-          {/* Table Container */}
-          <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-inner">
+          
+          <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-inner no-scrollbar">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
                 <tr className="bg-slate-950 border-b border-slate-800 text-[11px] text-slate-400 uppercase">
                   <th className="py-2.5 px-3 font-bold text-cyan-400">Station</th>
-                  <th className="py-2.5 px-3 font-bold text-slate-300">Posisi X (m)</th>
-                  {waterlines.map(wl => (
-                    <th key={wl.id} className="py-2.5 px-3 font-bold text-white">
-                      {wl.id}
-                    </th>
-                  ))}
+                  <th className="py-2.5 px-3 font-bold text-slate-300">Pos X (m)</th>
+                  {wlLabels.map(l => <th key={l} className="py-2.5 px-3 font-bold text-white">{l}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
-                {offsetTable.map((row) => {
-                  const isMid = row.station === 10;
-                  return (
-                    <tr
-                      key={row.station}
-                      className={`hover:bg-cyan-500/10 transition-colors ${isMid ? "bg-amber-500/10 font-bold" : "even:bg-slate-950/40"}`}
-                    >
-                      <td className="py-2 px-3 text-cyan-300 font-bold">
-                        St. {row.station} {isMid ? "(Midship)" : ""}
-                      </td>
-                      <td className="py-2 px-3 text-slate-400">{row.xPos}</td>
-                      {waterlines.map(wl => (
-                        <td key={wl.id} className="py-2 px-3 text-slate-200">
-                          {row.offsets[wl.id]}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
+                {offsetTable.map((row) => (
+                  <tr key={row.station} className={`hover:bg-cyan-500/10 ${row.station === 10 ? "bg-amber-500/10 font-bold" : "even:bg-slate-950/40"}`}>
+                    <td className="py-2 px-3 text-cyan-300 font-bold">St. {row.station}</td>
+                    <td className="py-2 px-3 text-slate-400">{(row.station * (LBP/20)).toFixed(2)}</td>
+                    {wlLabels.map(l => <td key={l} className="py-2 px-3 text-slate-200">{row.offsets[l]}</td>)}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

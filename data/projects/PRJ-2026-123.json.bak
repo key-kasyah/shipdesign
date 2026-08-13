@@ -13,16 +13,16 @@
         "owner": "ukkasyah",
         "organization": "Unhas",
         "revision_number": 0,
-        "updated_at": "2026-07-31T02:03:14.601101+00:00",
+        "updated_at": "2026-08-04T10:56:57.143094+00:00",
         "status": "ACTIVE",
         "vessel_type": "GENERAL_CARGO",
         "vessel_function": null,
         "cargo_type": null,
-        "route_name": "Biak - Merauke",
+        "route_name": "Jakarta - Makassar - Manokwari",
         "operating_area": null,
         "origin_port": null,
         "destination_port": null,
-        "route_distance_nm": 508.9,
+        "route_distance_nm": 1376.0,
         "target_dwt_ton": 3910.0,
         "service_speed_knots": 12.0,
         "max_speed_knots": null,
@@ -47,7 +47,7 @@
       "revision_note": null,
       "reason_for_change": null,
       "updated_by": "designer@ship.com",
-      "updated_at": "2026-07-31T02:03:14.601101+00:00",
+      "updated_at": "2026-08-04T10:56:57.143094+00:00",
       "submitted_by": null,
       "submitted_at": null,
       "reviewed_by": null,
@@ -68,6 +68,34 @@
       "new_value": null,
       "reason": "Inisialisasi riwayat proyek pertama kali.",
       "metadata": null
+    },
+    {
+      "event_id": "a2c1c388-957a-4e27-8910-7b2511ab21ff",
+      "project_id": "PRJ-2026-123",
+      "revision_id": "1a2ebcdb-6b73-407b-9ca1-98ab18fdc19f",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-08-04T10:56:57.143094+00:00",
+      "old_value": "Biak - Merauke",
+      "new_value": "Jakarta - Makassar - Manokwari",
+      "reason": "Update field route_name: Modifikasi parameter desain",
+      "metadata": {
+        "field": "route_name"
+      }
+    },
+    {
+      "event_id": "9f7dea85-b19c-4046-9e87-8aff96fc0e24",
+      "project_id": "PRJ-2026-123",
+      "revision_id": "1a2ebcdb-6b73-407b-9ca1-98ab18fdc19f",
+      "action": "FIELD_UPDATED",
+      "actor": "designer@ship.com",
+      "timestamp": "2026-08-04T10:56:57.143094+00:00",
+      "old_value": "508.9",
+      "new_value": "1376.0",
+      "reason": "Update field route_distance_nm: Modifikasi parameter desain",
+      "metadata": {
+        "field": "route_distance_nm"
+      }
     }
   ],
   "approval_records": [],
