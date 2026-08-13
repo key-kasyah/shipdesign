@@ -61,27 +61,67 @@ const DEFAULT_STATIONS_CONFIG: Array<{ station: number; label: string; ms: numbe
 ];
 
 /**
- * Helper: Smooth curve (Catmull-Rom to Cubic Bezier)
- * Produces a perfectly fair curve through all control points without sharp corners.
- * Flat segments (like PMB) naturally resolve to straight lines without overshooting.
+ * Helper: Smooth curve (Monotone Cubic Interpolation)
+ * Produces a perfectly fair curve, eliminating micro-wiggles caused by non-uniform point spacing.
+ * Guarantees no overshoots, preserving perfectly flat lines (PMB) and smooth monotonic curves.
  */
 const getSmoothPathD = (points: {x: number, y: number}[]) => {
   if (points.length === 0) return "";
-  let d = ``;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = i > 0 ? points[i - 1] : points[0];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = i !== points.length - 2 ? points[i + 2] : p2;
+  if (points.length === 1) return ``;
 
-    const cp1x = p1.x + (p2.x - p0.x) / 6;
-    const cp1y = p1.y + (p2.y - p0.y) / 6;
+  const n = points.length;
+  const delta = new Float64Array(n - 1);
+  const m = new Float64Array(n);
 
-    const cp2x = p2.x - (p3.x - p1.x) / 6;
-    const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-    d += ` C ${cp1x.toFixed(3)},${cp1y.toFixed(3)} ${cp2x.toFixed(3)},${cp2y.toFixed(3)} ${p2.x.toFixed(3)},${p2.y.toFixed(3)}`;
+  // 1. Calculate secant slopes
+  for (let i = 0; i < n - 1; i++) {
+    const dx = points[i + 1].x - points[i].x;
+    delta[i] = dx === 0 ? 0 : (points[i + 1].y - points[i].y) / dx;
   }
+
+  // 2. Initialize tangents
+  m[0] = delta[0];
+  m[n - 1] = delta[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    // Weighted average based on segment lengths can be used, but simple average is fine 
+    // when we apply Fritsch-Carlson constraints below
+    m[i] = (delta[i - 1] + delta[i]) / 2;
+  }
+
+  // 3. Monotonicity constraints (Fritsch-Carlson)
+  for (let i = 0; i < n - 1; i++) {
+    if (delta[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+    } else {
+      const alpha = m[i] / delta[i];
+      const beta = m[i + 1] / delta[i];
+      if (alpha < 0) m[i] = 0;
+      if (beta < 0) m[i + 1] = 0;
+      const mag = alpha * alpha + beta * beta;
+      if (mag > 9) {
+        const tau = 3 / Math.sqrt(mag);
+        m[i] = tau * alpha * delta[i];
+        m[i + 1] = tau * beta * delta[i];
+      }
+    }
+  }
+
+  // 4. Generate cubic bezier commands
+  let d = ``;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const dx = (p1.x - p0.x) / 3;
+    
+    const cp1x = p0.x + dx;
+    const cp1y = p0.y + m[i] * dx;
+    const cp2x = p1.x - dx;
+    const cp2y = p1.y - m[i + 1] * dx;
+
+    d += ` C ${cp1x.toFixed(3)},${cp1y.toFixed(3)} ${cp2x.toFixed(3)},${cp2y.toFixed(3)} ${p1.x.toFixed(3)},${p1.y.toFixed(3)}`;
+  }
+  
   return d;
 };
 
@@ -587,16 +627,17 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     strokeWidth={isMidship ? "0.4" : "0.2"}
                   />
                   {/* Station label */}
-                  {(r.station === -0.5 || r.station === 0 || r.station === 5 || r.station === 10 || r.station === 15 || r.station === 20) && (
+                  {(r.station === 0 || r.station === 5 || r.station === 10 || r.station === 15 || r.station === 20) && (
                     <text
                       x={normX}
                       y="29"
-                      fill="#64748b"
-                      fontSize="2.2"
+                      fill={isAp || isFp ? "#94a3b8" : "#64748b"}
+                      fontSize={isAp || isFp || isMidship ? "2.6" : "2.2"}
+                      fontWeight={isAp || isFp || isMidship ? "bold" : "normal"}
                       textAnchor="middle"
                       fontFamily="monospace"
                     >
-                      {r.station}
+                      {r.station === 0 ? "AP" : r.station === 20 ? "FP" : r.station === 10 ? "MID" : r.station}
                     </text>
                   )}
                 </g>
