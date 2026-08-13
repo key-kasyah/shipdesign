@@ -252,11 +252,15 @@ def calculate_route(payload: RouteCalculatePayload):
                 next_pid = payload.port_ids[i+1]
                 next_pinfo = ports_dict.get(next_pid, {"name": f"Port #{next_pid}", "lat": 0, "lon": 0})
 
-                cur.execute("SELECT distance_nm FROM sea_distance WHERE origin_id = ? AND destination_id = ?", (pid, next_pid))
-                dist_row = cur.fetchone()
-                if dist_row and dist_row[0] is not None:
-                    dist = float(dist_row[0])
-                else:
+                try:
+                    cur.execute("SELECT distance_nm FROM sea_distance WHERE origin_id = ? AND destination_id = ?", (pid, next_pid))
+                    dist_row = cur.fetchone()
+                    if dist_row and dist_row[0] is not None:
+                        dist = float(dist_row[0])
+                    else:
+                        dist = haversine_nm(pinfo["lat"], pinfo["lon"], next_pinfo["lat"], next_pinfo["lon"])
+                except sqlite3.OperationalError:
+                    # Fallback to haversine if table does not exist
                     dist = haversine_nm(pinfo["lat"], pinfo["lon"], next_pinfo["lat"], next_pinfo["lon"])
 
                 legs.append({
