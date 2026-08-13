@@ -352,58 +352,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       </div>
 
       {/* BILGE GEOMETRY & MIDSHIP PROFILE CAD BLUEPRINT VISUALIZATION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Geometric Theory & Parameters */}
-        <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4">
-          <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
-            <Compass size={16} className="text-cyan-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Geometri & Titik Tangen Busur Bilga
-            </h3>
-          </div>
-
-          <div className="space-y-3 text-xs font-mono text-slate-300 leading-relaxed">
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
-              <span className="text-cyan-400 font-bold text-[11px]">1. Radius Kelengkungan Bilga (R):</span>
-              <p className="text-slate-300 text-[11px]">
-                R = Akar( (B * T * (1 - Cm)) / (2 - (pi / 2)) )
-              </p>
-              <p className="text-slate-400 text-[10px]">
-                = Akar( ({B} * {T} * (1 - {Cm})) / 0.4292 ) = <strong className="text-cyan-300">{R.toFixed(4)} m</strong>
-              </p>
-            </div>
-
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
-              <span className="text-emerald-400 font-bold text-[11px]">2. Tangen Dasar (Flat of Bottom):</span>
-              <p className="text-slate-300 text-[11px]">
-                Titik Tangen = 0.5B - R
-              </p>
-              <p className="text-slate-400 text-[10px]">
-                = {halfB.toFixed(3)} - {R.toFixed(4)} = <strong className="text-emerald-300">{flatOfBottom.toFixed(4)} m</strong>
-              </p>
-            </div>
-
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
-              <span className="text-amber-400 font-bold text-[11px]">3. Chord Busur Bilga (l):</span>
-              <p className="text-slate-300 text-[11px]">
-                l = R * Tan(22.5&deg;) = <strong className="text-amber-300">{l_chord.toFixed(4)} m</strong>
-              </p>
-              <p className="text-slate-400 text-[10px]">
-                r_sub = l / 2 = <strong className="text-amber-300">{r_sub.toFixed(4)} m</strong>
-              </p>
-            </div>
-
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 flex items-start space-x-2">
-              <Info size={14} className="text-cyan-400 shrink-0 mt-0.5" />
-              <span>
-                Pada kapal berkoefisien midship tinggi (<span className="text-amber-300">Cm = {Cm}</span>), badan kapal mendekati kotak dengan sudut bilga melengkung mulus beradius <span className="text-cyan-300">R = {R.toFixed(3)}m</span>.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Detailed CAD Naval Blueprint SVG for Station 10 & Bilge Arc */}
-        <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4 flex flex-col h-fit">
+      <div className="w-full">
+        {/* Detailed CAD Naval Blueprint SVG for Station 10 & Bilge Arc */}
+        <div className="w-full bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4 flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center space-x-2">
               <TrendingUp size={15} className="text-cyan-400" />
