@@ -60,6 +60,31 @@ const DEFAULT_STATIONS_CONFIG: Array<{ station: number; label: string; ms: numbe
   { station: 20.00, label: "20 (FP)", ms: 0.50, fm: 10.00 },
 ];
 
+/**
+ * Helper: Smooth curve (Catmull-Rom to Cubic Bezier)
+ * Produces a perfectly fair curve through all control points without sharp corners.
+ * Flat segments (like PMB) naturally resolve to straight lines without overshooting.
+ */
+const getSmoothPathD = (points: {x: number, y: number}[]) => {
+  if (points.length === 0) return "";
+  let d = ``;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = i > 0 ? points[i - 1] : points[0];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = i !== points.length - 2 ? points[i + 2] : p2;
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+    d += ` C ${cp1x.toFixed(3)},${cp1y.toFixed(3)} ${cp2x.toFixed(3)},${cp2y.toFixed(3)} ${p2.x.toFixed(3)},${p2.y.toFixed(3)}`;
+  }
+  return d;
+};
+
 export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = ({
   lbp_m = 81.19,
   lwl_m,
@@ -580,14 +605,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
             {/* Waterline Curve Path */}
             <path
-              d={`M ${((-0.5 + 0.5) / 20.5) * 100},26 ${calculatedRows
-                .map((r) => {
-                  const x = ((r.station + 0.5) / 20.5) * 100;
-                  const maxHalfB = BWL / 2 || 1;
-                  const y = 26 - (r.halfBreadth / maxHalfB) * 22;
-                  return `L ${x},${y}`;
-                })
-                .join(" ")} L 100,26 Z`}
+              d={`M ${((-0.5 + 0.5) / 20.5) * 100},26 L ${calculatedRows.length > 0 ? (((calculatedRows[0].station + 0.5) / 20.5) * 100) : 0},${calculatedRows.length > 0 ? (26 - (calculatedRows[0].halfBreadth / (BWL / 2 || 1)) * 22) : 26} ${getSmoothPathD(
+                calculatedRows.map((r) => ({
+                  x: ((r.station + 0.5) / 20.5) * 100,
+                  y: 26 - (r.halfBreadth / (BWL / 2 || 1)) * 22
+                }))
+              )} L 100,26 Z`}
               fill="rgba(6, 182, 212, 0.15)"
               stroke="#06b6d4"
               strokeWidth="0.15"
