@@ -403,7 +403,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         </div>
 
         {/* Right: Detailed CAD Naval Blueprint SVG for Station 10 & Bilge Arc */}
-        <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-3 flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4 flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center space-x-2">
               <TrendingUp size={15} className="text-cyan-400" />
@@ -428,7 +428,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
 
           {/* SVG Blueprint Canvas */}
-          <div className="w-full h-64 bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800/90 flex items-center justify-center p-3">
+          <div className="w-full flex-1 min-h-[280px] bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800/90 flex items-center justify-center p-3">
             <svg className="w-full h-full" viewBox="0 0 160 90" preserveAspectRatio="xMidYMid meet">
               <defs>
                 {/* CAD Grid Pattern */}
