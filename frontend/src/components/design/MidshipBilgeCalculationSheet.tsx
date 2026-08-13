@@ -13,7 +13,9 @@ import {
   Wand2,
   Compass,
   Info,
-  Plus
+  Plus,
+  Eye,
+  EyeOff
 } from "lucide-react";
 
 /**
@@ -124,6 +126,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingDraft, setDraggingDraft] = useState<number | null>(null);
   const [hoverDraft, setHoverDraft] = useState<number | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
 
   // Ensure draftSteps is always sorted
   const sortedDraftSteps = useMemo(() => [...draftSteps].sort((a, b) => a - b), [draftSteps]);
@@ -523,26 +526,39 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       <div className="w-full">
         {/* Detailed CAD Naval Blueprint SVG for Station 10 & Bilge Arc */}
         <div className="w-full bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4 flex flex-col">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-800 pb-2 gap-3">
             <div className="flex items-center space-x-2">
               <TrendingUp size={15} className="text-cyan-400" />
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">
                 Visual Blueprint Penampang Midship (Gading 10 & Konstruksi Busur Bilga)
               </h3>
             </div>
-            <div className="flex items-center space-x-3 text-[10px] font-mono">
-              <span className="text-cyan-400 flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
-                <span>Profil Gading 10 (Separuh B/2)</span>
-              </span>
-              <span className="text-emerald-400 flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                <span>Garis Sarat T = {T.toFixed(2)}m</span>
-              </span>
-              <span className="text-amber-400 flex items-center space-x-1">
-                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                <span>Busur Bilga R = {R.toFixed(3)}m</span>
-              </span>
+            <div className="flex items-center justify-between lg:justify-end w-full lg:w-auto gap-4">
+              <div className="flex items-center space-x-3 text-[10px] font-mono">
+                <span className="text-cyan-400 flex items-center space-x-1">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
+                  <span>Profil Gading 10 (Separuh B/2)</span>
+                </span>
+                <span className="text-emerald-400 flex items-center space-x-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                  <span>Garis Sarat T = {T.toFixed(2)}m</span>
+                </span>
+                <span className="text-amber-400 flex items-center space-x-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                  <span>Busur Bilga R = {R.toFixed(3)}m</span>
+                </span>
+              </div>
+              <button
+                onClick={() => setIsPreviewMode(!isPreviewMode)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow ${
+                  isPreviewMode 
+                    ? "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/50" 
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
+                }`}
+              >
+                {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
+                <span>{isPreviewMode ? "Matikan Preview" : "Preview Penuh"}</span>
+              </button>
             </div>
           </div>
 
@@ -569,13 +585,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 </defs>
 
                 {/* Background Grid */}
-                <rect x="0" y="0" width="160" height="90" fill="url(#cadGrid)" />
+                {!isPreviewMode && <rect x="0" y="0" width="160" height="90" fill="url(#cadGrid)" />}
 
                 {/* COORDINATE MAPPING */}
                 {(() => {
-                  const ox = 25;
+                  const ox = isPreviewMode ? 80 : 25;
                   const oy = 78;
-                  const scaleX = 95 / (halfB || 7.5);
+                  const scaleX = isPreviewMode ? 70 / (halfB || 7.5) : 95 / (halfB || 7.5);
                   const scaleZ = 62 / (H || 7.0);
 
                   const deckY = oy - H * scaleZ;
@@ -619,65 +635,85 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     <g>
                       {/* Submerged Area Fill */}
                       <path d={subHullPath} fill="url(#waterHatch)" />
-                      <path d={hullPath} fill="rgba(6, 182, 212, 0.08)" stroke="#06b6d4" strokeWidth="1.2" />
+                      <path d={hullPath} fill={isPreviewMode ? "rgba(6, 182, 212, 0.15)" : "rgba(6, 182, 212, 0.08)"} stroke="#06b6d4" strokeWidth="1.2" />
 
-                      {/* Baseline BL & Extension */}
-                      <line x1="12" y1={oy} x2="145" y2={oy} stroke="#64748b" strokeWidth="0.8" />
-                      <text x="146" y={oy + 2} fill="#64748b" fontSize="3.0" fontFamily="monospace" fontWeight="bold">
-                        BL (Lunas)
-                      </text>
-
-                      {/* Centerline CL & Extension */}
-                      <line x1={ox} y1="6" x2={ox} y2="85" stroke="#64748b" strokeWidth="0.8" strokeDasharray="3,1.5" />
-                      <text x={ox - 2} y="10" fill="#64748b" fontSize="3.0" textAnchor="end" fontFamily="monospace" fontWeight="bold">
-                        CL (Centerline)
-                      </text>
-
-                      {/* Deck Line at H */}
-                      <line x1={ox - 5} y1={deckY} x2={outerX + 15} y2={deckY} stroke="#94a3b8" strokeWidth="0.7" strokeDasharray="2,2" />
-                      <text x={outerX + 17} y={deckY + 1.5} fill="#94a3b8" fontSize="2.8" fontFamily="monospace">
-                        Geladak H = {H.toFixed(2)}m
-                      </text>
-
-                      {/* DWL Sarat Line at T */}
-                      <line x1={ox - 8} y1={dwlY} x2={outerX + 18} y2={dwlY} stroke="#10b981" strokeWidth="0.9" strokeDasharray="4,2" />
-                      <text x={outerX + 20} y={dwlY + 1.5} fill="#10b981" fontSize="3.0" fontFamily="monospace" fontWeight="bold">
-                        DWL (T = {T.toFixed(2)}m)
-                      </text>
-                      
-                      {/* Interactive Drag Points on Bilge Curve */}
-                      {curvePts.filter(p => p.isBilge).map((p, idx) => (
-                        <g key={`drag-${p.z}`}>
-                          <line x1={p.x} y1={p.y} x2={outerX} y2={p.y} stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="1,1" opacity="0.5" />
-                          <circle
-                            cx={p.x}
-                            cy={p.y}
-                            r={draggingDraft === p.z || hoverDraft === p.z ? "2.5" : "1.8"}
-                            fill={draggingDraft === p.z ? "#fbbf24" : "#f59e0b"}
-                            stroke="#ffffff"
-                            strokeWidth="0.5"
-                            className="cursor-pointer hover:fill-amber-300 transition-all"
-                            onPointerDown={(e) => handlePointerDown(e, p.z)}
-                            onPointerEnter={() => setHoverDraft(p.z)}
-                            onPointerLeave={() => setHoverDraft(null)}
-                          />
-                          {(draggingDraft === p.z || hoverDraft === p.z) && (
-                            <text x={p.x - 4} y={p.y - 3} fill="#fbbf24" fontSize="2.5" fontFamily="monospace" textAnchor="end" fontWeight="bold">
-                              y = {(draftOrdinates[p.z] || 0).toFixed(3)}
-                            </text>
-                          )}
+                      {/* Mirror Port Side for Preview Mode */}
+                      {isPreviewMode && (
+                        <g transform={`translate(${2 * ox}, 0) scale(-1, 1)`}>
+                          <path d={subHullPath} fill="url(#waterHatch)" />
+                          <path d={hullPath} fill="rgba(6, 182, 212, 0.15)" stroke="#06b6d4" strokeWidth="1.2" />
                         </g>
-                      ))}
+                      )}
 
-                      {/* Breadth Dimension (B/2) */}
-                    <line x1={ox} y1="18" x2={outerX} y2="18" stroke="#38bdf8" strokeWidth="0.6" />
-                    <polygon points={`${ox},18 ${ox + 2},16.8 ${ox + 2},19.2`} fill="#38bdf8" />
-                    <polygon points={`${outerX},18 ${outerX - 2},16.8 ${outerX - 2},19.2`} fill="#38bdf8" />
-                    <text x={ox + (outerX - ox) / 2} y="15.5" fill="#38bdf8" fontSize="2.8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
-                      0.5 B = {halfB.toFixed(3)} m (Lebar Total B = {B.toFixed(2)} m)
-                    </text>
-                  </g>
-                );
+                      {!isPreviewMode ? (
+                        <>
+                          {/* Baseline BL & Extension */}
+                          <line x1="12" y1={oy} x2="145" y2={oy} stroke="#64748b" strokeWidth="0.8" />
+                          <text x="146" y={oy + 2} fill="#64748b" fontSize="3.0" fontFamily="monospace" fontWeight="bold">
+                            BL (Lunas)
+                          </text>
+
+                          {/* Centerline CL & Extension */}
+                          <line x1={ox} y1="6" x2={ox} y2="85" stroke="#64748b" strokeWidth="0.8" strokeDasharray="3,1.5" />
+                          <text x={ox - 2} y="10" fill="#64748b" fontSize="3.0" textAnchor="end" fontFamily="monospace" fontWeight="bold">
+                            CL (Centerline)
+                          </text>
+
+                          {/* Deck Line at H */}
+                          <line x1={ox - 5} y1={deckY} x2={outerX + 15} y2={deckY} stroke="#94a3b8" strokeWidth="0.7" strokeDasharray="2,2" />
+                          <text x={outerX + 17} y={deckY + 1.5} fill="#94a3b8" fontSize="2.8" fontFamily="monospace">
+                            Geladak H = {H.toFixed(2)}m
+                          </text>
+
+                          {/* DWL Sarat Line at T */}
+                          <line x1={ox - 8} y1={dwlY} x2={outerX + 18} y2={dwlY} stroke="#10b981" strokeWidth="0.9" strokeDasharray="4,2" />
+                          <text x={outerX + 20} y={dwlY + 1.5} fill="#10b981" fontSize="3.0" fontFamily="monospace" fontWeight="bold">
+                            DWL (T = {T.toFixed(2)}m)
+                          </text>
+                          
+                          {/* Interactive Drag Points on Bilge Curve */}
+                          {curvePts.filter(p => p.isBilge).map((p, idx) => (
+                            <g key={`drag-${p.z}`}>
+                              <line x1={p.x} y1={p.y} x2={outerX} y2={p.y} stroke="#f59e0b" strokeWidth="0.2" strokeDasharray="1,1" opacity="0.5" />
+                              <circle
+                                cx={p.x}
+                                cy={p.y}
+                                r={draggingDraft === p.z || hoverDraft === p.z ? "1.2" : "0.7"}
+                                fill={draggingDraft === p.z ? "#fbbf24" : "#f59e0b"}
+                                stroke="#ffffff"
+                                strokeWidth="0.3"
+                                className="cursor-pointer hover:fill-amber-300 transition-all"
+                                onPointerDown={(e) => handlePointerDown(e, p.z)}
+                                onPointerEnter={() => setHoverDraft(p.z)}
+                                onPointerLeave={() => setHoverDraft(null)}
+                              />
+                              {(draggingDraft === p.z || hoverDraft === p.z) && (
+                                <text x={p.x - 4} y={p.y - 3} fill="#fbbf24" fontSize="2.5" fontFamily="monospace" textAnchor="end" fontWeight="bold">
+                                  y = {(draftOrdinates[p.z] || 0).toFixed(3)}
+                                </text>
+                              )}
+                            </g>
+                          ))}
+
+                          {/* Breadth Dimension (B/2) */}
+                          <line x1={ox} y1="18" x2={outerX} y2="18" stroke="#38bdf8" strokeWidth="0.6" />
+                          <polygon points={`${ox},18 ${ox + 2},16.8 ${ox + 2},19.2`} fill="#38bdf8" />
+                          <polygon points={`${outerX},18 ${outerX - 2},16.8 ${outerX - 2},19.2`} fill="#38bdf8" />
+                          <text x={ox + (outerX - ox) / 2} y="15.5" fill="#38bdf8" fontSize="2.8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
+                            0.5 B = {halfB.toFixed(3)} m (Lebar Total B = {B.toFixed(2)} m)
+                          </text>
+                        </>
+                      ) : (
+                        <>
+                          {/* Preview Mode Overlays (Minimal) */}
+                          <line x1={ox - 75} y1={dwlY} x2={ox + 75} y2={dwlY} stroke="#10b981" strokeWidth="0.6" strokeDasharray="4,2" />
+                          <text x={ox} y={dwlY - 2} fill="#10b981" fontSize="2.5" textAnchor="middle" fontFamily="monospace" fontWeight="bold">DWL (T = {T.toFixed(2)}m)</text>
+                          <line x1={ox} y1="5" x2={ox} y2="85" stroke="#64748b" strokeWidth="0.5" strokeDasharray="3,1.5" />
+                          <text x={ox} y="9" fill="#64748b" fontSize="2.5" textAnchor="middle" fontFamily="monospace">CL</text>
+                        </>
+                      )}
+                    </g>
+                  );
               })()}
             </svg>
           </div>
@@ -811,13 +847,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1.5 shadow">
             <div className="flex items-center justify-between text-xs text-slate-400">
               <span>Luas Midship Integrasi (Am_calc)</span>
-              <span className="text-[10px] font-mono text-cyan-400">(2/3) &middot; (T/14) &middot; &Sigma;</span>
+              <span className="text-[10px] font-mono text-cyan-400">2 &middot; Luas (Satu Sisi)</span>
             </div>
             <div className="text-2xl font-black font-mono text-emerald-400">
               {Am_calc.toFixed(3)} <span className="text-sm font-normal text-slate-400">m&sup2;</span>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">
-              = (2/3) &times; {(T / 14).toFixed(4)} &times; {totalSimpsonSum.toFixed(2)}
+              = 2 &times; Luas Satu Sisi ({(Am_calc / 2).toFixed(3)})
             </div>
           </div>
 
