@@ -91,12 +91,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const AWL_rancangan = useMemo(() => LWL * BWL * targetCw, [LWL, BWL, targetCw]);
 
   // High-precision Natural Waterline Curve Generator with Guaranteed <= 0.5% tolerance
-  const generateOptimizedHalfBreadths = (targetArea: number): Record<number, number> => {
+  const generateOptimizedHalfBreadths = (targetArea: number, startingCurve?: Record<number, number>): Record<number, number> => {
     const halfB = BWL / 2; // Maximum half breadth e.g. 7.50m
-    const initial: Record<number, number> = {};
+    const initial: Record<number, number> = startingCurve ? { ...startingCurve } : {};
 
-    // 1. Base geometric distribution along waterline
-    DEFAULT_STATIONS_CONFIG.forEach(({ station }) => {
+    if (!startingCurve) {
+      // 1. Base geometric distribution along waterline
+      DEFAULT_STATIONS_CONFIG.forEach(({ station }) => {
       let val = 0;
       if (station < 0) {
         // Cant / Overhang Aft
@@ -153,6 +154,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       initial[19.50] = 0.950;
       initial[20.00] = 0.000;
     }
+    }
 
     // 2. Convergence Loop: scale curve smoothly to guarantee correction <= 0.01% (well below 0.05% requirement)
     for (let iter = 0; iter < 15; iter++) {
@@ -169,8 +171,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       const scaleRatio = targetArea / (currentAWL || 1);
       DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
         if (cfg.station !== 20 && !(cfg.station >= 7 && cfg.station <= 13)) {
-          // Adjust non-PMB stations
-          let newVal = initial[cfg.station] * (1 + (scaleRatio - 1) * 0.85);
+          // Smooth fade interpolation so it doesn't bend/keriting at PMB boundary
+          let fade = 1.0;
+          if (cfg.station < 7) {
+            fade = Math.pow((7 - cfg.station) / 7.0, 1.5);
+          } else if (cfg.station > 13) {
+            fade = Math.pow((cfg.station - 13) / 7.0, 1.5);
+          }
+          // Adjust non-PMB stations smoothly
+          let newVal = initial[cfg.station] * (1 + (scaleRatio - 1) * fade);
           initial[cfg.station] = Number(Math.max(0, Math.min(halfB, newVal)).toFixed(3));
         }
       });
@@ -241,7 +250,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
   // Auto-Fine-Tune to strictly hit <= 0.01% (< 0.05%) tolerance
   const handleAutoFineTune = () => {
-    setHalfBreadths(generateOptimizedHalfBreadths(AWL_rancangan));
+    // Pass current halfBreadths to retain user's custom shape while auto-scaling smoothly
+    setHalfBreadths(generateOptimizedHalfBreadths(AWL_rancangan, halfBreadths));
   };
 
   // Update a single station half-breadth
