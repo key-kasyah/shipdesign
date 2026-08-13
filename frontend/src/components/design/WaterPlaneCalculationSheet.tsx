@@ -605,12 +605,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
             {/* Waterline Curve Path */}
             <path
-              d={`M ${((-0.5 + 0.5) / 20.5) * 100},26 L ${calculatedRows.length > 0 ? (((calculatedRows[0].station + 0.5) / 20.5) * 100) : 0},${calculatedRows.length > 0 ? (26 - (calculatedRows[0].halfBreadth / (BWL / 2 || 1)) * 22) : 26} ${getSmoothPathD(
-                calculatedRows.map((r) => ({
+              d={`M ${((calculatedRows.length > 0 ? calculatedRows[0].station - 0.5 : -1.0 + 0.5) / 20.5) * 100},26 ${getSmoothPathD([
+                {
+                  x: ((calculatedRows.length > 0 ? calculatedRows[0].station - 0.5 : -1.0 + 0.5) / 20.5) * 100,
+                  y: 26
+                },
+                ...calculatedRows.map((r) => ({
                   x: ((r.station + 0.5) / 20.5) * 100,
                   y: 26 - (r.halfBreadth / (BWL / 2 || 1)) * 22
                 }))
-              )} L 100,26 Z`}
+              ])} L 100,26 Z`}
               fill="rgba(6, 182, 212, 0.15)"
               stroke="#06b6d4"
               strokeWidth="0.15"
