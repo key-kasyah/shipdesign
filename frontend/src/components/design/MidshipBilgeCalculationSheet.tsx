@@ -120,17 +120,33 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const l_chord = Number((R * Math.tan((22.5 * Math.PI) / 180)).toFixed(4));
   const r_sub = Number((l_chord / 2).toFixed(4));
 
-  // 20 Standard Default Draft Steps for Midship Section & Bilge Arc (20 Titik)
-  const DEFAULT_DRAFT_STEPS: number[] = useMemo(() => [
-    0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25,
-    2.50, 2.75, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00, 6.50
-  ], []);
+  // Helper to generate exactly 20 discrete points on the circular bilge arc (0 to R) plus upper section steps
+  const createDefaultDraftSteps = (rVal: number, draftT: number, depthH: number): number[] => {
+    const safeR = Math.max(0.1, rVal || 2.0);
+    // Exactly 20 points along the bilge arc (0 to R)
+    const bilgeSteps = Array.from({ length: 20 }).map((_, i) => {
+      return Number(((i / 19) * safeR).toFixed(3));
+    });
 
-  // Dynamic state for draft steps (default 20 points)
-  const [draftSteps, setDraftSteps] = useState<number[]>([
-    0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25,
-    2.50, 2.75, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00, 6.50
-  ]);
+    // Standard steps above R up to depth H
+    const maxZ = Math.max(draftT, depthH, safeR + 1);
+    const upperSteps: number[] = [];
+    let currentZ = Math.ceil((safeR + 0.1) * 2) / 2;
+    while (currentZ <= maxZ + 0.01) {
+      upperSteps.push(Number(currentZ.toFixed(3)));
+      currentZ += 0.5;
+    }
+    if (draftT > safeR && !upperSteps.some(z => Math.abs(z - draftT) < 0.01)) {
+      upperSteps.push(Number(draftT.toFixed(3)));
+    }
+
+    return Array.from(new Set([...bilgeSteps, ...upperSteps])).sort((a, b) => a - b);
+  };
+
+  // Dynamic state for draft steps (default 20 points on Bilge Arc)
+  const [draftSteps, setDraftSteps] = useState<number[]>(() =>
+    createDefaultDraftSteps(calculatedRadius, T, H)
+  );
   
   // Dragging interaction state
   const svgRef = useRef<SVGSVGElement>(null);
@@ -227,20 +243,20 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const Am_rancangan = useMemo(() => B * T * Cm, [B, T, Cm]);
 
   const [draftOrdinates, setDraftOrdinates] = useState<Record<number, number>>(() =>
-    generateOptimizedDraftOrdinates(Am_rancangan, [
-      0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25,
-      2.50, 2.75, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00, 6.50
-    ])
+    generateOptimizedDraftOrdinates(Am_rancangan, createDefaultDraftSteps(calculatedRadius, T, H))
   );
 
   useEffect(() => {
-    setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, sortedDraftSteps));
-  }, [Am_rancangan, B, T, Cm, sortedDraftSteps, calculatedRadius, halfB]);
+    const defaultSteps = createDefaultDraftSteps(calculatedRadius, T, H);
+    setDraftSteps(defaultSteps);
+    setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, defaultSteps));
+  }, [Am_rancangan, B, T, Cm, calculatedRadius, halfB, H]);
 
   // Reset & Auto-Fit Handlers
   const handleReset = () => {
-    setDraftSteps(DEFAULT_DRAFT_STEPS);
-    setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, DEFAULT_DRAFT_STEPS));
+    const defaultSteps = createDefaultDraftSteps(calculatedRadius, T, H);
+    setDraftSteps(defaultSteps);
+    setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, defaultSteps));
   };
 
   const handleAutoFineTune = () => {
@@ -646,12 +662,12 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   const dwlY = oy - T * scaleZ;
                   const outerX = ox + halfB * scaleX;
                   
-                  // Interactive Curve Points
+                  // Interactive Curve Points (Tepat 20 Titik pada Busur Bilga 0 s/d R)
                   const curvePts = sortedDraftSteps.map(z => ({
                     z,
                     x: ox + (draftOrdinates[z] || 0) * scaleX,
                     y: oy - z * scaleZ,
-                    isBilge: z <= R + 0.1
+                    isBilge: z <= R + 0.001
                   }));
                   
                   const smoothCurve = getSmoothPathD(curvePts);
