@@ -717,138 +717,138 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             >
-              {/* 1. AREA BACKGROUND ZONES & SHADINGS */}
-              {/* After Peak (AP) Zone: Dari Ujung Kiri ke Garis AP (St. 0.00) */}
-              <g 
-                onMouseEnter={() => setHoveredZone("after-peak")}
-                onMouseLeave={() => setHoveredZone(null)}
-                className="cursor-pointer transition-opacity"
-                opacity={activeZone && activeZone !== "after-peak" ? 0.35 : 1}
-              >
-                <rect
-                  x="0.00"
-                  y="1.5"
-                  width="14.00"
-                  height="24.5"
-                  fill="rgba(180, 83, 9, 0.48)"
-                />
-                {/* Watermark AP */}
-                <text
-                  x="7.00"
-                  y="19"
-                  fill="rgba(139, 26, 26, 0.75)"
-                  fontSize="8.5"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  fontFamily="serif"
-                  style={{ pointerEvents: "none" }}
-                >
-                  AP
-                </text>
-              </g>
+              {/* 1. AREA BACKGROUND ZONES & SHADINGS (HANYA DITAMPILKAN SAAT BUKAN PREVIEW MODE) */}
+              {!isPreviewMode && (
+                <>
+                  {/* After Peak (AP) Zone */}
+                  <g 
+                    onMouseEnter={() => setHoveredZone("after-peak")}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    className="cursor-pointer transition-opacity"
+                    opacity={activeZone && activeZone !== "after-peak" ? 0.35 : 1}
+                  >
+                    <rect
+                      x="0.00"
+                      y="1.5"
+                      width="14.00"
+                      height="24.5"
+                      fill="rgba(180, 83, 9, 0.48)"
+                    />
+                    <text
+                      x="7.00"
+                      y="19"
+                      fill="rgba(139, 26, 26, 0.75)"
+                      fontSize="8.5"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      fontFamily="serif"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      AP
+                    </text>
+                  </g>
 
-              {/* Peak 1 (P1) Zone: Station 0.00 (AP) s/d 7.00 */}
-              <g 
-                onMouseEnter={() => setHoveredZone("peak-1")}
-                onMouseLeave={() => setHoveredZone(null)}
-                className="cursor-pointer transition-opacity"
-                opacity={activeZone && activeZone !== "peak-1" ? 0.35 : 1}
-              >
-                <rect
-                  x="14.00"
-                  y="1.5"
-                  width="30.10"
-                  height="24.5"
-                  fill="rgba(2, 132, 199, 0.38)"
-                />
-                {/* Watermark P1 */}
-                <text
-                  x="29.05"
-                  y="19"
-                  fill="rgba(139, 26, 26, 0.75)"
-                  fontSize="10.5"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  fontFamily="serif"
-                  style={{ pointerEvents: "none" }}
-                >
-                  P1
-                </text>
-              </g>
+                  {/* Peak 1 (P1) Zone */}
+                  <g 
+                    onMouseEnter={() => setHoveredZone("peak-1")}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    className="cursor-pointer transition-opacity"
+                    opacity={activeZone && activeZone !== "peak-1" ? 0.35 : 1}
+                  >
+                    <rect
+                      x="14.00"
+                      y="1.5"
+                      width="30.10"
+                      height="24.5"
+                      fill="rgba(2, 132, 199, 0.38)"
+                    />
+                    <text
+                      x="29.05"
+                      y="19"
+                      fill="rgba(139, 26, 26, 0.75)"
+                      fontSize="10.5"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      fontFamily="serif"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      P1
+                    </text>
+                  </g>
 
-              {/* Parallel Media Body (PMB) Zone: Station 7.00 s/d 13.00 */}
-              <g 
-                onMouseEnter={() => setHoveredZone("parallel-middle-body")}
-                onMouseLeave={() => setHoveredZone(null)}
-                className="cursor-pointer transition-opacity"
-                opacity={activeZone && activeZone !== "parallel-middle-body" ? 0.35 : 1}
-              >
-                <rect
-                  x="44.10"
-                  y="1.5"
-                  width="25.80"
-                  height="24.5"
-                  fill="rgba(22, 163, 74, 0.38)"
-                />
-              </g>
+                  {/* Parallel Media Body (PMB) Zone */}
+                  <g 
+                    onMouseEnter={() => setHoveredZone("parallel-middle-body")}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    className="cursor-pointer transition-opacity"
+                    opacity={activeZone && activeZone !== "parallel-middle-body" ? 0.35 : 1}
+                  >
+                    <rect
+                      x="44.10"
+                      y="1.5"
+                      width="25.80"
+                      height="24.5"
+                      fill="rgba(22, 163, 74, 0.38)"
+                    />
+                  </g>
 
-              {/* Peak 2 (P2) Zone: Station 13.00 s/d 20.00 (FP) */}
-              <g 
-                onMouseEnter={() => setHoveredZone("peak-2")}
-                onMouseLeave={() => setHoveredZone(null)}
-                className="cursor-pointer transition-opacity"
-                opacity={activeZone && activeZone !== "peak-2" ? 0.35 : 1}
-              >
-                <rect
-                  x="69.90"
-                  y="1.5"
-                  width="30.10"
-                  height="24.5"
-                  fill="rgba(168, 85, 247, 0.40)"
-                />
-                {/* Watermark P2 */}
-                <text
-                  x="84.95"
-                  y="19"
-                  fill="rgba(139, 26, 26, 0.75)"
-                  fontSize="10.5"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  fontFamily="serif"
-                  style={{ pointerEvents: "none" }}
-                >
-                  P2
-                </text>
-              </g>
+                  {/* Peak 2 (P2) Zone */}
+                  <g 
+                    onMouseEnter={() => setHoveredZone("peak-2")}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    className="cursor-pointer transition-opacity"
+                    opacity={activeZone && activeZone !== "peak-2" ? 0.35 : 1}
+                  >
+                    <rect
+                      x="69.90"
+                      y="1.5"
+                      width="30.10"
+                      height="24.5"
+                      fill="rgba(168, 85, 247, 0.40)"
+                    />
+                    <text
+                      x="84.95"
+                      y="19"
+                      fill="rgba(139, 26, 26, 0.75)"
+                      fontSize="10.5"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      fontFamily="serif"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      P2
+                    </text>
+                  </g>
 
-              {/* Fore Peak (FP) Zone: Dari Garis FP (St. 20.00) ke Kanan */}
-              <g 
-                onMouseEnter={() => setHoveredZone("fore-peak")}
-                onMouseLeave={() => setHoveredZone(null)}
-                className="cursor-pointer transition-opacity"
-                opacity={activeZone && activeZone !== "fore-peak" ? 0.35 : 1}
-              >
-                <rect
-                  x="100.00"
-                  y="1.5"
-                  width="14.00"
-                  height="24.5"
-                  fill="rgba(126, 34, 206, 0.50)"
-                />
-                {/* Watermark FP */}
-                <text
-                  x="107.00"
-                  y="19"
-                  fill="rgba(139, 26, 26, 0.85)"
-                  fontSize="8.5"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                  fontFamily="serif"
-                  style={{ pointerEvents: "none" }}
-                >
-                  FP
-                </text>
-              </g>
+                  {/* Fore Peak (FP) Zone */}
+                  <g 
+                    onMouseEnter={() => setHoveredZone("fore-peak")}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    className="cursor-pointer transition-opacity"
+                    opacity={activeZone && activeZone !== "fore-peak" ? 0.35 : 1}
+                  >
+                    <rect
+                      x="100.00"
+                      y="1.5"
+                      width="14.00"
+                      height="24.5"
+                      fill="rgba(126, 34, 206, 0.50)"
+                    />
+                    <text
+                      x="107.00"
+                      y="19"
+                      fill="rgba(139, 26, 26, 0.85)"
+                      fontSize="8.5"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                      fontFamily="serif"
+                      style={{ pointerEvents: "none" }}
+                    >
+                      FP
+                    </text>
+                  </g>
+                </>
+              )}
 
               {/* Horizontal Reference Grid Lines (0.5B, 75%, 50%, 25%) */}
               {[3.0, 8.75, 14.5, 20.25].map((gridY, i) => (
@@ -858,7 +858,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   y1={gridY}
                   x2="118"
                   y2={gridY}
-                  stroke="#334155"
+                  stroke={isPreviewMode ? "rgba(51, 65, 85, 0.4)" : "#334155"}
                   strokeWidth="0.1"
                   strokeDasharray="1,1"
                 />
@@ -881,7 +881,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       y1="1.5"
                       x2={normX}
                       y2="26"
-                      stroke={isMidship ? "#38bdf8" : isAp || isFp ? "#64748b" : "rgba(51, 65, 85, 0.4)"}
+                      stroke={isMidship ? "#38bdf8" : isAp || isFp ? "#64748b" : "rgba(51, 65, 85, 0.35)"}
                       strokeWidth={isMidship ? "0.3" : "0.1"}
                     />
                     {/* Station label */}
@@ -902,8 +902,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 );
               })}
 
-              {/* RED VERTICAL DIVIDER LINES AT ZONE BOUNDARIES (Refined 0.25px stroke) */}
-              {[
+              {/* RED VERTICAL DIVIDER LINES (HANYA SAAT EDIT/NON-PREVIEW MODE) */}
+              {!isPreviewMode && [
                 { x: 0.00, key: "div-left" },
                 { x: 14.00, key: "div-ap" },
                 { x: 44.10, key: "div-st7" },
@@ -1004,83 +1004,92 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             )}
           </div>
 
-          {/* 5-SEGMENT BOTTOM BAR / LEGEND STRIP (MATCHING USER SCREENSHOT) */}
-          <div className="w-full flex gap-1.5 pt-3 text-xs font-mono select-none">
-            {/* After Peak (Span: Ujung Kiri s/d AP 0) */}
-            <div 
-              onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
-              onMouseEnter={() => setHoveredZone('after-peak')}
-              onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "2.5 1 0%" }}
-              className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
-                activeZone === 'after-peak' || hoveredZone === 'after-peak'
-                  ? 'bg-[#b45309] border-amber-400 text-white shadow-lg shadow-amber-900/50 ring-1 ring-amber-400'
-                  : 'bg-[#9a3412]/80 hover:bg-[#b45309] border-amber-700/50 text-amber-100'
-              }`}
-            >
-              <span className="truncate block text-[11px] sm:text-xs">After Peak</span>
-            </div>
+          {/* 5-SEGMENT BOTTOM BAR / LEGEND STRIP (HANYA DITAMPILKAN SAAT BUKAN PREVIEW MODE) */}
+          {!isPreviewMode ? (
+            <div className="w-full flex gap-1.5 pt-3 text-xs font-mono select-none">
+              {/* After Peak (Span: Ujung Kiri s/d AP 0) */}
+              <div 
+                onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
+                onMouseEnter={() => setHoveredZone('after-peak')}
+                onMouseLeave={() => setHoveredZone(null)}
+                style={{ flex: "2.5 1 0%" }}
+                className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
+                  activeZone === 'after-peak' || hoveredZone === 'after-peak'
+                    ? 'bg-[#b45309] border-amber-400 text-white shadow-lg shadow-amber-900/50 ring-1 ring-amber-400'
+                    : 'bg-[#9a3412]/80 hover:bg-[#b45309] border-amber-700/50 text-amber-100'
+                }`}
+              >
+                <span className="truncate block text-[11px] sm:text-xs">After Peak</span>
+              </div>
 
-            {/* Peak 1 (Span: 0 to 7) */}
-            <div 
-              onClick={() => setActiveZone(activeZone === 'peak-1' ? null : 'peak-1')}
-              onMouseEnter={() => setHoveredZone('peak-1')}
-              onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "6 1 0%" }}
-              className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
-                activeZone === 'peak-1' || hoveredZone === 'peak-1'
-                  ? 'bg-[#2563eb] border-sky-400 text-white shadow-lg shadow-sky-900/50 ring-1 ring-sky-400'
-                  : 'bg-[#1d4ed8]/75 hover:bg-[#2563eb] border-sky-600/50 text-sky-100'
-              }`}
-            >
-              <span className="truncate block text-[11px] sm:text-xs">Peak 1</span>
-            </div>
+              {/* Peak 1 (Span: 0 to 7) */}
+              <div 
+                onClick={() => setActiveZone(activeZone === 'peak-1' ? null : 'peak-1')}
+                onMouseEnter={() => setHoveredZone('peak-1')}
+                onMouseLeave={() => setHoveredZone(null)}
+                style={{ flex: "6 1 0%" }}
+                className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
+                  activeZone === 'peak-1' || hoveredZone === 'peak-1'
+                    ? 'bg-[#2563eb] border-sky-400 text-white shadow-lg shadow-sky-900/50 ring-1 ring-sky-400'
+                    : 'bg-[#1d4ed8]/75 hover:bg-[#2563eb] border-sky-600/50 text-sky-100'
+                }`}
+              >
+                <span className="truncate block text-[11px] sm:text-xs">Peak 1</span>
+              </div>
 
-            {/* Parallel Media Body (Span: 7 to 13) */}
-            <div 
-              onClick={() => setActiveZone(activeZone === 'parallel-middle-body' ? null : 'parallel-middle-body')}
-              onMouseEnter={() => setHoveredZone('parallel-middle-body')}
-              onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "5 1 0%" }}
-              className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
-                activeZone === 'parallel-middle-body' || hoveredZone === 'parallel-middle-body'
-                  ? 'bg-[#16a34a] border-emerald-400 text-white shadow-lg shadow-emerald-900/50 ring-1 ring-emerald-400'
-                  : 'bg-[#15803d]/75 hover:bg-[#16a34a] border-emerald-600/50 text-emerald-100'
-              }`}
-            >
-              <span className="truncate block text-[11px] sm:text-xs">Parallel Media Body</span>
-            </div>
+              {/* Parallel Media Body (Span: 7 to 13) */}
+              <div 
+                onClick={() => setActiveZone(activeZone === 'parallel-middle-body' ? null : 'parallel-middle-body')}
+                onMouseEnter={() => setHoveredZone('parallel-middle-body')}
+                onMouseLeave={() => setHoveredZone(null)}
+                style={{ flex: "5 1 0%" }}
+                className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
+                  activeZone === 'parallel-middle-body' || hoveredZone === 'parallel-middle-body'
+                    ? 'bg-[#16a34a] border-emerald-400 text-white shadow-lg shadow-emerald-900/50 ring-1 ring-emerald-400'
+                    : 'bg-[#15803d]/75 hover:bg-[#16a34a] border-emerald-600/50 text-emerald-100'
+                }`}
+              >
+                <span className="truncate block text-[11px] sm:text-xs">Parallel Media Body</span>
+              </div>
 
-            {/* Peak 2 (Span: 13 to 20) */}
-            <div 
-              onClick={() => setActiveZone(activeZone === 'peak-2' ? null : 'peak-2')}
-              onMouseEnter={() => setHoveredZone('peak-2')}
-              onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "6 1 0%" }}
-              className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border ${
-                activeZone === 'peak-2' || hoveredZone === 'peak-2'
-                  ? 'bg-[#a21caf] border-purple-400 text-white shadow-lg shadow-purple-900/50 ring-1 ring-purple-400'
-                  : 'bg-[#86198f]/75 hover:bg-[#a21caf] border-purple-600/50 text-purple-100'
-              }`}
-            >
-              <span className="truncate block text-[11px] sm:text-xs">Peak 2</span>
-            </div>
+              {/* Peak 2 (Span: 13 to 20) */}
+              <div 
+                onClick={() => setActiveZone(activeZone === 'peak-2' ? null : 'peak-2')}
+                onMouseEnter={() => setHoveredZone('peak-2')}
+                onMouseLeave={() => setHoveredZone(null)}
+                style={{ flex: "6 1 0%" }}
+                className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border ${
+                  activeZone === 'peak-2' || hoveredZone === 'peak-2'
+                    ? 'bg-[#a21caf] border-purple-400 text-white shadow-lg shadow-purple-900/50 ring-1 ring-purple-400'
+                    : 'bg-[#86198f]/75 hover:bg-[#a21caf] border-purple-600/50 text-purple-100'
+                }`}
+              >
+                <span className="truncate block text-[11px] sm:text-xs">Peak 2</span>
+              </div>
 
-            {/* Fore Peak (Span: 20 ke kanan) */}
-            <div 
-              onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
-              onMouseEnter={() => setHoveredZone('fore-peak')}
-              onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "2.5 1 0%" }}
-              className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
-                activeZone === 'fore-peak' || hoveredZone === 'fore-peak'
-                  ? 'bg-[#6b21a8] border-violet-400 text-white shadow-lg shadow-violet-900/50 ring-1 ring-violet-400'
-                  : 'bg-[#581c87]/85 hover:bg-[#6b21a8] border-violet-700/50 text-violet-100'
-              }`}
-            >
-              <span className="truncate block text-[11px] sm:text-xs">Fore Peak</span>
+              {/* Fore Peak (Span: 20 ke kanan) */}
+              <div 
+                onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
+                onMouseEnter={() => setHoveredZone('fore-peak')}
+                onMouseLeave={() => setHoveredZone(null)}
+                style={{ flex: "2.5 1 0%" }}
+                className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
+                  activeZone === 'fore-peak' || hoveredZone === 'fore-peak'
+                    ? 'bg-[#6b21a8] border-violet-400 text-white shadow-lg shadow-violet-900/50 ring-1 ring-violet-400'
+                    : 'bg-[#581c87]/85 hover:bg-[#6b21a8] border-violet-700/50 text-violet-100'
+                }`}
+              >
+                <span className="truncate block text-[11px] sm:text-xs">Fore Peak</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="w-full flex items-center justify-center pt-3 text-[11px] font-mono text-slate-400 select-none">
+              <span className="flex items-center space-x-2 bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow-inner">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
+                <span className="text-slate-300 font-medium">Mode Preview CAD — Garis Air Bersih (DWL Half-Breadth Plan)</span>
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
