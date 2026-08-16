@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   PlusCircle,
@@ -104,18 +105,30 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Page Header */}
+      {/* Page Header with UNHAS Branding */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/80 pb-5">
-        <div>
-          <div className="flex items-center space-x-3">
-            <h2 className="text-2xl font-bold text-white tracking-tight">Naval Engineering Dashboard</h2>
-            <span className="text-[10px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-0.5 rounded-full">
-              Overview
-            </span>
+        <div className="flex items-center space-x-4">
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center p-1 bg-slate-900/90 border border-slate-700/80 shadow-lg shrink-0">
+            <Image 
+              src="/unhas-logo.png" 
+              alt="Logo Universitas Hasanuddin" 
+              width={48} 
+              height={48} 
+              className="object-contain w-full h-full"
+              priority
+            />
           </div>
-          <p className="text-slate-400 text-xs mt-1">
-            Analitik komprehensif & status siklus rancang bangun kapal terintegrasi AI.
-          </p>
+          <div>
+            <div className="flex items-center space-x-3">
+              <h2 className="text-2xl font-bold text-white tracking-tight">Naval Engineering Dashboard</h2>
+              <span className="text-[10px] font-mono font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-0.5 rounded-full">
+                Universitas Hasanuddin
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Platform Rancang Bangun Kapal Terintegrasi AI — Departemen Teknik Perkapalan UNHAS.
+            </p>
+          </div>
         </div>
         <button
           onClick={fetchDashboardData}

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -211,15 +212,27 @@ export default function DashboardLayout({
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-950/40">
+        {/* Sidebar Header with UNHAS Logo */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 bg-slate-950/40">
           <Link href="/" className="flex items-center space-x-2.5 group">
-            <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400 group-hover:border-blue-400/50 transition-colors">
-              <Cpu size={20} />
+            <div className="relative w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center p-0.5 bg-slate-950 border border-slate-700/80 shadow-md group-hover:border-cyan-400/60 transition-colors shrink-0">
+              <Image 
+                src="/unhas-logo.png" 
+                alt="Logo Universitas Hasanuddin" 
+                width={36} 
+                height={36} 
+                className="object-contain w-full h-full"
+                priority
+              />
             </div>
-            <span className="font-bold text-base tracking-wider bg-gradient-to-r from-white via-slate-200 to-blue-400 bg-clip-text text-transparent">
-              SHIP DESIGN AI
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-extrabold text-sm tracking-wide bg-gradient-to-r from-white via-slate-100 to-cyan-300 bg-clip-text text-transparent truncate">
+                SHIP DESIGN AI
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 -mt-0.5 truncate">
+                Universitas Hasanuddin
+              </span>
+            </div>
           </Link>
           <button
             className="lg:hidden text-slate-400 hover:text-white"
