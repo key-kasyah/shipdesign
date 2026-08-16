@@ -457,11 +457,50 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     });
   }, [halfBreadths]);
 
-  // Sums
+  // Grand Sums
   const sum1 = useMemo(() => calculatedRows.reduce((acc, r) => acc + r.col4, 0), [calculatedRows]);
   const sum2 = useMemo(() => calculatedRows.reduce((acc, r) => acc + r.col6, 0), [calculatedRows]);
   const sum3 = useMemo(() => calculatedRows.reduce((acc, r) => acc + r.col7, 0), [calculatedRows]);
   const sum4 = useMemo(() => calculatedRows.reduce((acc, r) => acc + r.col8, 0), [calculatedRows]);
+
+  // Zone-specific Subtotals (AP, P1, PMB, P2, FP)
+  const zoneSubtotals = useMemo(() => {
+    const result: Record<
+      string,
+      {
+        zone: AreaZone;
+        stations: typeof calculatedRows;
+        sum1: number;
+        sum2: number;
+        sum3: number;
+        sum4: number;
+      }
+    > = {};
+
+    AREA_ZONES.forEach((z) => {
+      result[z.id] = {
+        zone: z,
+        stations: [],
+        sum1: 0,
+        sum2: 0,
+        sum3: 0,
+        sum4: 0,
+      };
+    });
+
+    calculatedRows.forEach((r) => {
+      const z = getStationZone(r.station);
+      if (result[z.id]) {
+        result[z.id].stations.push(r);
+        result[z.id].sum1 += r.col4;
+        result[z.id].sum2 += r.col6;
+        result[z.id].sum3 += r.col7;
+        result[z.id].sum4 += r.col8;
+      }
+    });
+
+    return result;
+  }, [calculatedRows]);
 
   // Derived Naval Architecture Outputs
   // AWL = (2 / 3) * l * sum1
@@ -1093,7 +1132,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
       </div>
 
-      {/* TABLE: 27 STATIONS SIMPSON INTEGRATION */}
+      {/* TABLE: 27 STATIONS SIMPSON INTEGRATION & AREA SUBTOTALS */}
       <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -1101,9 +1140,56 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <span>Tabel Integrasi Simpson Ordinat Garis Air (Water Plane 27 Station)</span>
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Anda dapat mengedit nilai <strong className="text-cyan-300">0.5 B (m)</strong> pada tabel di bawah. Seluruh sigma dan nilai turunan akan terhitung otomatis seketika.
+              Anda dapat mengedit nilai <strong className="text-cyan-300">0.5 B (m)</strong> pada tabel di bawah. Subtotal per area (AP, P1, PMB, P2, FP) dan total sigma akan terhitung otomatis seketika.
             </p>
           </div>
+        </div>
+
+        {/* 5-Area Subtotal Summary Quick-Glance Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
+          {AREA_ZONES.map((zone) => {
+            const data = zoneSubtotals[zone.id];
+            if (!data) return null;
+            return (
+              <div
+                key={zone.id}
+                onClick={() => setActiveZone(activeZone === zone.id ? null : zone.id)}
+                className={`p-3 rounded-xl border transition-all cursor-pointer shadow-md ${
+                  activeZone === zone.id 
+                    ? "bg-slate-800/90 ring-2 ring-cyan-400 border-transparent shadow-cyan-900/50" 
+                    : `${zone.badgeColor} hover:brightness-110`
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: zone.bgFill.replace(/0\.\d+/, '1') }} />
+                    <span className="text-[11px] font-bold uppercase">{zone.code}</span>
+                  </div>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/40 text-slate-300 font-mono">
+                    {data.stations.length} St
+                  </span>
+                </div>
+                <div className="space-y-0.5 text-[10px] font-mono">
+                  <div className="flex justify-between text-emerald-300">
+                    <span className="opacity-75">&Sigma;1:</span>
+                    <span className="font-bold">{data.sum1.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between text-indigo-300">
+                    <span className="opacity-75">&Sigma;2:</span>
+                    <span className="font-bold">{data.sum2.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between text-purple-300">
+                    <span className="opacity-75">&Sigma;3:</span>
+                    <span className="font-bold">{data.sum3.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between text-rose-300">
+                    <span className="opacity-75">&Sigma;4:</span>
+                    <span className="font-bold">{data.sum4.toFixed(3)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Responsive Table Container */}
@@ -1145,126 +1231,183 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 const isHighlighted = isMid || isAp || isFp;
                 const stationZone = getStationZone(r.station);
                 const isZoneActive = (activeZone && activeZone === stationZone.id) || (hoveredZone && hoveredZone === stationZone.id);
+                const isLastInZone = r.station === 0.00 || r.station === 6.00 || r.station === 13.00 || r.station === 19.50 || r.station === 20.00;
+                const zoneData = zoneSubtotals[stationZone.id];
 
                 return (
-                  <tr
-                    key={idx}
-                    className={`hover:bg-slate-800/40 transition-colors ${
-                      isZoneActive 
-                        ? "bg-slate-800/60 ring-1 ring-cyan-500/30" 
-                        : isHighlighted 
-                        ? "bg-slate-900/60 font-semibold" 
-                        : ""
-                    }`}
-                  >
-                    {/* (1) NO. SECT with Area Zone Badge */}
-                    <td className="py-2 px-2.5 text-center border-r border-slate-800/60">
-                      <div className="flex items-center justify-center space-x-1.5">
-                        <span
-                          className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                            stationZone.code === 'AP' ? 'bg-amber-950/90 text-amber-300 border border-amber-600/40' :
-                            stationZone.code === 'P1' ? 'bg-sky-950/90 text-sky-300 border border-sky-600/40' :
-                            stationZone.code === 'PMB' ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-600/40' :
-                            stationZone.code === 'P2' ? 'bg-purple-950/90 text-purple-300 border border-purple-600/40' :
-                            'bg-violet-950/90 text-violet-300 border border-violet-600/40'
-                          }`}
-                          title={stationZone.description}
-                        >
-                          {stationZone.code}
-                        </span>
-                        <span
-                          className={`inline-block px-1.5 py-0.5 rounded text-[11px] ${
-                            isMid
-                              ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
-                              : isAp || isFp
-                              ? "bg-amber-500/20 text-amber-300 font-bold"
-                              : "text-slate-300"
-                          }`}
-                        >
-                          {r.label}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* (2) 0.5 B (m) - Editable */}
-                    <td className="py-1 px-2 border-r border-slate-800/60">
-                      <input
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        max={BWL}
-                        value={halfBreadths[r.station] ?? 0}
-                        onChange={(e) => handleCellChange(r.station, e.target.value)}
-                        className="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg py-1 px-2 text-cyan-300 font-bold font-mono text-xs focus:border-cyan-400 focus:bg-slate-950 focus:outline-none text-right transition-all"
-                      />
-                    </td>
-
-                    {/* (3) MS */}
-                    <td className="py-2 px-3 text-center text-slate-400 border-r border-slate-800/60">
-                      {r.ms.toFixed(2)}
-                    </td>
-
-                    {/* (4) 0.5B . MS */}
-                    <td className="py-2 px-3 text-right text-emerald-400 font-medium border-r border-slate-800/60">
-                      {r.col4.toFixed(3)}
-                    </td>
-
-                    {/* (5) FM */}
-                    <td
-                      className={`py-2 px-3 text-center border-r border-slate-800/60 ${
-                        r.fm < 0 ? "text-amber-400/90" : r.fm > 0 ? "text-cyan-400/90" : "text-white font-bold"
+                  <React.Fragment key={idx}>
+                    <tr
+                      className={`hover:bg-slate-800/40 transition-colors ${
+                        isZoneActive 
+                          ? "bg-slate-800/60 ring-1 ring-cyan-500/30" 
+                          : isHighlighted 
+                          ? "bg-slate-900/60 font-semibold" 
+                          : ""
                       }`}
                     >
-                      {r.fm > 0 ? `+${r.fm.toFixed(2)}` : r.fm.toFixed(2)}
-                    </td>
+                      {/* (1) NO. SECT with Area Zone Badge */}
+                      <td className="py-2 px-2.5 text-center border-r border-slate-800/60">
+                        <div className="flex items-center justify-center space-x-1.5">
+                          <span
+                            className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              stationZone.code === 'AP' ? 'bg-amber-950/90 text-amber-300 border border-amber-600/40' :
+                              stationZone.code === 'P1' ? 'bg-sky-950/90 text-sky-300 border border-sky-600/40' :
+                              stationZone.code === 'PMB' ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-600/40' :
+                              stationZone.code === 'P2' ? 'bg-purple-950/90 text-purple-300 border border-purple-600/40' :
+                              'bg-violet-950/90 text-violet-300 border border-violet-600/40'
+                            }`}
+                            title={stationZone.description}
+                          >
+                            {stationZone.code}
+                          </span>
+                          <span
+                            className={`inline-block px-1.5 py-0.5 rounded text-[11px] ${
+                              isMid
+                                ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
+                                : isAp || isFp
+                                ? "bg-amber-500/20 text-amber-300 font-bold"
+                                : "text-slate-300"
+                            }`}
+                          >
+                            {r.label}
+                          </span>
+                        </div>
+                      </td>
 
-                    {/* (6) SMA */}
-                    <td
-                      className={`py-2 px-3 text-right font-medium border-r border-slate-800/60 ${
-                        r.col6 < 0 ? "text-amber-300" : r.col6 > 0 ? "text-cyan-300" : "text-slate-400"
-                      }`}
-                    >
-                      {r.col6.toFixed(3)}
-                    </td>
+                      {/* (2) 0.5 B (m) - Editable */}
+                      <td className="py-1 px-2 border-r border-slate-800/60">
+                        <input
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          max={BWL}
+                          value={halfBreadths[r.station] ?? 0}
+                          onChange={(e) => handleCellChange(r.station, e.target.value)}
+                          className="w-full bg-slate-900/90 border border-slate-700/80 rounded-lg py-1 px-2 text-cyan-300 font-bold font-mono text-xs focus:border-cyan-400 focus:bg-slate-950 focus:outline-none text-right transition-all"
+                        />
+                      </td>
 
-                    {/* (7) (0.5B)^3 . MS */}
-                    <td className="py-2 px-3 text-right text-purple-300 font-medium border-r border-slate-800/60">
-                      {r.col7.toFixed(3)}
-                    </td>
+                      {/* (3) MS */}
+                      <td className="py-2 px-3 text-center text-slate-400 border-r border-slate-800/60">
+                        {r.ms.toFixed(2)}
+                      </td>
 
-                    {/* (8) 0.5B . MS . FM^2 */}
-                    <td className="py-2 px-3 text-right text-rose-300 font-medium">
-                      {r.col8.toFixed(3)}
-                    </td>
-                  </tr>
+                      {/* (4) 0.5B . MS */}
+                      <td className="py-2 px-3 text-right text-emerald-400 font-medium border-r border-slate-800/60">
+                        {r.col4.toFixed(3)}
+                      </td>
+
+                      {/* (5) FM */}
+                      <td
+                        className={`py-2 px-3 text-center border-r border-slate-800/60 ${
+                          r.fm < 0 ? "text-amber-400/90" : r.fm > 0 ? "text-cyan-400/90" : "text-white font-bold"
+                        }`}
+                      >
+                        {r.fm > 0 ? `+${r.fm.toFixed(2)}` : r.fm.toFixed(2)}
+                      </td>
+
+                      {/* (6) SMA */}
+                      <td
+                        className={`py-2 px-3 text-right font-medium border-r border-slate-800/60 ${
+                          r.col6 < 0 ? "text-amber-300" : r.col6 > 0 ? "text-cyan-300" : "text-slate-400"
+                        }`}
+                      >
+                        {r.col6.toFixed(3)}
+                      </td>
+
+                      {/* (7) (0.5B)^3 . MS */}
+                      <td className="py-2 px-3 text-right text-purple-300 font-medium border-r border-slate-800/60">
+                        {r.col7.toFixed(3)}
+                      </td>
+
+                      {/* (8) 0.5B . MS . FM^2 */}
+                      <td className="py-2 px-3 text-right text-rose-300 font-medium">
+                        {r.col8.toFixed(3)}
+                      </td>
+                    </tr>
+
+                    {/* SUB-TOTAL ROW FOR THIS AREA ZONE */}
+                    {isLastInZone && zoneData && (
+                      <tr 
+                        className={`border-y-2 font-bold text-xs ${
+                          stationZone.code === 'AP' ? 'bg-[#451a03]/50 border-amber-600/70 text-amber-200' :
+                          stationZone.code === 'P1' ? 'bg-[#082f49]/50 border-sky-600/70 text-sky-200' :
+                          stationZone.code === 'PMB' ? 'bg-[#052e16]/50 border-emerald-600/70 text-emerald-200' :
+                          stationZone.code === 'P2' ? 'bg-[#3b0764]/50 border-purple-600/70 text-purple-200' :
+                          'bg-[#2e1065]/50 border-violet-600/70 text-violet-200'
+                        }`}
+                      >
+                        <td colSpan={3} className="py-2.5 px-3 text-right uppercase tracking-wider border-r border-slate-800/80">
+                          <div className="flex items-center justify-end space-x-2">
+                            <span 
+                              className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                                stationZone.code === 'AP' ? 'bg-amber-950 text-amber-300 border-amber-500/50' :
+                                stationZone.code === 'P1' ? 'bg-sky-950 text-sky-300 border-sky-500/50' :
+                                stationZone.code === 'PMB' ? 'bg-emerald-950 text-emerald-300 border-emerald-500/50' :
+                                stationZone.code === 'P2' ? 'bg-purple-950 text-purple-300 border-purple-500/50' :
+                                'bg-violet-950 text-violet-300 border-violet-500/50'
+                              }`}
+                            >
+                              {stationZone.code}
+                            </span>
+                            <span className="font-bold text-[11px]">
+                              Subtotal &Sigma; Area {stationZone.name} ({zoneData.stations.length} St):
+                            </span>
+                          </div>
+                        </td>
+                        {/* Subtotal Sigma 1 */}
+                        <td className="py-2 px-3 text-right text-emerald-300 border-r border-slate-800/80">
+                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;1_{stationZone.code} =</div>
+                          <div className="text-xs font-bold font-mono">{zoneData.sum1.toFixed(3)}</div>
+                        </td>
+                        <td className="py-2 px-3 text-center text-slate-500 border-r border-slate-800/80">-</td>
+                        {/* Subtotal Sigma 2 */}
+                        <td className="py-2 px-3 text-right text-indigo-300 border-r border-slate-800/80">
+                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;2_{stationZone.code} =</div>
+                          <div className="text-xs font-bold font-mono">{zoneData.sum2.toFixed(3)}</div>
+                        </td>
+                        {/* Subtotal Sigma 3 */}
+                        <td className="py-2 px-3 text-right text-purple-300 border-r border-slate-800/80">
+                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;3_{stationZone.code} =</div>
+                          <div className="text-xs font-bold font-mono">{zoneData.sum3.toFixed(3)}</div>
+                        </td>
+                        {/* Subtotal Sigma 4 */}
+                        <td className="py-2 px-3 text-right text-rose-300">
+                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;4_{stationZone.code} =</div>
+                          <div className="text-xs font-bold font-mono">{zoneData.sum4.toFixed(3)}</div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
 
-              {/* TOTAL SIGMA SUMMARY ROW */}
-              <tr className="bg-slate-950 border-t-2 border-slate-700 font-bold text-xs text-white">
-                <td colSpan={3} className="py-3 px-4 text-right uppercase tracking-wider text-slate-300 border-r border-slate-800">
-                  Total Sigma (&Sigma;):
+              {/* GRAND TOTAL SIGMA SUMMARY ROW */}
+              <tr className="bg-slate-950 border-t-4 border-cyan-500/80 font-bold text-xs text-white shadow-2xl">
+                <td colSpan={3} className="py-3.5 px-4 text-right uppercase tracking-wider text-cyan-300 border-r border-slate-800 text-xs">
+                  <div className="font-extrabold text-white">TOTAL SIGMA KESELURUHAN (&Sigma;1 s.d &Sigma;4):</div>
+                  <div className="text-[10px] text-slate-400 font-normal mt-0.5">Penjumlahan 27 Stasiun Lengkap</div>
                 </td>
                 {/* Sigma 1 */}
                 <td className="py-3 px-3 text-right text-emerald-400 border-r border-slate-800 text-sm">
-                  <div className="text-[9px] text-slate-500 uppercase">&Sigma;1 =</div>
-                  <div>{sum1.toFixed(3)}</div>
+                  <div className="text-[9px] text-slate-400 uppercase font-mono">&Sigma;1 =</div>
+                  <div className="text-base font-black font-mono">{sum1.toFixed(3)}</div>
                 </td>
                 <td className="py-3 px-3 text-center text-slate-500 border-r border-slate-800">-</td>
                 {/* Sigma 2 */}
                 <td className="py-3 px-3 text-right text-indigo-300 border-r border-slate-800 text-sm">
-                  <div className="text-[9px] text-slate-500 uppercase">&Sigma;2 =</div>
-                  <div>{sum2.toFixed(3)}</div>
+                  <div className="text-[9px] text-slate-400 uppercase font-mono">&Sigma;2 =</div>
+                  <div className="text-base font-black font-mono">{sum2.toFixed(3)}</div>
                 </td>
                 {/* Sigma 3 */}
                 <td className="py-3 px-3 text-right text-purple-300 border-r border-slate-800 text-sm">
-                  <div className="text-[9px] text-slate-500 uppercase">&Sigma;3 =</div>
-                  <div>{sum3.toFixed(3)}</div>
+                  <div className="text-[9px] text-slate-400 uppercase font-mono">&Sigma;3 =</div>
+                  <div className="text-base font-black font-mono">{sum3.toFixed(3)}</div>
                 </td>
                 {/* Sigma 4 */}
                 <td className="py-3 px-3 text-right text-rose-300 text-sm">
-                  <div className="text-[9px] text-slate-500 uppercase">&Sigma;4 =</div>
-                  <div>{sum4.toFixed(3)}</div>
+                  <div className="text-[9px] text-slate-400 uppercase font-mono">&Sigma;4 =</div>
+                  <div className="text-base font-black font-mono">{sum4.toFixed(3)}</div>
                 </td>
               </tr>
             </tbody>
