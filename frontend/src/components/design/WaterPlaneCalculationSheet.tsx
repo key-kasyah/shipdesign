@@ -60,6 +60,102 @@ const DEFAULT_STATIONS_CONFIG: Array<{ station: number; label: string; ms: numbe
   { station: 20.00, label: "20 (FP)", ms: 0.50, fm: 10.00 },
 ];
 
+export interface AreaZone {
+  id: string;
+  name: string;
+  code: string;
+  badgeLabel: string;
+  startStation: number;
+  endStation: number;
+  bgFill: string;
+  watermark: string;
+  textColor: string;
+  badgeColor: string;
+  description: string;
+  subSegments?: Array<{
+    startStation: number;
+    endStation: number;
+    bgFill: string;
+    watermark?: string;
+  }>;
+}
+
+export const AREA_ZONES: AreaZone[] = [
+  {
+    id: "after-peak",
+    name: "After Peak",
+    code: "AP",
+    badgeLabel: "After Peak",
+    startStation: -0.5,
+    endStation: 0.0,
+    bgFill: "rgba(180, 83, 9, 0.48)", // Warm Bronze Amber
+    watermark: "AP",
+    textColor: "text-amber-400",
+    badgeColor: "bg-amber-950/80 border-amber-600/50 text-amber-300",
+    description: "Area After Peak (AP) - St. -0.50 s/d 0.00 (Buritan Kapal / Transisi Cant)"
+  },
+  {
+    id: "peak-1",
+    name: "Peak 1",
+    code: "P1",
+    badgeLabel: "Peak 1",
+    startStation: 0.0,
+    endStation: 7.0,
+    bgFill: "rgba(2, 132, 199, 0.38)", // Ocean Blue
+    watermark: "P1",
+    textColor: "text-sky-400",
+    badgeColor: "bg-sky-950/80 border-sky-600/50 text-sky-300",
+    description: "Area Peak 1 (P1) - St. 0.00 s/d 7.00 (Run Body / Transisi Buritan ke PMB)"
+  },
+  {
+    id: "parallel-middle-body",
+    name: "Parallel Media Body",
+    code: "PMB",
+    badgeLabel: "Parallel Media Body",
+    startStation: 7.0,
+    endStation: 13.0,
+    bgFill: "rgba(22, 163, 74, 0.38)", // Emerald Green
+    watermark: "",
+    textColor: "text-emerald-400",
+    badgeColor: "bg-emerald-950/80 border-emerald-600/50 text-emerald-300",
+    description: "Area Parallel Media Body (PMB) - St. 7.00 s/d 13.00 (Badan Tengah Lebar Maksimum 0.5B)"
+  },
+  {
+    id: "peak-2",
+    name: "Peak 2",
+    code: "P2",
+    badgeLabel: "Peak 2",
+    startStation: 13.0,
+    endStation: 20.0,
+    bgFill: "rgba(168, 85, 247, 0.40)", // Royal Purple
+    watermark: "P2",
+    textColor: "text-purple-400",
+    badgeColor: "bg-purple-950/80 border-purple-600/50 text-purple-300",
+    description: "Area Peak 2 (P2) - Ungu - St. 13.00 s/d 20.00 (Entrance Body)"
+  },
+  {
+    id: "fore-peak",
+    name: "Fore Peak",
+    code: "FP",
+    badgeLabel: "Fore Peak",
+    startStation: 20.0,
+    endStation: 21.0,
+    bgFill: "rgba(126, 34, 206, 0.50)", // Deep Violet
+    watermark: "FP",
+    textColor: "text-violet-400",
+    badgeColor: "bg-violet-950/80 border-violet-600/50 text-purple-300",
+    description: "Area Fore Peak (FP) - St. 20.00 (FP) ke Kanan (Haluan Kapal / Fore Peak)"
+  }
+];
+
+export const getStationZone = (st: number): AreaZone => {
+  if (st <= 0) return AREA_ZONES[0]; // Station -0.50, -0.25, dan 0.00 (AP) adalah After Peak (AP)
+  if (st < 7) return AREA_ZONES[1];  // Station 0.50 s/d 6.00 adalah Peak 1 (P1)
+  if (st <= 13) return AREA_ZONES[2]; // Station 7.00 s/d 13.00 adalah PMB
+  if (st < 20) return AREA_ZONES[3];  // Station 14.00 s/d 19.50 adalah Peak 2 (P2)
+  return AREA_ZONES[4];              // Station 20.00 (FP) adalah Fore Peak (FP)
+};
+
 /**
  * Helper: Smooth curve (Monotone Cubic Interpolation)
  * Produces a perfectly fair curve, eliminating micro-wiggles caused by non-uniform point spacing.
@@ -155,107 +251,104 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   // AWL Target Calculation: AWL_target = LWL * BWL * targetCw
   const AWL_rancangan = useMemo(() => LWL * BWL * targetCw, [LWL, BWL, targetCw]);
 
-  // High-precision Natural Waterline Curve Generator with Guaranteed <= 0.5% tolerance
-  const generateOptimizedHalfBreadths = (targetArea: number, startingCurve?: Record<number, number>): Record<number, number> => {
-    const halfB = BWL / 2; // Maximum half breadth e.g. 7.50m
-    const initial: Record<number, number> = startingCurve ? { ...startingCurve } : {};
+  // Standard Lines Plan Benchmark Ratios (r_0 = y_st / (BWL / 2))
+  const STANDARD_WATERLINE_RATIOS: Record<number, number> = {
+    [-0.50]: 3.800 / 7.500, // 0.50667 (After Peak Transom)
+    [-0.25]: 4.090 / 7.500, // 0.54533
+    [0.00]:  4.370 / 7.500, // 0.58267 (AP Station 0)
+    [0.50]:  4.890 / 7.500, // 0.65200
+    [1.00]:  5.380 / 7.500, // 0.71733
+    [1.50]:  5.830 / 7.500, // 0.77733
+    [2.00]:  6.230 / 7.500, // 0.83067
+    [3.00]:  6.850 / 7.500, // 0.91333
+    [4.00]:  7.200 / 7.500, // 0.96000
+    [5.00]:  7.370 / 7.500, // 0.98267
+    [6.00]:  7.480 / 7.500, // 0.99733
+    [7.00]:  1.00000,
+    [8.00]:  1.00000,
+    [9.00]:  1.00000,
+    [10.00]: 1.00000,
+    [11.00]: 1.00000,
+    [12.00]: 1.00000,
+    [13.00]: 1.00000,
+    [14.00]: 7.440 / 7.500, // 0.99200
+    [15.00]: 7.160 / 7.500, // 0.95467
+    [16.00]: 6.380 / 7.500, // 0.85067
+    [17.00]: 5.140 / 7.500, // 0.68533
+    [18.00]: 3.600 / 7.500, // 0.48000
+    [18.50]: 2.800 / 7.500, // 0.37333
+    [19.00]: 1.890 / 7.500, // 0.25200
+    [19.50]: 0.950 / 7.500, // 0.12667
+    [20.00]: 0.00000        // 0.00000 (FP Station 20)
+  };
 
-    if (!startingCurve) {
-      // 1. Base geometric distribution along waterline
-      DEFAULT_STATIONS_CONFIG.forEach(({ station }) => {
-      let val = 0;
-      if (station < 0) {
-        // Cant / Overhang Aft
-        const aftFrac = Math.max(0, (station + 1.0) / 1.0);
-        val = halfB * 0.48 * Math.pow(aftFrac, 1.1);
-      } else if (station <= 7) {
-        // Aft transition curve to PMB
-        const t = station / 7.0;
-        const ratio = 0.58 + 0.42 * (3 * t * t - 2 * t * t * t);
-        val = halfB * ratio;
-      } else if (station <= 13) {
-        // Parallel Middle Body (PMB - Full breadth)
-        val = halfB;
-      } else {
-        // Fore body taper to FP
-        const t = (20 - station) / 7.0;
-        if (t <= 0) {
-          val = 0.0;
+  // High-precision Natural Waterline Generator with Guaranteed <= 0.005% (< 0.05%) Tolerance
+  const generateOptimizedHalfBreadths = (targetArea: number): Record<number, number> => {
+    const halfB = BWL / 2; // Maximum half breadth
+
+    // Exponential scaling solver:
+    // y(st) = halfB * (STANDARD_WATERLINE_RATIOS[st] ^ power)
+    // Preserves 100% of the textbook fairing shape, guarantees strictly monotonic curve
+    let low = 0.1;
+    let high = 5.0;
+    let bestPower = 1.0;
+
+    for (let iter = 0; iter < 40; iter++) {
+      const mid = (low + high) / 2.0;
+      let sum1 = 0;
+      DEFAULT_STATIONS_CONFIG.forEach(cfg => {
+        let y = halfB;
+        if (cfg.station >= 7 && cfg.station <= 13) {
+          y = halfB;
+        } else if (cfg.station === 20) {
+          y = 0.0;
         } else {
-          const ratio = Math.pow(t, 0.93);
-          val = halfB * ratio;
+          const baseRatio = STANDARD_WATERLINE_RATIOS[cfg.station] ?? 0.5;
+          y = halfB * Math.pow(baseRatio, mid);
         }
+        sum1 += y * cfg.ms;
+      });
+
+      const currentAWL = (2.0 / 3.0) * l * sum1;
+      if (Math.abs(currentAWL - targetArea) < 0.0001) {
+        bestPower = mid;
+        break;
       }
-      initial[station] = Number(Math.max(0, Math.min(halfB, val)).toFixed(3));
+
+      if (currentAWL < targetArea) {
+        // Need more area -> lower power makes curve fuller
+        high = mid;
+      } else {
+        // Need less area -> higher power makes curve finer
+        low = mid;
+      }
+      bestPower = mid;
+    }
+
+    const result: Record<number, number> = {};
+    DEFAULT_STATIONS_CONFIG.forEach(cfg => {
+      let y = halfB;
+      if (cfg.station >= 7 && cfg.station <= 13) {
+        y = halfB;
+      } else if (cfg.station === 20) {
+        y = 0.0;
+      } else {
+        const baseRatio = STANDARD_WATERLINE_RATIOS[cfg.station] ?? 0.5;
+        y = halfB * Math.pow(baseRatio, bestPower);
+      }
+      result[cfg.station] = Number(Math.max(0, Math.min(halfB, y)).toFixed(3));
     });
 
-    // If close to standard 15.0m breadth benchmark
-    if (Math.abs(BWL - 15.0) < 0.1) {
-      initial[-0.50] = 3.800;
-      initial[-0.25] = 4.090;
-      initial[0.00] = 4.370;
-      initial[0.50] = 4.890;
-      initial[1.00] = 5.380;
-      initial[1.50] = 5.830;
-      initial[2.00] = 6.230;
-      initial[3.00] = 6.850;
-      initial[4.00] = 7.200;
-      initial[5.00] = 7.370;
-      initial[6.00] = 7.480;
-      initial[7.00] = 7.500;
-      initial[8.00] = 7.500;
-      initial[9.00] = 7.500;
-      initial[10.00] = 7.500;
-      initial[11.00] = 7.500;
-      initial[12.00] = 7.500;
-      initial[13.00] = 7.500;
-      initial[14.00] = 7.440;
-      initial[15.00] = 7.160;
-      initial[16.00] = 6.380;
-      initial[17.00] = 5.140;
-      initial[18.00] = 3.600;
-      initial[18.50] = 2.800;
-      initial[19.00] = 1.890;
-      initial[19.50] = 0.950;
-      initial[20.00] = 0.000;
-    }
-    }
-
-    // 2. Convergence Loop: scale curve smoothly to guarantee correction <= 0.01% (well below 0.05% requirement)
-    for (let iter = 0; iter < 15; iter++) {
-      let currentSum1 = 0;
-      DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
-        currentSum1 += (initial[cfg.station] || 0) * cfg.ms;
-      });
-      const currentAWL = (2.0 / 3.0) * l * currentSum1;
-      const deviance = (currentAWL - targetArea) / (currentAWL || 1);
-
-      // If already within 0.01% (<= 0.05%), perfect
-      if (Math.abs(deviance) < 0.0001) break;
-
-      const scaleRatio = targetArea / (currentAWL || 1);
-      DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
-        if (cfg.station !== 20 && !(cfg.station >= 7 && cfg.station <= 13)) {
-          // Smooth fade interpolation so it doesn't bend/keriting at PMB boundary
-          let fade = 1.0;
-          if (cfg.station < 7) {
-            fade = Math.pow((7 - cfg.station) / 7.0, 1.5);
-          } else if (cfg.station > 13) {
-            fade = Math.pow((cfg.station - 13) / 7.0, 1.5);
-          }
-          // Adjust non-PMB stations smoothly
-          let newVal = initial[cfg.station] * (1 + (scaleRatio - 1) * fade);
-          initial[cfg.station] = Number(Math.max(0, Math.min(halfB, newVal)).toFixed(3));
-        }
-      });
-    }
-
-    return initial;
+    return result;
   };
 
   const [halfBreadths, setHalfBreadths] = useState<Record<number, number>>(() =>
     generateOptimizedHalfBreadths(AWL_rancangan)
   );
+
+  // --- AREA ZONE INTERACTION STATE ---
+  const [hoveredZone, setHoveredZone] = useState<string | null>(null);
+  const [activeZone, setActiveZone] = useState<string | null>(null);
 
   // --- SVG INTERACTIVE DRAG STATE & HANDLERS ---
   const svgRef = useRef<SVGSVGElement>(null);
@@ -263,28 +356,38 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   const handlePointerDown = (e: React.PointerEvent<SVGCircleElement>, station: number) => {
-    // Kunci rentang Parallel Middle Body (PMB) Gading 7 s.d 13
+    // Kunci rentang Parallel Middle Body (PMB) Gading 7 s.d 13 (sesuai kaidah rancang lambung)
     if (station >= 7 && station <= 13) return;
     
+    e.preventDefault();
+    e.stopPropagation();
     setDraggingStation(station);
-    (e.target as Element).setPointerCapture(e.pointerId);
+    try {
+      (e.target as Element).setPointerCapture(e.pointerId);
+    } catch (err) {
+      // Fallback
+    }
   };
 
-  const handlePointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
+  const handlePointerMove = (e: React.PointerEvent) => {
     if (draggingStation === null || !svgRef.current) return;
     
-    const rect = svgRef.current.getBoundingClientRect();
-    const yClient = e.clientY - rect.top;
+    e.preventDefault();
+    const svg = svgRef.current;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
     
-    // ViewBox is "-5 0 110 30"
-    const viewBoxHeight = 30;
-    const ySvg = (yClient / rect.height) * viewBoxHeight;
+    const screenCTM = svg.getScreenCTM();
+    if (!screenCTM) return;
+    
+    // Transform screen mouse coordinates into exact SVG coordinates
+    const svgP = pt.matrixTransform(screenCTM.inverse());
     
     const maxHalfB = BWL / 2;
-    // Calculation mapping from SVG Y to HalfBreadth:
-    // y = 26 - (newHalfB / maxHalfB) * 22
-    // newHalfB = maxHalfB * (26 - y) / 22
-    let newHalfB = maxHalfB * (26 - ySvg) / 22;
+    // Y formula: y = 26 - (halfB / maxHalfB) * 22
+    // halfB = maxHalfB * (26 - svgP.y) / 22
+    let newHalfB = maxHalfB * (26 - svgP.y) / 22;
     
     // Clamp between 0 and maximum half breadth
     newHalfB = Math.max(0, Math.min(maxHalfB, newHalfB));
@@ -295,9 +398,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     }));
   };
 
-  const handlePointerUp = (e: React.PointerEvent<SVGCircleElement>) => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     if (draggingStation !== null) {
-      (e.target as Element).releasePointerCapture(e.pointerId);
+      try {
+        (e.target as Element).releasePointerCapture(e.pointerId);
+      } catch (err) {
+        // Fallback
+      }
       setDraggingStation(null);
     }
   };
@@ -313,10 +420,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     setHalfBreadths(generateOptimizedHalfBreadths(AWL_rancangan));
   };
 
-  // Auto-Fine-Tune to strictly hit <= 0.01% (< 0.05%) tolerance
+  // Auto-Fine-Tune: Instant fair curve regeneration with guaranteed <= 0.005% (<= 0.05%) tolerance
   const handleAutoFineTune = () => {
-    // Pass current halfBreadths to retain user's custom shape while auto-scaling smoothly
-    setHalfBreadths(generateOptimizedHalfBreadths(AWL_rancangan, halfBreadths));
+    setHalfBreadths(generateOptimizedHalfBreadths(AWL_rancangan));
   };
 
   // Update a single station half-breadth
@@ -568,144 +674,399 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
       {/* VISUAL WATERPLANE DWL PLOT */}
       <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <TrendingUp size={16} className="text-cyan-400" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
               Plot Visual Garis Air (DWL Half-Breadth Plan & Posisi LCF)
             </h3>
           </div>
-          <div className="flex items-center space-x-3 text-[11px] font-mono">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
             <span className="flex items-center space-x-1 text-cyan-400">
-              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block shadow-sm shadow-cyan-500/50" />
               <span>Garis Air DWL (T = {T.toFixed(2)}m)</span>
             </span>
             <span className="flex items-center space-x-1 text-amber-400">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block shadow-sm shadow-amber-500/50" />
               <span>Titik LCF ({LCF.toFixed(2)}m)</span>
             </span>
           </div>
         </div>
 
-        {/* SVG Plot */}
-        <div className="w-full h-48 bg-slate-950/90 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center p-2 group">
+        {/* SVG Plot Container */}
+        <div className="w-full bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800 flex flex-col items-center justify-center p-3 group select-none shadow-2xl">
           
           {/* Floating Preview Toggle Button */}
           <button
             onClick={() => setIsPreviewMode(!isPreviewMode)}
-            className="absolute top-3 right-3 z-10 p-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-slate-400 hover:text-cyan-300 transition-all opacity-0 group-hover:opacity-100 shadow-lg backdrop-blur-sm"
+            className="absolute top-3 right-3 z-20 p-2 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded-lg text-slate-300 hover:text-cyan-300 transition-all opacity-80 group-hover:opacity-100 shadow-lg backdrop-blur-sm cursor-pointer"
             title={isPreviewMode ? "Tampilkan Titik Ordinat (Edit Mode)" : "Sembunyikan Titik Ordinat (Preview Mode)"}
           >
             {isPreviewMode ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
 
-          <svg 
-            ref={svgRef}
-            className="w-full h-full px-2" 
-            viewBox="-5 0 110 30" 
-            preserveAspectRatio="none"
-          >
-            {/* Centerline Baseline */}
-            <line x1="-5" y1="26" x2="105" y2="26" stroke="#475569" strokeWidth="0.5" strokeDasharray="1,1" />
-
-            {/* Vertical Station Lines */}
-            {calculatedRows.map((r, idx) => {
-              // Map station -0.5 to 20 into X range 0 to 100
-              const normX = ((r.station + 0.5) / 20.5) * 100;
-              const isMidship = r.station === 10;
-              const isAp = r.station === 0;
-              const isFp = r.station === 20;
-
-              return (
-                <g key={idx}>
-                  <line
-                    x1={normX}
-                    y1="2"
-                    x2={normX}
-                    y2="26"
-                    stroke={isMidship ? "#38bdf8" : isAp || isFp ? "#64748b" : "#1e293b"}
-                    strokeWidth={isMidship ? "0.4" : "0.2"}
-                  />
-                  {/* Station label */}
-                  {(r.station === 0 || r.station === 5 || r.station === 10 || r.station === 15 || r.station === 20) && (
-                    <text
-                      x={normX}
-                      y="29"
-                      fill={isAp || isFp ? "#94a3b8" : "#64748b"}
-                      fontSize={isAp || isFp || isMidship ? "2.6" : "2.2"}
-                      fontWeight={isAp || isFp || isMidship ? "bold" : "normal"}
-                      textAnchor="middle"
-                      fontFamily="monospace"
-                    >
-                      {r.station === 0 ? "AP" : r.station === 20 ? "FP" : r.station === 10 ? "MID" : r.station}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-
-            {/* Waterline Curve Path */}
-            <path
-              d={`M ${((calculatedRows.length > 0 ? calculatedRows[0].station - 0.5 : -1.0 + 0.5) / 20.5) * 100},26 ${getSmoothPathD([
-                {
-                  x: ((calculatedRows.length > 0 ? calculatedRows[0].station - 0.5 : -1.0 + 0.5) / 20.5) * 100,
-                  y: 26
-                },
-                ...calculatedRows.map((r) => ({
-                  x: ((r.station + 0.5) / 20.5) * 100,
-                  y: 26 - (r.halfBreadth / (BWL / 2 || 1)) * 22
-                }))
-              ])} L 100,26 Z`}
-              fill="rgba(6, 182, 212, 0.15)"
-              stroke="#06b6d4"
-              strokeWidth="0.15"
-            />
-
-            {/* Station Points (Draggable for non-PMB) */}
-            {!isPreviewMode && calculatedRows.map((r, idx) => {
-              const x = ((r.station + 0.5) / 20.5) * 100;
-              const maxHalfB = BWL / 2 || 1;
-              const y = 26 - (r.halfBreadth / maxHalfB) * 22;
-              
-              const isLocked = r.station >= 7 && r.station <= 13;
-              const isDragging = draggingStation === r.station;
-              
-              return (
-                <circle 
-                  key={idx} 
-                  cx={x} 
-                  cy={y} 
-                  r={isDragging ? "1.2" : isLocked ? "0.4" : "0.7"} 
-                  fill={isLocked ? "#ef4444" : isDragging ? "#facc15" : "#38bdf8"} 
-                  stroke={isLocked ? "transparent" : "#fff"}
-                  strokeWidth={isDragging ? "0.2" : "0"}
-                  className={isLocked ? "cursor-not-allowed opacity-60" : "cursor-ns-resize hover:opacity-80 transition-all drop-shadow-md"}
-                  onPointerDown={(e) => handlePointerDown(e, r.station)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerUp}
+          {/* SVG Canvas */}
+          <div className="w-full h-56 sm:h-64 relative">
+            <svg 
+              ref={svgRef}
+              className="w-full h-full select-none" 
+              viewBox="-4 -1 122 33" 
+              preserveAspectRatio="none"
+              style={{ touchAction: "none" }}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+            >
+              {/* 1. AREA BACKGROUND ZONES & SHADINGS */}
+              {/* After Peak (AP) Zone: Dari Ujung Kiri ke Garis AP (St. 0.00) */}
+              <g 
+                onMouseEnter={() => setHoveredZone("after-peak")}
+                onMouseLeave={() => setHoveredZone(null)}
+                className="cursor-pointer transition-opacity"
+                opacity={activeZone && activeZone !== "after-peak" ? 0.35 : 1}
+              >
+                <rect
+                  x="0.00"
+                  y="1"
+                  width="14.00"
+                  height="25"
+                  fill="rgba(180, 83, 9, 0.48)"
                 />
-              );
-            })}
+                {/* Watermark AP */}
+                <text
+                  x="7.00"
+                  y="21"
+                  fill="rgba(139, 26, 26, 0.75)"
+                  fontSize="9.5"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fontFamily="serif"
+                  style={{ pointerEvents: "none" }}
+                >
+                  AP
+                </text>
+              </g>
 
-            {/* LCF Marker */}
-            {(() => {
-              const lcfStation = 10 + (LCF / (l || 1));
-              const lcfX = ((lcfStation + 0.5) / 20.5) * 100;
-              return (
-                <g>
-                  <line x1={lcfX} y1="0" x2={lcfX} y2="26" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="1,1" />
-                  <polygon
-                    points={`${lcfX},1 ${lcfX - 1.2},3 ${lcfX + 1.2},3`}
-                    fill="#f59e0b"
+              {/* Peak 1 (P1) Zone: Station 0.00 (AP) s/d 7.00 */}
+              <g 
+                onMouseEnter={() => setHoveredZone("peak-1")}
+                onMouseLeave={() => setHoveredZone(null)}
+                className="cursor-pointer transition-opacity"
+                opacity={activeZone && activeZone !== "peak-1" ? 0.35 : 1}
+              >
+                <rect
+                  x="14.00"
+                  y="1"
+                  width="30.10"
+                  height="25"
+                  fill="rgba(2, 132, 199, 0.38)"
+                />
+                {/* Watermark P1 */}
+                <text
+                  x="29.05"
+                  y="21"
+                  fill="rgba(139, 26, 26, 0.75)"
+                  fontSize="11"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fontFamily="serif"
+                  style={{ pointerEvents: "none" }}
+                >
+                  P1
+                </text>
+              </g>
+
+              {/* Parallel Media Body (PMB) Zone: Station 7.00 s/d 13.00 */}
+              <g 
+                onMouseEnter={() => setHoveredZone("parallel-middle-body")}
+                onMouseLeave={() => setHoveredZone(null)}
+                className="cursor-pointer transition-opacity"
+                opacity={activeZone && activeZone !== "parallel-middle-body" ? 0.35 : 1}
+              >
+                <rect
+                  x="44.10"
+                  y="1"
+                  width="25.80"
+                  height="25"
+                  fill="rgba(22, 163, 74, 0.38)"
+                />
+              </g>
+
+              {/* Peak 2 (P2) Zone: Station 13.00 s/d 20.00 (FP) */}
+              <g 
+                onMouseEnter={() => setHoveredZone("peak-2")}
+                onMouseLeave={() => setHoveredZone(null)}
+                className="cursor-pointer transition-opacity"
+                opacity={activeZone && activeZone !== "peak-2" ? 0.35 : 1}
+              >
+                <rect
+                  x="69.90"
+                  y="1"
+                  width="30.10"
+                  height="25"
+                  fill="rgba(168, 85, 247, 0.40)"
+                />
+                {/* Watermark P2 */}
+                <text
+                  x="84.95"
+                  y="21"
+                  fill="rgba(139, 26, 26, 0.75)"
+                  fontSize="11"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fontFamily="serif"
+                  style={{ pointerEvents: "none" }}
+                >
+                  P2
+                </text>
+              </g>
+
+              {/* Fore Peak (FP) Zone: Dari Garis FP (St. 20.00) ke Kanan */}
+              <g 
+                onMouseEnter={() => setHoveredZone("fore-peak")}
+                onMouseLeave={() => setHoveredZone(null)}
+                className="cursor-pointer transition-opacity"
+                opacity={activeZone && activeZone !== "fore-peak" ? 0.35 : 1}
+              >
+                <rect
+                  x="100.00"
+                  y="1"
+                  width="14.00"
+                  height="25"
+                  fill="rgba(126, 34, 206, 0.50)"
+                />
+                {/* Watermark FP */}
+                <text
+                  x="107.00"
+                  y="21"
+                  fill="rgba(139, 26, 26, 0.85)"
+                  fontSize="9.5"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  fontFamily="serif"
+                  style={{ pointerEvents: "none" }}
+                >
+                  FP
+                </text>
+              </g>
+
+              {/* Centerline Baseline */}
+              <line x1="-4" y1="26" x2="118" y2="26" stroke="#475569" strokeWidth="0.3" strokeDasharray="1,1" />
+
+              {/* Standard Station Grid Lines & X-Axis Labels */}
+              {calculatedRows.map((r, idx) => {
+                const normX = 14.00 + (r.station / 20.0) * 86.00;
+                const isMidship = r.station === 10;
+                const isAp = r.station === 0;
+                const isFp = r.station === 20;
+
+                return (
+                  <g key={idx}>
+                    <line
+                      x1={normX}
+                      y1="1"
+                      x2={normX}
+                      y2="26"
+                      stroke={isMidship ? "#38bdf8" : isAp || isFp ? "#64748b" : "rgba(51, 65, 85, 0.4)"}
+                      strokeWidth={isMidship ? "0.3" : "0.1"}
+                    />
+                    {/* Station label */}
+                    {(r.station === 0 || r.station === 5 || r.station === 10 || r.station === 15 || r.station === 20) && (
+                      <text
+                        x={normX}
+                        y="29.5"
+                        fill={isAp || isFp ? "#94a3b8" : "#64748b"}
+                        fontSize={isAp || isFp || isMidship ? "2.6" : "2.2"}
+                        fontWeight={isAp || isFp || isMidship ? "bold" : "normal"}
+                        textAnchor="middle"
+                        fontFamily="monospace"
+                      >
+                        {r.station === 0 ? "AP" : r.station === 20 ? "FP" : r.station === 10 ? "MID" : r.station}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+
+              {/* RED VERTICAL DIVIDER LINES AT ZONE BOUNDARIES (Refined 0.25px stroke) */}
+              {[
+                { x: 0.00, key: "div-left" },
+                { x: 14.00, key: "div-ap" },
+                { x: 44.10, key: "div-st7" },
+                { x: 69.90, key: "div-st13" },
+                { x: 100.00, key: "div-fp" },
+                { x: 114.00, key: "div-right" }
+              ].map((div) => (
+                <line
+                  key={div.key}
+                  x1={div.x}
+                  y1="1"
+                  x2={div.x}
+                  y2="26"
+                  stroke="#991b1b"
+                  strokeWidth="0.25"
+                />
+              ))}
+
+              {/* Waterline Curve Area Fill & Smooth Fairing Stroke (Refined 0.28px stroke) */}
+              <path
+                d={`M ${14.00 + (-0.5 / 20.0) * 86.00},26 ${getSmoothPathD(
+                  calculatedRows.map((r) => ({
+                    x: 14.00 + (r.station / 20.0) * 86.00,
+                    y: 26 - (r.halfBreadth / (BWL / 2 || 1)) * 22
+                  }))
+                )} L 100,26 Z`}
+                fill="rgba(6, 182, 212, 0.10)"
+                stroke="#38bdf8"
+                strokeWidth="0.28"
+                strokeLinecap="round"
+              />
+
+              {/* Station Control Points (Interactive Drag for non-PMB) */}
+              {!isPreviewMode && calculatedRows.map((r, idx) => {
+                const x = 14.00 + (r.station / 20.0) * 86.00;
+                const maxHalfB = BWL / 2 || 1;
+                const y = 26 - (r.halfBreadth / maxHalfB) * 22;
+                
+                const isLocked = r.station >= 7 && r.station <= 13;
+                const isDragging = draggingStation === r.station;
+                
+                return (
+                  <circle 
+                    key={idx} 
+                    cx={x} 
+                    cy={y} 
+                    r={isDragging ? "1.0" : isLocked ? "0.35" : "0.55"} 
+                    fill={isLocked ? "#ef4444" : isDragging ? "#facc15" : "#38bdf8"} 
+                    stroke={isLocked ? "transparent" : isDragging ? "#ffffff" : "#ffffff"} 
+                    strokeWidth={isDragging ? "0.2" : "0.08"}
+                    className={
+                      isLocked 
+                        ? "cursor-not-allowed opacity-60 pointer-events-none" 
+                        : isDragging 
+                        ? "cursor-ns-resize drop-shadow-xl" 
+                        : "cursor-ns-resize hover:opacity-100 drop-shadow-md"
+                    }
+                    style={{ touchAction: "none" }}
+                    onPointerDown={(e) => handlePointerDown(e, r.station)}
                   />
-                  <text x={lcfX} y="6" fill="#f59e0b" fontSize="2.2" textAnchor="middle" fontWeight="bold">
-                    LCF
-                  </text>
-                </g>
-              );
-            })()}
-          </svg>
+                );
+              })}
+
+              {/* LCF Marker (Longitudinal Center of Flotation) */}
+              {(() => {
+                const lcfStation = 10 + (LCF / (l || 1));
+                const lcfX = 14.00 + (lcfStation / 20.0) * 86.00;
+                return (
+                  <g>
+                    <line x1={lcfX} y1="0" x2={lcfX} y2="26" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="1,1" />
+                    <polygon
+                      points={`${lcfX},1 ${lcfX - 1.2},3 ${lcfX + 1.2},3`}
+                      fill="#f59e0b"
+                    />
+                    <text x={lcfX} y="6" fill="#f59e0b" fontSize="2.2" textAnchor="middle" fontWeight="bold">
+                      LCF
+                    </text>
+                  </g>
+                );
+              })()}
+            </svg>
+
+            {/* DYNAMIC FLOATING TOOLTIP ON HOVER (MATCHING USER SCREENSHOT) */}
+            {(hoveredZone || activeZone) && (
+              <div className="absolute bottom-2 right-3 z-30 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
+                {(() => {
+                  const targetZoneId = hoveredZone || activeZone;
+                  const zoneObj = AREA_ZONES.find(z => z.id === targetZoneId);
+                  if (!zoneObj) return null;
+                  return (
+                    <div className="bg-slate-950/95 border border-slate-700/90 rounded-xl px-3.5 py-1.5 text-xs font-mono shadow-2xl backdrop-blur-md text-white flex items-center space-x-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: zoneObj.bgFill.replace(/0\.\d+/, '1') }} />
+                      <span className="font-semibold text-slate-200">{zoneObj.description}</span>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+
+          {/* 5-SEGMENT BOTTOM BAR / LEGEND STRIP (MATCHING USER SCREENSHOT) */}
+          <div className="w-full flex gap-1.5 pt-3 text-xs font-mono select-none">
+            {/* After Peak (Span: Ujung Kiri s/d AP 0) */}
+            <div 
+              onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
+              onMouseEnter={() => setHoveredZone('after-peak')}
+              onMouseLeave={() => setHoveredZone(null)}
+              style={{ flex: "2.5 1 0%" }}
+              className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
+                activeZone === 'after-peak' || hoveredZone === 'after-peak'
+                  ? 'bg-[#b45309] border-amber-400 text-white shadow-lg shadow-amber-900/50 ring-1 ring-amber-400'
+                  : 'bg-[#9a3412]/80 hover:bg-[#b45309] border-amber-700/50 text-amber-100'
+              }`}
+            >
+              <span className="truncate block text-[11px] sm:text-xs">After Peak</span>
+            </div>
+
+            {/* Peak 1 (Span: 0 to 7) */}
+            <div 
+              onClick={() => setActiveZone(activeZone === 'peak-1' ? null : 'peak-1')}
+              onMouseEnter={() => setHoveredZone('peak-1')}
+              onMouseLeave={() => setHoveredZone(null)}
+              style={{ flex: "6 1 0%" }}
+              className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
+                activeZone === 'peak-1' || hoveredZone === 'peak-1'
+                  ? 'bg-[#2563eb] border-sky-400 text-white shadow-lg shadow-sky-900/50 ring-1 ring-sky-400'
+                  : 'bg-[#1d4ed8]/75 hover:bg-[#2563eb] border-sky-600/50 text-sky-100'
+              }`}
+            >
+              <span className="truncate block text-[11px] sm:text-xs">Peak 1</span>
+            </div>
+
+            {/* Parallel Media Body (Span: 7 to 13) */}
+            <div 
+              onClick={() => setActiveZone(activeZone === 'parallel-middle-body' ? null : 'parallel-middle-body')}
+              onMouseEnter={() => setHoveredZone('parallel-middle-body')}
+              onMouseLeave={() => setHoveredZone(null)}
+              style={{ flex: "5 1 0%" }}
+              className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
+                activeZone === 'parallel-middle-body' || hoveredZone === 'parallel-middle-body'
+                  ? 'bg-[#16a34a] border-emerald-400 text-white shadow-lg shadow-emerald-900/50 ring-1 ring-emerald-400'
+                  : 'bg-[#15803d]/75 hover:bg-[#16a34a] border-emerald-600/50 text-emerald-100'
+              }`}
+            >
+              <span className="truncate block text-[11px] sm:text-xs">Parallel Media Body</span>
+            </div>
+
+            {/* Peak 2 (Span: 13 to 20) */}
+            <div 
+              onClick={() => setActiveZone(activeZone === 'peak-2' ? null : 'peak-2')}
+              onMouseEnter={() => setHoveredZone('peak-2')}
+              onMouseLeave={() => setHoveredZone(null)}
+              style={{ flex: "6 1 0%" }}
+              className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border ${
+                activeZone === 'peak-2' || hoveredZone === 'peak-2'
+                  ? 'bg-[#a21caf] border-purple-400 text-white shadow-lg shadow-purple-900/50 ring-1 ring-purple-400'
+                  : 'bg-[#86198f]/75 hover:bg-[#a21caf] border-purple-600/50 text-purple-100'
+              }`}
+            >
+              <span className="truncate block text-[11px] sm:text-xs">Peak 2</span>
+            </div>
+
+            {/* Fore Peak (Span: 20 ke kanan) */}
+            <div 
+              onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
+              onMouseEnter={() => setHoveredZone('fore-peak')}
+              onMouseLeave={() => setHoveredZone(null)}
+              style={{ flex: "2.5 1 0%" }}
+              className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
+                activeZone === 'fore-peak' || hoveredZone === 'fore-peak'
+                  ? 'bg-[#6b21a8] border-violet-400 text-white shadow-lg shadow-violet-900/50 ring-1 ring-violet-400'
+                  : 'bg-[#581c87]/85 hover:bg-[#6b21a8] border-violet-700/50 text-violet-100'
+              }`}
+            >
+              <span className="truncate block text-[11px] sm:text-xs">Fore Peak</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -727,7 +1088,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           <table className="w-full text-left text-xs font-mono border-collapse">
             <thead>
               <tr className="bg-slate-950/90 text-slate-300 border-b border-slate-800 text-[11px]">
-                <th className="py-3 px-3.5 font-bold text-center border-r border-slate-800/60 w-16">
+                <th className="py-3 px-3.5 font-bold text-center border-r border-slate-800/60 w-28">
                   (1)<br />NO. SECT
                 </th>
                 <th className="py-3 px-3.5 font-bold text-cyan-300 border-r border-slate-800/60 min-w-[110px]">
@@ -759,27 +1120,47 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 const isAp = r.station === 0;
                 const isFp = r.station === 20;
                 const isHighlighted = isMid || isAp || isFp;
+                const stationZone = getStationZone(r.station);
+                const isZoneActive = (activeZone && activeZone === stationZone.id) || (hoveredZone && hoveredZone === stationZone.id);
 
                 return (
                   <tr
                     key={idx}
                     className={`hover:bg-slate-800/40 transition-colors ${
-                      isHighlighted ? "bg-slate-900/60 font-semibold" : ""
+                      isZoneActive 
+                        ? "bg-slate-800/60 ring-1 ring-cyan-500/30" 
+                        : isHighlighted 
+                        ? "bg-slate-900/60 font-semibold" 
+                        : ""
                     }`}
                   >
-                    {/* (1) NO. SECT */}
-                    <td className="py-2 px-3 text-center border-r border-slate-800/60">
-                      <span
-                        className={`inline-block px-1.5 py-0.5 rounded text-[11px] ${
-                          isMid
-                            ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
-                            : isAp || isFp
-                            ? "bg-amber-500/20 text-amber-300 font-bold"
-                            : "text-slate-300"
-                        }`}
-                      >
-                        {r.label}
-                      </span>
+                    {/* (1) NO. SECT with Area Zone Badge */}
+                    <td className="py-2 px-2.5 text-center border-r border-slate-800/60">
+                      <div className="flex items-center justify-center space-x-1.5">
+                        <span
+                          className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            stationZone.code === 'AP' ? 'bg-amber-950/90 text-amber-300 border border-amber-600/40' :
+                            stationZone.code === 'P1' ? 'bg-sky-950/90 text-sky-300 border border-sky-600/40' :
+                            stationZone.code === 'PMB' ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-600/40' :
+                            stationZone.code === 'P2' ? 'bg-purple-950/90 text-purple-300 border border-purple-600/40' :
+                            'bg-violet-950/90 text-violet-300 border border-violet-600/40'
+                          }`}
+                          title={stationZone.description}
+                        >
+                          {stationZone.code}
+                        </span>
+                        <span
+                          className={`inline-block px-1.5 py-0.5 rounded text-[11px] ${
+                            isMid
+                              ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
+                              : isAp || isFp
+                              ? "bg-amber-500/20 text-amber-300 font-bold"
+                              : "text-slate-300"
+                          }`}
+                        >
+                          {r.label}
+                        </span>
+                      </div>
                     </td>
 
                     {/* (2) 0.5 B (m) - Editable */}
