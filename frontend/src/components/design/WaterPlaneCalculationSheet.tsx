@@ -385,9 +385,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     const svgP = pt.matrixTransform(screenCTM.inverse());
     
     const maxHalfB = BWL / 2;
-    // Y formula: baseline is at Y = 26.00, max breadth is at Y = 3.00 (span = 23.00)
-    // halfB = maxHalfB * (26.00 - svgP.y) / 23.00
-    let newHalfB = maxHalfB * (26.00 - svgP.y) / 23.00;
+    // Y formula in SVG: Y(b) = 48.00 - (b / 8.00) * 38.00
+    // Inverse: b = 8.00 * (48.00 - svgP.y) / 38.00
+    let newHalfB = 8.00 * (48.00 - svgP.y) / 38.00;
     
     // Clamp between 0 and maximum half breadth
     newHalfB = Math.max(0, Math.min(maxHalfB, newHalfB));
