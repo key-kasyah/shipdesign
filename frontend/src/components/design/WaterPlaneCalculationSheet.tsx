@@ -890,24 +890,27 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 />
               ))}
 
-              {/* 5. WATERLINE CURVE (SMOOTH MONOTONIC CUBIC INTERPOLATION) */}
+              {/* 5. WATERLINE CURVE (SMOOTH MONOTONIC CUBIC INTERPOLATION FROM AP TO FP) */}
               {(() => {
-                const maxHalfB = BWL / 2 || 1;
-                const curvePts = calculatedRows.map((r) => ({
+                // Filter stasiun hanya dari AP (Station 0.00) sampai FP (Station 20.00)
+                const hullRows = calculatedRows.filter(r => r.station >= 0);
+                const curvePts = hullRows.map((r) => ({
                   x: 14.0 + (r.station / 20.0) * 180.0,
                   y: 48.0 - (r.halfBreadth / 8.0) * 38.0
                 }));
                 const smoothPath = getSmoothPathD(curvePts);
+                const apPt = curvePts[0];
+
                 return (
                   <g>
-                    {/* Area fill */}
+                    {/* Area fill - tertutup rapat dari garis AP ke FP */}
                     <path
-                      d={`M 14,48 ${smoothPath} L 194,48 Z`}
+                      d={`M 14,48 L ${apPt.x},${apPt.y} ${smoothPath} L 194,48 Z`}
                       fill="rgba(6, 182, 212, 0.08)"
                     />
-                    {/* Waterline 6 Fair Stroke */}
+                    {/* Waterline 6 Fair Stroke - berawal tepat di AP dan berakhir di FP */}
                     <path
-                      d={`M 14,48 ${smoothPath}`}
+                      d={`M ${apPt.x},${apPt.y} ${smoothPath}`}
                       fill="none"
                       stroke="#38bdf8"
                       strokeWidth="0.45"
@@ -917,8 +920,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 );
               })()}
 
-              {/* 6. CONTROL POINTS (Interactive Drag in Edit Mode) */}
-              {!isPreviewMode && calculatedRows.map((r, idx) => {
+              {/* 6. CONTROL POINTS (Interactive Drag from AP to FP) */}
+              {!isPreviewMode && calculatedRows.filter(r => r.station >= 0).map((r, idx) => {
                 const x = 14.0 + (r.station / 20.0) * 180.0;
                 const y = 48.0 - (r.halfBreadth / 8.0) * 38.0;
                 const isLocked = r.station >= 7 && r.station <= 13;
