@@ -14,8 +14,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ship Design AI Platform",
-  description: "Platform Rancang Bangun Kapal Terintegrasi AI - Kebutuhan Kapal (Tahap 1)",
+  title: "Ship Design AI — Universitas Hasanuddin",
+  description: "Platform Rancang Bangun Kapal Terintegrasi AI — Departemen Teknik Perkapalan UNHAS",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/unhas-logo.png", type: "image/png" }
+    ],
+    shortcut: "/unhas-logo.png",
+    apple: "/unhas-logo.png",
+  }
 };
 
 export default function RootLayout({
