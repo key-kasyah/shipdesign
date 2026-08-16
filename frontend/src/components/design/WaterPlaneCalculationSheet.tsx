@@ -1192,33 +1192,33 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           })}
         </div>
 
-        {/* Responsive Table Container */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-inner no-scrollbar">
-          <table className="w-full text-left text-xs font-mono border-collapse">
-            <thead>
-              <tr className="bg-slate-950/90 text-slate-300 border-b border-slate-800 text-[11px]">
-                <th className="py-3 px-3.5 font-bold text-center border-r border-slate-800/60 w-28">
+        {/* Responsive Fixed Table Container with Sticky Header */}
+        <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl border border-slate-800 shadow-inner">
+          <table className="w-full text-left text-xs font-mono border-collapse table-fixed min-w-[780px]">
+            <thead className="sticky top-0 z-20 shadow-md">
+              <tr className="bg-slate-950 text-slate-300 border-b border-slate-800 text-[11px]">
+                <th className="py-3 px-2 font-bold text-center border-r border-slate-800/60 w-[12%]">
                   (1)<br />NO. SECT
                 </th>
-                <th className="py-3 px-3.5 font-bold text-cyan-300 border-r border-slate-800/60 min-w-[110px]">
+                <th className="py-3 px-2 font-bold text-cyan-300 border-r border-slate-800/60 w-[14%]">
                   (2)<br />0.5 B (m)
                 </th>
-                <th className="py-3 px-3 font-semibold text-slate-400 text-center border-r border-slate-800/60 w-16">
+                <th className="py-3 px-2 font-semibold text-slate-400 text-center border-r border-slate-800/60 w-[8%]">
                   (3)<br />MS
                 </th>
-                <th className="py-3 px-3 font-bold text-emerald-400 text-right border-r border-slate-800/60 min-w-[110px]">
+                <th className="py-3 px-2 font-bold text-emerald-400 text-right border-r border-slate-800/60 w-[13%]">
                   (4) = (2)&times;(3)<br />0.5B &middot; MS
                 </th>
-                <th className="py-3 px-3 font-semibold text-amber-400 text-center border-r border-slate-800/60 w-20">
+                <th className="py-3 px-2 font-semibold text-amber-400 text-center border-r border-slate-800/60 w-[9%]">
                   (5)<br />FM
                 </th>
-                <th className="py-3 px-3 font-bold text-indigo-300 text-right border-r border-slate-800/60 min-w-[110px]">
+                <th className="py-3 px-2 font-bold text-indigo-300 text-right border-r border-slate-800/60 w-[14%]">
                   (6) = (4)&times;(5)<br />SMA
                 </th>
-                <th className="py-3 px-3 font-bold text-purple-300 text-right border-r border-slate-800/60 min-w-[120px]">
+                <th className="py-3 px-2 font-bold text-purple-300 text-right border-r border-slate-800/60 w-[15%]">
                   (7) = (2)&sup3;&times;(3)<br />(0.5B)&sup3; &middot; MS
                 </th>
-                <th className="py-3 px-3 font-bold text-rose-300 text-right min-w-[130px]">
+                <th className="py-3 px-2 font-bold text-rose-300 text-right w-[15%]">
                   (8) = (4)&times;(5)&sup2;<br />0.5B &middot; MS &middot; FM&sup2;
                 </th>
               </tr>
