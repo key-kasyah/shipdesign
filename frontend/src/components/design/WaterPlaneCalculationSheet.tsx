@@ -711,13 +711,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
       </div>
 
-      {/* VISUAL WATERPLANE DWL PLOT */}
+      {/* VISUAL WATERPLANE DWL PLOT - BLUEPRINT HALF-BREADTH PLAN */}
       <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
             <TrendingUp size={16} className="text-cyan-400" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Plot Visual Garis Air (DWL Half-Breadth Plan & Posisi LCF)
+              Plot Visual Garis Air (DWL Half-Breadth Plan &amp; Posisi LCF)
             </h3>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
@@ -738,261 +738,201 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           {/* Floating Preview Toggle Button */}
           <button
             onClick={() => setIsPreviewMode(!isPreviewMode)}
-            className="absolute top-3 right-3 z-20 p-2 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded-lg text-slate-300 hover:text-cyan-300 transition-all opacity-80 group-hover:opacity-100 shadow-lg backdrop-blur-sm cursor-pointer"
-            title={isPreviewMode ? "Tampilkan Titik Ordinat (Edit Mode)" : "Sembunyikan Titik Ordinat (Preview Mode)"}
+            className="absolute top-3 right-3 z-20 p-2 bg-slate-900/90 hover:bg-slate-800 border border-slate-700/80 rounded-lg text-slate-300 hover:text-cyan-300 transition-all shadow-lg backdrop-blur-sm cursor-pointer"
+            title={isPreviewMode ? "Tampilkan Titik & Garis Bantu (Edit Mode)" : "Sembunyikan Titik & Garis Bantu (Preview Mode)"}
           >
             {isPreviewMode ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
 
-          {/* SVG Canvas (Tall & Clear Proportions - Tidak Gepeng) */}
-          <div className="w-full h-56 sm:h-64 relative">
+          {/* SVG Canvas Matching the Reference Blueprint */}
+          <div className="w-full h-72 sm:h-80 md:h-96 relative">
             <svg 
               ref={svgRef}
               className="w-full h-full select-none" 
-              viewBox="-4 -1 122 34" 
+              viewBox="-12 -2 214 76" 
               preserveAspectRatio="none"
               style={{ touchAction: "none" }}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             >
-              {/* 1. AREA BACKGROUND ZONES & SHADINGS (HANYA DITAMPILKAN SAAT BUKAN PREVIEW MODE) */}
-              {!isPreviewMode && (
-                <>
-                  {/* After Peak (AP) Zone */}
-                  <g 
-                    onMouseEnter={() => setHoveredZone("after-peak")}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    className="cursor-pointer transition-opacity"
-                    opacity={activeZone && activeZone !== "after-peak" ? 0.35 : 1}
-                  >
-                    <rect
-                      x="0.00"
-                      y="1.5"
-                      width="14.00"
-                      height="24.5"
-                      fill="rgba(180, 83, 9, 0.48)"
-                    />
-                    <text
-                      x="7.00"
-                      y="19"
-                      fill="rgba(139, 26, 26, 0.75)"
-                      fontSize="8.5"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                      fontFamily="serif"
-                      style={{ pointerEvents: "none" }}
+              <defs>
+                {/* Arrow Markers for Dimension Lines */}
+                <marker id="dim-arrow-orange-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
+                  <path d="M 9 1.5 L 1 5 L 9 8.5 z" fill="#f97316" />
+                </marker>
+                <marker id="dim-arrow-orange-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
+                  <path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#f97316" />
+                </marker>
+                <marker id="dim-arrow-green-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
+                  <path d="M 9 1.5 L 1 5 L 9 8.5 z" fill="#10b981" />
+                </marker>
+                <marker id="dim-arrow-green-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
+                  <path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#10b981" />
+                </marker>
+                <marker id="dim-arrow-purple-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
+                  <path d="M 9 1.5 L 1 5 L 9 8.5 z" fill="#c084fc" />
+                </marker>
+                <marker id="dim-arrow-purple-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
+                  <path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#c084fc" />
+                </marker>
+              </defs>
+
+              {/* 1. Y-AXIS GRID & LABELS (0 to 8m) */}
+              <text 
+                x="-8" 
+                y="28" 
+                fill="#94a3b8" 
+                fontSize="2.6" 
+                fontFamily="monospace" 
+                transform="rotate(-90 -8 28)" 
+                textAnchor="middle"
+              >
+                Half-Breadth (m)
+              </text>
+
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((tick) => {
+                const yPos = 48.0 - (tick / 8.0) * 38.0;
+                return (
+                  <g key={`ytick-${tick}`}>
+                    <text 
+                      x="-1.5" 
+                      y={yPos + 0.9} 
+                      fill="#94a3b8" 
+                      fontSize="2.4" 
+                      fontFamily="monospace" 
+                      textAnchor="end"
                     >
-                      AP
+                      {tick}
                     </text>
-                  </g>
-
-                  {/* Peak 1 (P1) Zone */}
-                  <g 
-                    onMouseEnter={() => setHoveredZone("peak-1")}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    className="cursor-pointer transition-opacity"
-                    opacity={activeZone && activeZone !== "peak-1" ? 0.35 : 1}
-                  >
-                    <rect
-                      x="14.00"
-                      y="1.5"
-                      width="30.10"
-                      height="24.5"
-                      fill="rgba(2, 132, 199, 0.38)"
-                    />
-                    <text
-                      x="29.05"
-                      y="19"
-                      fill="rgba(139, 26, 26, 0.75)"
-                      fontSize="10.5"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                      fontFamily="serif"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      P1
-                    </text>
-                  </g>
-
-                  {/* Parallel Media Body (PMB) Zone */}
-                  <g 
-                    onMouseEnter={() => setHoveredZone("parallel-middle-body")}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    className="cursor-pointer transition-opacity"
-                    opacity={activeZone && activeZone !== "parallel-middle-body" ? 0.35 : 1}
-                  >
-                    <rect
-                      x="44.10"
-                      y="1.5"
-                      width="25.80"
-                      height="24.5"
-                      fill="rgba(22, 163, 74, 0.38)"
+                    <line 
+                      x1="2" 
+                      y1={yPos} 
+                      x2="198" 
+                      y2={yPos} 
+                      stroke="#1e293b" 
+                      strokeWidth="0.18" 
+                      strokeDasharray="1,1" 
                     />
                   </g>
+                );
+              })}
 
-                  {/* Peak 2 (P2) Zone */}
-                  <g 
-                    onMouseEnter={() => setHoveredZone("peak-2")}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    className="cursor-pointer transition-opacity"
-                    opacity={activeZone && activeZone !== "peak-2" ? 0.35 : 1}
-                  >
-                    <rect
-                      x="69.90"
-                      y="1.5"
-                      width="30.10"
-                      height="24.5"
-                      fill="rgba(168, 85, 247, 0.40)"
-                    />
-                    <text
-                      x="84.95"
-                      y="19"
-                      fill="rgba(139, 26, 26, 0.75)"
-                      fontSize="10.5"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                      fontFamily="serif"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      P2
-                    </text>
-                  </g>
+              {/* 2. BASELINE CL (CENTERLINE) */}
+              <line x1="2" y1="48" x2="200" y2="48" stroke="#475569" strokeWidth="0.4" strokeDasharray="1.5,1.5" />
 
-                  {/* Fore Peak (FP) Zone */}
-                  <g 
-                    onMouseEnter={() => setHoveredZone("fore-peak")}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    className="cursor-pointer transition-opacity"
-                    opacity={activeZone && activeZone !== "fore-peak" ? 0.35 : 1}
-                  >
-                    <rect
-                      x="100.00"
-                      y="1.5"
-                      width="14.00"
-                      height="24.5"
-                      fill="rgba(126, 34, 206, 0.50)"
-                    />
-                    <text
-                      x="107.00"
-                      y="19"
-                      fill="rgba(139, 26, 26, 0.85)"
-                      fontSize="8.5"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                      fontFamily="serif"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      FP
-                    </text>
-                  </g>
-                </>
-              )}
-
-              {/* Horizontal Reference Grid Lines (0.5B, 75%, 50%, 25%) */}
-              {[3.0, 8.75, 14.5, 20.25].map((gridY, i) => (
-                <line
-                  key={`horiz-grid-${i}`}
-                  x1="-4"
-                  y1={gridY}
-                  x2="118"
-                  y2={gridY}
-                  stroke={isPreviewMode ? "rgba(51, 65, 85, 0.4)" : "#334155"}
-                  strokeWidth="0.1"
-                  strokeDasharray="1,1"
-                />
-              ))}
-
-              {/* Centerline Baseline */}
-              <line x1="-4" y1="26" x2="118" y2="26" stroke="#475569" strokeWidth="0.3" strokeDasharray="1,1" />
-
-              {/* Standard Station Grid Lines & X-Axis Labels */}
-              {calculatedRows.map((r, idx) => {
-                const normX = 14.00 + (r.station / 20.0) * 86.00;
-                const isMidship = r.station === 10;
-                const isAp = r.station === 0;
-                const isFp = r.station === 20;
+              {/* 3. X-AXIS STATION VERTICAL GRID & LABELS */}
+              {DEFAULT_STATIONS_CONFIG.map((cfg) => {
+                const xPos = 14.0 + (cfg.station / 20.0) * 180.0;
+                const isMidship = cfg.station === 10;
+                const isAp = cfg.station === 0;
+                const isFp = cfg.station === 20;
 
                 return (
-                  <g key={idx}>
-                    <line
-                      x1={normX}
-                      y1="1.5"
-                      x2={normX}
-                      y2="26"
-                      stroke={isMidship ? "#38bdf8" : isAp || isFp ? "#64748b" : "rgba(51, 65, 85, 0.35)"}
-                      strokeWidth={isMidship ? "0.3" : "0.1"}
+                  <g key={`station-${cfg.station}`}>
+                    {/* Vertical grid line */}
+                    <line 
+                      x1={xPos} 
+                      y1="10" 
+                      x2={xPos} 
+                      y2="48" 
+                      stroke={isMidship ? "#06b6d4" : "rgba(30, 41, 59, 0.7)"} 
+                      strokeWidth={isMidship ? "0.35" : "0.15"} 
+                      strokeDasharray={isMidship ? "none" : "1,1"}
                     />
-                    {/* Station label */}
-                    {(r.station === 0 || r.station === 5 || r.station === 10 || r.station === 15 || r.station === 20) && (
-                      <text
-                        x={normX}
-                        y="29.5"
-                        fill={isAp || isFp ? "#94a3b8" : "#64748b"}
-                        fontSize={isAp || isFp || isMidship ? "2.6" : "2.2"}
-                        fontWeight={isAp || isFp || isMidship ? "bold" : "normal"}
+                    {/* Station tick text along baseline */}
+                    <text 
+                      x={xPos} 
+                      y="51.5" 
+                      fill={isAp || isFp || isMidship ? "#e2e8f0" : "#64748b"} 
+                      fontSize={isAp || isFp || isMidship ? "2.6" : "2.2"} 
+                      fontWeight={isAp || isFp || isMidship ? "bold" : "normal"}
+                      fontFamily="monospace" 
+                      textAnchor="middle"
+                    >
+                      {cfg.label}
+                    </text>
+                    {/* Extra MID label under station 10 */}
+                    {isMidship && (
+                      <text 
+                        x={xPos} 
+                        y="54.5" 
+                        fill="#06b6d4" 
+                        fontSize="2.6" 
+                        fontWeight="bold" 
+                        fontFamily="monospace" 
                         textAnchor="middle"
-                        fontFamily="monospace"
                       >
-                        {r.station === 0 ? "AP" : r.station === 20 ? "FP" : r.station === 10 ? "MID" : r.station}
+                        MID
                       </text>
                     )}
                   </g>
                 );
               })}
 
-              {/* RED VERTICAL DIVIDER LINES (HANYA SAAT EDIT/NON-PREVIEW MODE) */}
-              {!isPreviewMode && [
-                { x: 0.00, key: "div-left" },
-                { x: 14.00, key: "div-ap" },
-                { x: 44.10, key: "div-st7" },
-                { x: 69.90, key: "div-st13" },
-                { x: 100.00, key: "div-fp" },
-                { x: 114.00, key: "div-right" }
-              ].map((div) => (
+              {/* 4. ZONE VERTICAL EXTENSION GUIDELINES (Connecting to bottom bar) */}
+              {[
+                { x: 14.0, key: "guideline-ap" },
+                { x: 59.0, key: "guideline-p1" },
+                { x: 149.0, key: "guideline-pmb" },
+                { x: 176.0, key: "guideline-p2" },
+                { x: 194.0, key: "guideline-fp" }
+              ].map((line) => (
                 <line
-                  key={div.key}
-                  x1={div.x}
-                  y1="1.5"
-                  x2={div.x}
-                  y2="26"
-                  stroke="#991b1b"
+                  key={line.key}
+                  x1={line.x}
+                  y1="10"
+                  x2={line.x}
+                  y2="61"
+                  stroke="#475569"
                   strokeWidth="0.25"
+                  strokeDasharray="1.5,1.5"
                 />
               ))}
 
-              {/* Waterline Curve Area Fill & Smooth Fairing Stroke (Refined 0.28px stroke) */}
-              <path
-                d={`M ${14.00 + (-0.5 / 20.0) * 86.00},26 ${getSmoothPathD(
-                  calculatedRows.map((r) => ({
-                    x: 14.00 + (r.station / 20.0) * 86.00,
-                    y: 26.00 - (r.halfBreadth / (BWL / 2 || 1)) * 23.00
-                  }))
-                )} L 100,26 Z`}
-                fill="rgba(6, 182, 212, 0.12)"
-                stroke="#38bdf8"
-                strokeWidth="0.28"
-                strokeLinecap="round"
-              />
-
-              {/* Station Control Points (Interactive Drag for non-PMB) */}
-              {!isPreviewMode && calculatedRows.map((r, idx) => {
-                const x = 14.00 + (r.station / 20.0) * 86.00;
+              {/* 5. WATERLINE CURVE (SMOOTH MONOTONIC CUBIC INTERPOLATION) */}
+              {(() => {
                 const maxHalfB = BWL / 2 || 1;
-                const y = 26.00 - (r.halfBreadth / maxHalfB) * 23.00;
-                
+                const curvePts = calculatedRows.map((r) => ({
+                  x: 14.0 + (r.station / 20.0) * 180.0,
+                  y: 48.0 - (r.halfBreadth / 8.0) * 38.0
+                }));
+                const smoothPath = getSmoothPathD(curvePts);
+                return (
+                  <g>
+                    {/* Area fill */}
+                    <path
+                      d={`M 14,48 ${smoothPath} L 194,48 Z`}
+                      fill="rgba(6, 182, 212, 0.08)"
+                    />
+                    {/* Waterline 6 Fair Stroke */}
+                    <path
+                      d={`M 14,48 ${smoothPath}`}
+                      fill="none"
+                      stroke="#38bdf8"
+                      strokeWidth="0.45"
+                      strokeLinecap="round"
+                    />
+                  </g>
+                );
+              })()}
+
+              {/* 6. CONTROL POINTS (Interactive Drag in Edit Mode) */}
+              {!isPreviewMode && calculatedRows.map((r, idx) => {
+                const x = 14.0 + (r.station / 20.0) * 180.0;
+                const y = 48.0 - (r.halfBreadth / 8.0) * 38.0;
                 const isLocked = r.station >= 7 && r.station <= 13;
                 const isDragging = draggingStation === r.station;
-                
+
                 return (
                   <circle 
                     key={idx} 
                     cx={x} 
                     cy={y} 
-                    r={isDragging ? "1.0" : isLocked ? "0.35" : "0.55"} 
+                    r={isDragging ? "1.1" : isLocked ? "0.4" : "0.6"} 
                     fill={isLocked ? "#ef4444" : isDragging ? "#facc15" : "#38bdf8"} 
-                    stroke={isLocked ? "transparent" : isDragging ? "#ffffff" : "#ffffff"} 
-                    strokeWidth={isDragging ? "0.2" : "0.08"}
+                    stroke={isLocked ? "transparent" : "#ffffff"} 
+                    strokeWidth={isDragging ? "0.2" : "0.1"}
                     className={
                       isLocked 
                         ? "cursor-not-allowed opacity-60 pointer-events-none" 
@@ -1006,129 +946,141 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 );
               })}
 
-              {/* LCF Marker (Longitudinal Center of Flotation) */}
+              {/* 7. LCF MARKER (Longitudinal Center of Flotation) */}
               {(() => {
                 const lcfStation = 10 + (LCF / (l || 1));
-                const lcfX = 14.00 + (lcfStation / 20.0) * 86.00;
+                const lcfX = 14.0 + (lcfStation / 20.0) * 180.0;
                 return (
                   <g>
-                    <line x1={lcfX} y1="0.5" x2={lcfX} y2="26" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="1,1" />
+                    {/* Vertical dashed line */}
+                    <line x1={lcfX} y1="6" x2={lcfX} y2="48" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="1.5,1.5" />
+                    {/* Upward Amber Arrow */}
                     <polygon
-                      points={`${lcfX},1 ${lcfX - 1.2},3 ${lcfX + 1.2},3`}
+                      points={`${lcfX},6 ${lcfX - 1.4},8.5 ${lcfX + 1.4},8.5`}
                       fill="#f59e0b"
                     />
-                    <text x={lcfX} y="6" fill="#f59e0b" fontSize="2.2" textAnchor="middle" fontWeight="bold">
+                    {/* LCF Text */}
+                    <text x={lcfX} y="4.5" fill="#f59e0b" fontSize="2.8" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
                       LCF
                     </text>
                   </g>
                 );
               })()}
-            </svg>
 
-            {/* DYNAMIC FLOATING TOOLTIP ON HOVER (MATCHING USER SCREENSHOT) */}
-            {(hoveredZone || activeZone) && (
-              <div className="absolute bottom-2 right-3 z-30 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
-                {(() => {
-                  const targetZoneId = hoveredZone || activeZone;
-                  const zoneObj = AREA_ZONES.find(z => z.id === targetZoneId);
-                  if (!zoneObj) return null;
-                  return (
-                    <div className="bg-slate-950/95 border border-slate-700/90 rounded-xl px-3.5 py-1.5 text-xs font-mono shadow-2xl backdrop-blur-md text-white flex items-center space-x-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: zoneObj.bgFill.replace(/0\.\d+/, '1') }} />
-                      <span className="font-semibold text-slate-200">{zoneObj.description}</span>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
+              {/* 8. 5-SEGMENT AREA ZONES BAR */}
+              {/* After Peak */}
+              <g 
+                onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
+                className="cursor-pointer transition-all"
+              >
+                <rect x="0" y="56" width="14" height="4.5" rx="1" fill="#78350f" stroke="#9a3412" strokeWidth="0.2" />
+                <text x="7" y="59.2" fill="#fed7aa" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                  After Peak
+                </text>
+              </g>
+
+              {/* Peak 1 */}
+              <g 
+                onClick={() => setActiveZone(activeZone === 'peak-1' ? null : 'peak-1')}
+                className="cursor-pointer transition-all"
+              >
+                <rect x="14" y="56" width="45" height="4.5" rx="1" fill="#0c4a6e" stroke="#0284c7" strokeWidth="0.2" />
+                <text x="36.5" y="59.2" fill="#bae6fd" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                  Peak 1
+                </text>
+              </g>
+
+              {/* Parallel Media Body */}
+              <g 
+                onClick={() => setActiveZone(activeZone === 'parallel-middle-body' ? null : 'parallel-middle-body')}
+                className="cursor-pointer transition-all"
+              >
+                <rect x="59" y="56" width="90" height="4.5" rx="1" fill="#064e3b" stroke="#059669" strokeWidth="0.2" />
+                <text x="104" y="59.2" fill="#a7f3d0" fontSize="2.2" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                  Parallel Media Body
+                </text>
+              </g>
+
+              {/* Peak 2 */}
+              <g 
+                onClick={() => setActiveZone(activeZone === 'peak-2' ? null : 'peak-2')}
+                className="cursor-pointer transition-all"
+              >
+                <rect x="149" y="56" width="27" height="4.5" rx="1" fill="#4a044e" stroke="#c026d3" strokeWidth="0.2" />
+                <text x="162.5" y="59.2" fill="#f5d0fe" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                  Peak 2
+                </text>
+              </g>
+
+              {/* Fore Peak */}
+              <g 
+                onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
+                className="cursor-pointer transition-all"
+              >
+                <rect x="176" y="56" width="18" height="4.5" rx="1" fill="#2e1065" stroke="#7c3aed" strokeWidth="0.2" />
+                <text x="185" y="59.2" fill="#ddd6fe" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                  Fore Peak
+                </text>
+              </g>
+
+              {/* 9. THREE DUAL-ENDED DIMENSION ARROWS WITH DETAILED LABELS */}
+              {/* Buritan Arrow */}
+              <line 
+                x1="14" 
+                y1="63.5" 
+                x2="59" 
+                y2="63.5" 
+                stroke="#f97316" 
+                strokeWidth="0.3" 
+                markerStart="url(#dim-arrow-orange-start)" 
+                markerEnd="url(#dim-arrow-orange-end)" 
+              />
+              <text x="36.5" y="66.5" fill="#f97316" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                Buritan la&apos; = {la_prime.toFixed(4)} m
+              </text>
+
+              {/* Parallel Body Arrow */}
+              <line 
+                x1="59" 
+                y1="63.5" 
+                x2="149" 
+                y2="63.5" 
+                stroke="#10b981" 
+                strokeWidth="0.3" 
+                markerStart="url(#dim-arrow-green-start)" 
+                markerEnd="url(#dim-arrow-green-end)" 
+              />
+              <text x="104" y="66.5" fill="#10b981" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                Bagian Tengah (Parallel Body)
+              </text>
+              <text x="104" y="69.5" fill="#6ee7b7" fontSize="1.8" fontFamily="monospace" textAnchor="middle">
+                9 Interval @ {la_prime.toFixed(4)} m = {(9 * la_prime).toFixed(4)} m
+              </text>
+
+              {/* Haluan Arrow */}
+              <line 
+                x1="149" 
+                y1="63.5" 
+                x2="194" 
+                y2="63.5" 
+                stroke="#c084fc" 
+                strokeWidth="0.3" 
+                markerStart="url(#dim-arrow-purple-start)" 
+                markerEnd="url(#dim-arrow-purple-end)" 
+              />
+              <text x="171.5" y="66.5" fill="#c084fc" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+                Haluan lf = {lf.toFixed(4)} m
+              </text>
+            </svg>
           </div>
 
-          {/* 5-SEGMENT BOTTOM BAR / LEGEND STRIP (HANYA DITAMPILKAN SAAT BUKAN PREVIEW MODE) */}
-          {!isPreviewMode ? (
-            <div className="w-full flex gap-1.5 pt-3 text-xs font-mono select-none">
-              {/* After Peak (Span: Ujung Kiri s/d AP 0) */}
-              <div 
-                onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
-                onMouseEnter={() => setHoveredZone('after-peak')}
-                onMouseLeave={() => setHoveredZone(null)}
-                style={{ flex: "2.5 1 0%" }}
-                className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
-                  activeZone === 'after-peak' || hoveredZone === 'after-peak'
-                    ? 'bg-[#b45309] border-amber-400 text-white shadow-lg shadow-amber-900/50 ring-1 ring-amber-400'
-                    : 'bg-[#9a3412]/80 hover:bg-[#b45309] border-amber-700/50 text-amber-100'
-                }`}
-              >
-                <span className="truncate block text-[11px] sm:text-xs">After Peak</span>
-              </div>
-
-              {/* Peak 1 (Span: 0 to 7) */}
-              <div 
-                onClick={() => setActiveZone(activeZone === 'peak-1' ? null : 'peak-1')}
-                onMouseEnter={() => setHoveredZone('peak-1')}
-                onMouseLeave={() => setHoveredZone(null)}
-                style={{ flex: "6 1 0%" }}
-                className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
-                  activeZone === 'peak-1' || hoveredZone === 'peak-1'
-                    ? 'bg-[#2563eb] border-sky-400 text-white shadow-lg shadow-sky-900/50 ring-1 ring-sky-400'
-                    : 'bg-[#1d4ed8]/75 hover:bg-[#2563eb] border-sky-600/50 text-sky-100'
-                }`}
-              >
-                <span className="truncate block text-[11px] sm:text-xs">Peak 1</span>
-              </div>
-
-              {/* Parallel Media Body (Span: 7 to 13) */}
-              <div 
-                onClick={() => setActiveZone(activeZone === 'parallel-middle-body' ? null : 'parallel-middle-body')}
-                onMouseEnter={() => setHoveredZone('parallel-middle-body')}
-                onMouseLeave={() => setHoveredZone(null)}
-                style={{ flex: "5 1 0%" }}
-                className={`py-2 px-2 rounded-xl text-center font-bold transition-all cursor-pointer border ${
-                  activeZone === 'parallel-middle-body' || hoveredZone === 'parallel-middle-body'
-                    ? 'bg-[#16a34a] border-emerald-400 text-white shadow-lg shadow-emerald-900/50 ring-1 ring-emerald-400'
-                    : 'bg-[#15803d]/75 hover:bg-[#16a34a] border-emerald-600/50 text-emerald-100'
-                }`}
-              >
-                <span className="truncate block text-[11px] sm:text-xs">Parallel Media Body</span>
-              </div>
-
-              {/* Peak 2 (Span: 13 to 20) */}
-              <div 
-                onClick={() => setActiveZone(activeZone === 'peak-2' ? null : 'peak-2')}
-                onMouseEnter={() => setHoveredZone('peak-2')}
-                onMouseLeave={() => setHoveredZone(null)}
-                style={{ flex: "6 1 0%" }}
-                className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border ${
-                  activeZone === 'peak-2' || hoveredZone === 'peak-2'
-                    ? 'bg-[#a21caf] border-purple-400 text-white shadow-lg shadow-purple-900/50 ring-1 ring-purple-400'
-                    : 'bg-[#86198f]/75 hover:bg-[#a21caf] border-purple-600/50 text-purple-100'
-                }`}
-              >
-                <span className="truncate block text-[11px] sm:text-xs">Peak 2</span>
-              </div>
-
-              {/* Fore Peak (Span: 20 ke kanan) */}
-              <div 
-                onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
-                onMouseEnter={() => setHoveredZone('fore-peak')}
-                onMouseLeave={() => setHoveredZone(null)}
-                style={{ flex: "2.5 1 0%" }}
-                className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
-                  activeZone === 'fore-peak' || hoveredZone === 'fore-peak'
-                    ? 'bg-[#6b21a8] border-violet-400 text-white shadow-lg shadow-violet-900/50 ring-1 ring-violet-400'
-                    : 'bg-[#581c87]/85 hover:bg-[#6b21a8] border-violet-700/50 text-violet-100'
-                }`}
-              >
-                <span className="truncate block text-[11px] sm:text-xs">Fore Peak</span>
-              </div>
-            </div>
-          ) : (
-            <div className="w-full flex items-center justify-center pt-3 text-[11px] font-mono text-slate-400 select-none">
-              <span className="flex items-center space-x-2 bg-slate-900/90 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow-inner">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
-                <span className="text-slate-300 font-medium">Mode Preview CAD — Garis Air Bersih (DWL Half-Breadth Plan)</span>
-              </span>
-            </div>
-          )}
+          {/* Mode Preview CAD Indicator Pill */}
+          <div className="w-full flex items-center justify-center pt-2 select-none">
+            <span className="flex items-center space-x-2 bg-slate-900/90 px-4 py-1.5 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300 shadow-inner">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
+              <span>Mode Preview CAD &mdash; Garis Air Bersih (DWL Half-Breadth Plan)</span>
+            </span>
+          </div>
         </div>
       </div>
 
