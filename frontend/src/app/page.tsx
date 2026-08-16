@@ -109,13 +109,12 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/80 pb-5">
         <div className="flex items-center space-x-4">
           <div className="relative w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center p-1 bg-slate-900/90 border border-slate-700/80 shadow-lg shrink-0">
-            <Image 
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
               src="/unhas-logo.png" 
               alt="Logo Universitas Hasanuddin" 
-              width={48} 
-              height={48} 
               className="object-contain w-full h-full"
-              priority
+              loading="eager"
             />
           </div>
           <div>

@@ -216,13 +216,12 @@ export default function DashboardLayout({
         <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 bg-slate-950/40">
           <Link href="/" className="flex items-center space-x-2.5 group">
             <div className="relative w-9 h-9 rounded-lg overflow-hidden flex items-center justify-center p-0.5 bg-slate-950 border border-slate-700/80 shadow-md group-hover:border-cyan-400/60 transition-colors shrink-0">
-              <Image 
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img 
                 src="/unhas-logo.png" 
                 alt="Logo Universitas Hasanuddin" 
-                width={36} 
-                height={36} 
                 className="object-contain w-full h-full"
-                priority
+                loading="eager"
               />
             </div>
             <div className="flex flex-col min-w-0">
