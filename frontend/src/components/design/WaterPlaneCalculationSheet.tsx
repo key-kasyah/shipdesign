@@ -385,9 +385,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     const svgP = pt.matrixTransform(screenCTM.inverse());
     
     const maxHalfB = BWL / 2;
-    // Y formula: baseline is at Y = 19.00, max breadth is at Y = 3.00 (span = 16.00)
-    // halfB = maxHalfB * (19.00 - svgP.y) / 16.00
-    let newHalfB = maxHalfB * (19.00 - svgP.y) / 16.00;
+    // Y formula: baseline is at Y = 26.00, max breadth is at Y = 3.00 (span = 23.00)
+    // halfB = maxHalfB * (26.00 - svgP.y) / 23.00
+    let newHalfB = maxHalfB * (26.00 - svgP.y) / 23.00;
     
     // Clamp between 0 and maximum half breadth
     newHalfB = Math.max(0, Math.min(maxHalfB, newHalfB));
@@ -705,12 +705,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             {isPreviewMode ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
 
-          {/* SVG Canvas (Widescreen 9:1 Aspect Ratio matching true Lines Plan) */}
-          <div className="w-full h-44 sm:h-52 md:h-60 relative">
+          {/* SVG Canvas (Tall & Clear Proportions - Tidak Gepeng) */}
+          <div className="w-full h-56 sm:h-64 relative">
             <svg 
               ref={svgRef}
               className="w-full h-full select-none" 
-              viewBox="0 0 215 24" 
+              viewBox="-4 -1 122 34" 
               preserveAspectRatio="none"
               style={{ touchAction: "none" }}
               onPointerMove={handlePointerMove}
@@ -718,7 +718,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               onPointerLeave={handlePointerUp}
             >
               {/* 1. AREA BACKGROUND ZONES & SHADINGS */}
-              {/* After Peak (AP) Zone: X = 0.00 to 20.00 (St. 0.00 AP) */}
+              {/* After Peak (AP) Zone: Dari Ujung Kiri ke Garis AP (St. 0.00) */}
               <g 
                 onMouseEnter={() => setHoveredZone("after-peak")}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -728,16 +728,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 <rect
                   x="0.00"
                   y="1.5"
-                  width="20.00"
-                  height="17.5"
+                  width="14.00"
+                  height="24.5"
                   fill="rgba(180, 83, 9, 0.48)"
                 />
                 {/* Watermark AP */}
                 <text
-                  x="10.00"
-                  y="13.5"
+                  x="7.00"
+                  y="19"
                   fill="rgba(139, 26, 26, 0.75)"
-                  fontSize="7.5"
+                  fontSize="8.5"
                   fontWeight="bold"
                   textAnchor="middle"
                   fontFamily="serif"
@@ -747,7 +747,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </text>
               </g>
 
-              {/* Peak 1 (P1) Zone: X = 20.00 (AP) s/d 81.25 (St. 7.00) */}
+              {/* Peak 1 (P1) Zone: Station 0.00 (AP) s/d 7.00 */}
               <g 
                 onMouseEnter={() => setHoveredZone("peak-1")}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -755,18 +755,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 opacity={activeZone && activeZone !== "peak-1" ? 0.35 : 1}
               >
                 <rect
-                  x="20.00"
+                  x="14.00"
                   y="1.5"
-                  width="61.25"
-                  height="17.5"
+                  width="30.10"
+                  height="24.5"
                   fill="rgba(2, 132, 199, 0.38)"
                 />
                 {/* Watermark P1 */}
                 <text
-                  x="50.62"
-                  y="13.5"
+                  x="29.05"
+                  y="19"
                   fill="rgba(139, 26, 26, 0.75)"
-                  fontSize="9.0"
+                  fontSize="10.5"
                   fontWeight="bold"
                   textAnchor="middle"
                   fontFamily="serif"
@@ -776,7 +776,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </text>
               </g>
 
-              {/* Parallel Media Body (PMB) Zone: X = 81.25 (St. 7.00) s/d 133.75 (St. 13.00) */}
+              {/* Parallel Media Body (PMB) Zone: Station 7.00 s/d 13.00 */}
               <g 
                 onMouseEnter={() => setHoveredZone("parallel-middle-body")}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -784,15 +784,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 opacity={activeZone && activeZone !== "parallel-middle-body" ? 0.35 : 1}
               >
                 <rect
-                  x="81.25"
+                  x="44.10"
                   y="1.5"
-                  width="52.50"
-                  height="17.5"
+                  width="25.80"
+                  height="24.5"
                   fill="rgba(22, 163, 74, 0.38)"
                 />
               </g>
 
-              {/* Peak 2 (P2) Zone: X = 133.75 (St. 13.00) s/d 195.00 (St. 20.00 FP) */}
+              {/* Peak 2 (P2) Zone: Station 13.00 s/d 20.00 (FP) */}
               <g 
                 onMouseEnter={() => setHoveredZone("peak-2")}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -800,18 +800,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 opacity={activeZone && activeZone !== "peak-2" ? 0.35 : 1}
               >
                 <rect
-                  x="133.75"
+                  x="69.90"
                   y="1.5"
-                  width="61.25"
-                  height="17.5"
+                  width="30.10"
+                  height="24.5"
                   fill="rgba(168, 85, 247, 0.40)"
                 />
                 {/* Watermark P2 */}
                 <text
-                  x="164.38"
-                  y="13.5"
+                  x="84.95"
+                  y="19"
                   fill="rgba(139, 26, 26, 0.75)"
-                  fontSize="9.0"
+                  fontSize="10.5"
                   fontWeight="bold"
                   textAnchor="middle"
                   fontFamily="serif"
@@ -821,7 +821,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </text>
               </g>
 
-              {/* Fore Peak (FP) Zone: X = 195.00 (St. 20.00 FP) ke Kanan */}
+              {/* Fore Peak (FP) Zone: Dari Garis FP (St. 20.00) ke Kanan */}
               <g 
                 onMouseEnter={() => setHoveredZone("fore-peak")}
                 onMouseLeave={() => setHoveredZone(null)}
@@ -829,18 +829,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 opacity={activeZone && activeZone !== "fore-peak" ? 0.35 : 1}
               >
                 <rect
-                  x="195.00"
+                  x="100.00"
                   y="1.5"
-                  width="20.00"
-                  height="17.5"
+                  width="14.00"
+                  height="24.5"
                   fill="rgba(126, 34, 206, 0.50)"
                 />
                 {/* Watermark FP */}
                 <text
-                  x="205.00"
-                  y="13.5"
+                  x="107.00"
+                  y="19"
                   fill="rgba(139, 26, 26, 0.85)"
-                  fontSize="7.5"
+                  fontSize="8.5"
                   fontWeight="bold"
                   textAnchor="middle"
                   fontFamily="serif"
@@ -850,13 +850,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </text>
               </g>
 
-              {/* Horizontal Reference Grid Lines (0.5B, 75%, 50%, 25%, Centerline) */}
-              {[3.0, 7.0, 11.0, 15.0].map((gridY, i) => (
+              {/* Horizontal Reference Grid Lines (0.5B, 75%, 50%, 25%) */}
+              {[3.0, 8.75, 14.5, 20.25].map((gridY, i) => (
                 <line
                   key={`horiz-grid-${i}`}
-                  x1="0"
+                  x1="-4"
                   y1={gridY}
-                  x2="215"
+                  x2="118"
                   y2={gridY}
                   stroke="#334155"
                   strokeWidth="0.1"
@@ -865,11 +865,11 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               ))}
 
               {/* Centerline Baseline */}
-              <line x1="0" y1="19" x2="215" y2="19" stroke="#475569" strokeWidth="0.25" strokeDasharray="1,1" />
+              <line x1="-4" y1="26" x2="118" y2="26" stroke="#475569" strokeWidth="0.3" strokeDasharray="1,1" />
 
               {/* Standard Station Grid Lines & X-Axis Labels */}
               {calculatedRows.map((r, idx) => {
-                const normX = 20.00 + (r.station / 20.0) * 175.00;
+                const normX = 14.00 + (r.station / 20.0) * 86.00;
                 const isMidship = r.station === 10;
                 const isAp = r.station === 0;
                 const isFp = r.station === 20;
@@ -880,17 +880,17 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       x1={normX}
                       y1="1.5"
                       x2={normX}
-                      y2="19"
+                      y2="26"
                       stroke={isMidship ? "#38bdf8" : isAp || isFp ? "#64748b" : "rgba(51, 65, 85, 0.4)"}
-                      strokeWidth={isMidship ? "0.25" : "0.08"}
+                      strokeWidth={isMidship ? "0.3" : "0.1"}
                     />
                     {/* Station label */}
                     {(r.station === 0 || r.station === 5 || r.station === 10 || r.station === 15 || r.station === 20) && (
                       <text
                         x={normX}
-                        y="22.2"
+                        y="29.5"
                         fill={isAp || isFp ? "#94a3b8" : "#64748b"}
-                        fontSize={isAp || isFp || isMidship ? "2.3" : "1.9"}
+                        fontSize={isAp || isFp || isMidship ? "2.6" : "2.2"}
                         fontWeight={isAp || isFp || isMidship ? "bold" : "normal"}
                         textAnchor="middle"
                         fontFamily="monospace"
@@ -902,45 +902,45 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 );
               })}
 
-              {/* RED VERTICAL DIVIDER LINES AT ZONE BOUNDARIES (Refined 0.2px stroke) */}
+              {/* RED VERTICAL DIVIDER LINES AT ZONE BOUNDARIES (Refined 0.25px stroke) */}
               {[
                 { x: 0.00, key: "div-left" },
-                { x: 20.00, key: "div-ap" },
-                { x: 81.25, key: "div-st7" },
-                { x: 133.75, key: "div-st13" },
-                { x: 195.00, key: "div-fp" },
-                { x: 215.00, key: "div-right" }
+                { x: 14.00, key: "div-ap" },
+                { x: 44.10, key: "div-st7" },
+                { x: 69.90, key: "div-st13" },
+                { x: 100.00, key: "div-fp" },
+                { x: 114.00, key: "div-right" }
               ].map((div) => (
                 <line
                   key={div.key}
                   x1={div.x}
                   y1="1.5"
                   x2={div.x}
-                  y2="19"
+                  y2="26"
                   stroke="#991b1b"
-                  strokeWidth="0.2"
+                  strokeWidth="0.25"
                 />
               ))}
 
-              {/* Waterline Curve Area Fill & Smooth Fairing Stroke (Refined 0.25px stroke) */}
+              {/* Waterline Curve Area Fill & Smooth Fairing Stroke (Refined 0.28px stroke) */}
               <path
-                d={`M ${20.00 + (-0.5 / 20.0) * 175.00},19 ${getSmoothPathD(
+                d={`M ${14.00 + (-0.5 / 20.0) * 86.00},26 ${getSmoothPathD(
                   calculatedRows.map((r) => ({
-                    x: 20.00 + (r.station / 20.0) * 175.00,
-                    y: 19.00 - (r.halfBreadth / (BWL / 2 || 1)) * 16.00
+                    x: 14.00 + (r.station / 20.0) * 86.00,
+                    y: 26.00 - (r.halfBreadth / (BWL / 2 || 1)) * 23.00
                   }))
-                )} L 195,19 Z`}
+                )} L 100,26 Z`}
                 fill="rgba(6, 182, 212, 0.12)"
                 stroke="#38bdf8"
-                strokeWidth="0.25"
+                strokeWidth="0.28"
                 strokeLinecap="round"
               />
 
               {/* Station Control Points (Interactive Drag for non-PMB) */}
               {!isPreviewMode && calculatedRows.map((r, idx) => {
-                const x = 20.00 + (r.station / 20.0) * 175.00;
+                const x = 14.00 + (r.station / 20.0) * 86.00;
                 const maxHalfB = BWL / 2 || 1;
-                const y = 19.00 - (r.halfBreadth / maxHalfB) * 16.00;
+                const y = 26.00 - (r.halfBreadth / maxHalfB) * 23.00;
                 
                 const isLocked = r.station >= 7 && r.station <= 13;
                 const isDragging = draggingStation === r.station;
@@ -950,10 +950,10 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     key={idx} 
                     cx={x} 
                     cy={y} 
-                    r={isDragging ? "0.8" : isLocked ? "0.25" : "0.45"} 
+                    r={isDragging ? "1.0" : isLocked ? "0.35" : "0.55"} 
                     fill={isLocked ? "#ef4444" : isDragging ? "#facc15" : "#38bdf8"} 
                     stroke={isLocked ? "transparent" : isDragging ? "#ffffff" : "#ffffff"} 
-                    strokeWidth={isDragging ? "0.15" : "0.06"}
+                    strokeWidth={isDragging ? "0.2" : "0.08"}
                     className={
                       isLocked 
                         ? "cursor-not-allowed opacity-60 pointer-events-none" 
@@ -970,15 +970,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               {/* LCF Marker (Longitudinal Center of Flotation) */}
               {(() => {
                 const lcfStation = 10 + (LCF / (l || 1));
-                const lcfX = 20.00 + (lcfStation / 20.0) * 175.00;
+                const lcfX = 14.00 + (lcfStation / 20.0) * 86.00;
                 return (
                   <g>
-                    <line x1={lcfX} y1="0.5" x2={lcfX} y2="19" stroke="#f59e0b" strokeWidth="0.4" strokeDasharray="1,1" />
+                    <line x1={lcfX} y1="0.5" x2={lcfX} y2="26" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="1,1" />
                     <polygon
-                      points={`${lcfX},1.0 ${lcfX - 0.9},2.5 ${lcfX + 0.9},2.5`}
+                      points={`${lcfX},1 ${lcfX - 1.2},3 ${lcfX + 1.2},3`}
                       fill="#f59e0b"
                     />
-                    <text x={lcfX} y="5.0" fill="#f59e0b" fontSize="1.8" textAnchor="middle" fontWeight="bold">
+                    <text x={lcfX} y="6" fill="#f59e0b" fontSize="2.2" textAnchor="middle" fontWeight="bold">
                       LCF
                     </text>
                   </g>
@@ -1011,7 +1011,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
               onMouseEnter={() => setHoveredZone('after-peak')}
               onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "2 1 0%" }}
+              style={{ flex: "2.5 1 0%" }}
               className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
                 activeZone === 'after-peak' || hoveredZone === 'after-peak'
                   ? 'bg-[#b45309] border-amber-400 text-white shadow-lg shadow-amber-900/50 ring-1 ring-amber-400'
@@ -1071,7 +1071,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
               onMouseEnter={() => setHoveredZone('fore-peak')}
               onMouseLeave={() => setHoveredZone(null)}
-              style={{ flex: "2 1 0%" }}
+              style={{ flex: "2.5 1 0%" }}
               className={`py-2 px-1 rounded-xl text-center font-bold transition-all cursor-pointer border min-w-[70px] ${
                 activeZone === 'fore-peak' || hoveredZone === 'fore-peak'
                   ? 'bg-[#6b21a8] border-violet-400 text-white shadow-lg shadow-violet-900/50 ring-1 ring-violet-400'
