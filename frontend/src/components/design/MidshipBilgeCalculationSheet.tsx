@@ -120,9 +120,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const l_chord = Number((R * Math.tan((22.5 * Math.PI) / 180)).toFixed(4));
   const r_sub = Number((l_chord / 2).toFixed(4));
 
-  // Dynamic state for draft steps (allows user to add points)
+  // 20 Standard Default Draft Steps for Midship Section & Bilge Arc (20 Titik)
+  const DEFAULT_DRAFT_STEPS: number[] = useMemo(() => [
+    0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25,
+    2.50, 2.75, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00, 6.50
+  ], []);
+
+  // Dynamic state for draft steps (default 20 points)
   const [draftSteps, setDraftSteps] = useState<number[]>([
-    0.00, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 2.50, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00
+    0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25,
+    2.50, 2.75, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00, 6.50
   ]);
   
   // Dragging interaction state
@@ -221,7 +228,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
   const [draftOrdinates, setDraftOrdinates] = useState<Record<number, number>>(() =>
     generateOptimizedDraftOrdinates(Am_rancangan, [
-      0.00, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 2.50, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00
+      0.00, 0.25, 0.50, 0.75, 1.00, 1.25, 1.50, 1.75, 2.00, 2.25,
+      2.50, 2.75, 3.00, 3.50, 4.00, 4.50, 5.00, 5.50, 6.00, 6.50
     ])
   );
 
@@ -231,7 +239,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
   // Reset & Auto-Fit Handlers
   const handleReset = () => {
-    setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, sortedDraftSteps));
+    setDraftSteps(DEFAULT_DRAFT_STEPS);
+    setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, DEFAULT_DRAFT_STEPS));
   };
 
   const handleAutoFineTune = () => {
