@@ -236,7 +236,7 @@ export const CsaToBodyPlanProjection: React.FC<CsaProjectionProps> = ({
 
               {/* CSA SVG Plot */}
               <div className="w-full h-56 bg-slate-950/90 rounded-xl border border-slate-800 relative p-3 overflow-hidden shadow-inner">
-                <svg className="w-full h-full" viewBox="0 0 1000 240" preserveAspectRatio="none">
+                <svg className="w-full h-full" viewBox="0 0 1000 240" preserveAspectRatio="xMidYMid meet">
                   {/* Grid Lines */}
                   {Array.from({ length: 21 }).map((_, i) => {
                     const x = 50 + (i / 20) * 900;

@@ -4,9 +4,11 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileDown, CheckCircle, AlertTriangle, Eye } from "lucide-react";
 import { api } from "../../../services/api";
+import { useLanguage } from "../../../context/LanguageContext";
 
 export default function ImportProject() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [preview, setPreview] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,14 +29,6 @@ export default function ImportProject() {
       setFileContent(content);
       
       try {
-        const previewData = await api.importProject(JSON.parse(content));
-        // api.importProject actually runs import, but wait!
-        // We can get preview before actually committing it, or we can use get_import_preview logic
-        // Wait, let's verify if the server.py exposes a preview endpoint or if we can fetch it.
-        // Actually, we can get import preview by making a POST request or reading locally first.
-        // In api.ts, importProject runs POST /api/projects/import which returns { success: true, preview: ... }.
-        // Let's call it after they click "Confirm Import"!
-        // For preview, let's parse locally on the client! That is super fast and clean.
         const parsed = JSON.parse(content);
         let project_id = parsed.project_id || "";
         let project_name = "";
@@ -59,7 +53,7 @@ export default function ImportProject() {
           total_revisions
         });
       } catch (err: any) {
-        setError("Format file JSON tidak valid atau rusak.");
+        setError(language === "en" ? "Invalid or corrupted JSON file format." : "Format file JSON tidak valid atau rusak.");
       }
     };
     reader.readAsText(file);
@@ -79,7 +73,7 @@ export default function ImportProject() {
         }, 1500);
       }
     } catch (err: any) {
-      setError(err.message || "Gagal mengimport data proyek.");
+      setError(err.message || (language === "en" ? "Failed to import project data." : "Gagal mengimport data proyek."));
     } finally {
       setLoading(false);
     }
@@ -94,15 +88,15 @@ export default function ImportProject() {
           className="flex items-center space-x-2 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
         >
           <ArrowLeft size={14} />
-          <span>Kembali ke Daftar Proyek</span>
+          <span>{language === "en" ? "Back to Projects List" : "Kembali ke Daftar Proyek"}</span>
         </button>
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-8 space-y-6">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-wide">Import Project Data JSON</h2>
+          <h2 className="text-xl font-bold text-white tracking-wide">{t("badge.import_project", "Import Project Data JSON")}</h2>
           <p className="text-slate-400 text-xs mt-1">
-            Muat data riwayat spesifikasi kapal eksternal untuk diproses di Validation Engine.
+            {language === "en" ? "Load external vessel specification history data for processing in the Validation Engine." : "Muat data riwayat spesifikasi kapal eksternal untuk diproses di Validation Engine."}
           </p>
         </div>
 
@@ -116,7 +110,7 @@ export default function ImportProject() {
         {success && (
           <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-xs px-4 py-3 rounded-lg flex items-center space-x-2">
             <CheckCircle size={16} />
-            <span>Import proyek berhasil! Mengalihkan ke halaman detail...</span>
+            <span>{language === "en" ? "Project import successful! Redirecting to detail page..." : "Import proyek berhasil! Mengalihkan ke halaman detail..."}</span>
           </div>
         )}
 
@@ -125,7 +119,7 @@ export default function ImportProject() {
             <FileDown size={32} className="mx-auto text-slate-500" />
             <div className="text-xs text-slate-400">
               <label className="text-blue-500 hover:underline cursor-pointer font-semibold">
-                <span>Pilih file JSON</span>
+                <span>{language === "en" ? "Select JSON file" : "Pilih file JSON"}</span>
                 <input
                   type="file"
                   accept=".json"
@@ -133,7 +127,7 @@ export default function ImportProject() {
                   onChange={handleFileChange}
                 />
               </label>
-              <span className="block mt-1 text-[10px] text-slate-500">Berkas .json hasil ekspor platform</span>
+              <span className="block mt-1 text-[10px] text-slate-500">{language === "en" ? "Platform exported .json file" : "Berkas .json hasil ekspor platform"}</span>
             </div>
           </div>
 
@@ -142,7 +136,7 @@ export default function ImportProject() {
             <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-5 space-y-4">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-1.5">
                 <Eye size={14} className="text-blue-400" />
-                <span>Preview Metadata Berkas</span>
+                <span>{language === "en" ? "File Metadata Preview" : "Preview Metadata Berkas"}</span>
               </h4>
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
@@ -150,17 +144,17 @@ export default function ImportProject() {
                   <span className="text-blue-400 font-bold font-mono">{preview.project_id}</span>
                 </div>
                 <div>
-                  <span className="text-slate-550 block font-semibold">Nama Kapal / Proyek:</span>
+                  <span className="text-slate-550 block font-semibold">{language === "en" ? "Vessel / Project Name:" : "Nama Kapal / Proyek:"}</span>
                   <span className="text-white font-medium">{preview.project_name}</span>
                 </div>
                 <div>
-                  <span className="text-slate-550 block font-semibold">Owner / Pemilik:</span>
+                  <span className="text-slate-550 block font-semibold">{language === "en" ? "Owner / Shipowner:" : "Owner / Pemilik:"}</span>
                   <span className="text-slate-300">{preview.owner}</span>
                 </div>
                 <div>
-                  <span className="text-slate-550 block font-semibold">Skema Versi / Revisi:</span>
+                  <span className="text-slate-550 block font-semibold">{language === "en" ? "Schema / Revision Version:" : "Skema Versi / Revisi:"}</span>
                   <span className="text-slate-300">
-                    Versi {preview.schema_version} ({preview.total_revisions} revisi)
+                    {language === "en" ? `Version ${preview.schema_version} (${preview.total_revisions} revision(s))` : `Versi ${preview.schema_version} (${preview.total_revisions} revisi)`}
                   </span>
                 </div>
               </div>
@@ -171,7 +165,7 @@ export default function ImportProject() {
                   disabled={loading}
                   className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  {loading ? "Memproses Import..." : "Konfirmasi Import Data"}
+                  {loading ? (language === "en" ? "Processing Import..." : "Memproses Import...") : (language === "en" ? "Confirm Data Import" : "Konfirmasi Import Data")}
                 </button>
               </div>
             </div>

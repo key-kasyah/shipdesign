@@ -675,6 +675,10 @@ def delete_project(project_id: str):
     if os.path.exists(stage2_path):
         os.remove(stage2_path)
 
+    stage3_path = get_stage3_file_path(project_id)
+    if os.path.exists(stage3_path):
+        os.remove(stage3_path)
+
     # Remove from project_index.json
     if os.path.exists(INDEX_PATH):
         try:
@@ -701,6 +705,60 @@ def delete_project(project_id: str):
 def get_stage2_file_path(project_id: str) -> str:
     safe_id = "".join(c for c in project_id if c.isalnum() or c in "-_")
     return os.path.join(PROJECTS_DIR, f"{safe_id}_stage2.json")
+
+
+def get_stage3_file_path(project_id: str) -> str:
+    safe_id = "".join(c for c in project_id if c.isalnum() or c in "-_")
+    return os.path.join(PROJECTS_DIR, f"{safe_id}_stage3.json")
+
+
+@app.get("/api/projects/{project_id}/stage3")
+def get_stage3_data(project_id: str):
+    """Mendapatkan data tersimpan Tahap 3 (Basic Design & Rencana Garis)."""
+    file_path = get_stage3_file_path(project_id)
+    if not os.path.exists(file_path):
+        return {
+            "project_id": project_id,
+            "has_saved_data": False,
+            "waterlines_data": None,
+            "exact_loa": None,
+            "fore_overhang": None,
+            "aft_overhang": None,
+            "updated_at": None,
+        }
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            data["has_saved_data"] = True
+            return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memuat data Stage 3: {e}")
+
+
+@app.put("/api/projects/{project_id}/stage3")
+def save_stage3_data(project_id: str, payload: Dict[str, Any] = Body(...)):
+    """Menyimpan data Tahap 3 secara permanen ke disk storage."""
+    file_path = get_stage3_file_path(project_id)
+    try:
+        payload["project_id"] = project_id
+        payload["updated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        # Save atomically
+        tmp_path = file_path + ".tmp"
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+            
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        os.rename(tmp_path, file_path)
+        
+        return {
+            "success": True,
+            "message": "Data Stage 3 (Rencana Garis & Garis Air) berhasil disimpan permanen.",
+            "data": payload
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menyimpan data Stage 3: {e}")
 
 
 @app.get("/api/projects/{project_id}/stage2/history")

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Compass,
   Move,
@@ -108,6 +109,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
   vesselType = "GENERAL_CARGO",
   onUpdateLoa
 }) => {
+  const { language } = useLanguage();
   const LBP = Math.max(10, lbp_m);
   const H = Math.max(2, depth_m);
   const T = Math.max(1, draft_m);
@@ -461,10 +463,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
               </div>
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
-                  Studio Tampak Samping & Profil Lambung (NURBS Spline)
+                  {language === "en" ? "Side Profile & Hull Profile Studio (NURBS Spline)" : "Studio Tampak Samping & Profil Lambung (NURBS Spline)"}
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Perancangan kurva linggi haluan (bow), linggi buritan (stern), garis dasar (baseline), dan sheer geladak dengan titik kontrol interaktif.
+                  {language === "en"
+                    ? "Design bow, stern, baseline, and deck sheer curves with interactive control points."
+                    : "Perancangan kurva linggi haluan (bow), linggi buritan (stern), garis dasar (baseline), dan sheer geladak dengan titik kontrol interaktif."}
                 </p>
               </div>
             </div>
@@ -481,7 +485,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
               <option value="cargo">General Cargo (Raked Bow + Transom)</option>
               <option value="tanker">Tanker / Bulk (Bulbous Bow + Cruiser)</option>
               <option value="axeBow">Container / Fast (Axe Bow + Transom)</option>
-              <option value="barge">Tongkang / Ponton (Box Hull / Full PMB)</option>
+              <option value="barge">{language === "en" ? "Barge / Pontoon (Box Hull / Full PMB)" : "Tongkang / Ponton (Box Hull / Full PMB)"}</option>
             </select>
           </div>
         </div>
@@ -492,12 +496,16 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1.5 text-cyan-400 font-semibold">
                 <Anchor size={14} />
-                <span>1. Batasan Tetap LBP</span>
+                <span>{language === "en" ? "1. Fixed LBP Constraint" : "1. Batasan Tetap LBP"}</span>
               </div>
-              <span className="text-[10px] bg-cyan-950 text-cyan-400 px-1.5 py-0.5 rounded font-mono font-bold">Tetap</span>
+              <span className="text-[10px] bg-cyan-950 text-cyan-400 px-1.5 py-0.5 rounded font-mono font-bold">{language === "en" ? "Fixed" : "Tetap"}</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              LBP (<strong className="text-white font-mono">{LBP.toFixed(2)} m</strong>) bersifat konstan dari AP (St. 0) hingga FP (St. 20).
+              {language === "en" ? (
+                <>LBP (<strong className="text-white font-mono">{LBP.toFixed(2)} m</strong>) is constant from AP (St. 0) to FP (St. 20).</>
+              ) : (
+                <>LBP (<strong className="text-white font-mono">{LBP.toFixed(2)} m</strong>) bersifat konstan dari AP (St. 0) hingga FP (St. 20).</>
+              )}
             </p>
           </div>
 
@@ -505,12 +513,14 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1.5 text-amber-400 font-semibold">
                 <Activity size={14} />
-                <span>2. Kepadatan Bawah Sarat</span>
+                <span>{language === "en" ? "2. Sub-Draft Density" : "2. Kepadatan Bawah Sarat"}</span>
               </div>
               <span className="text-[10px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded font-mono font-bold">NURBS</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Titik kontrol dibuat rapat di bawah sarat air agar kelengkungan linggi haluan & buritan mulus (smooth).
+              {language === "en"
+                ? "Control points are densely arranged below draft for smooth stem & stern curvature."
+                : "Titik kontrol dibuat rapat di bawah sarat air agar kelengkungan linggi haluan & buritan mulus (smooth)."}
             </p>
           </div>
 
@@ -518,12 +528,16 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1.5 text-emerald-400 font-semibold">
                 <Maximize2 size={14} />
-                <span>3. Nilai Pasti LOA</span>
+                <span>{language === "en" ? "3. Exact LOA Value" : "3. Nilai Pasti LOA"}</span>
               </div>
               <span className="text-[10px] bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold">Real-Time</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              LOA dihitung dari selisih puncak haluan dan ujung buritan: <strong className="text-emerald-300 font-mono font-bold">{exactLoa.toFixed(2)} m</strong>.
+              {language === "en" ? (
+                <>LOA calculated from difference between bow peak and stern tip: <strong className="text-emerald-300 font-mono font-bold">{exactLoa.toFixed(2)} m</strong>.</>
+              ) : (
+                <>LOA dihitung dari selisih puncak haluan dan ujung buritan: <strong className="text-emerald-300 font-mono font-bold">{exactLoa.toFixed(2)} m</strong>.</>
+              )}
             </p>
           </div>
 
@@ -531,12 +545,16 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1.5 text-purple-400 font-semibold">
                 <Box size={14} />
-                <span>4. Parallel Middle Body</span>
+                <span>{language === "en" ? "4. Parallel Middle Body" : "4. Parallel Middle Body"}</span>
               </div>
               <span className="text-[10px] bg-purple-950 text-purple-400 px-1.5 py-0.5 rounded font-mono font-bold">PMB</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Zona lunas datar tengah (PMB) membentang dari St. {(pmbStartX / (LBP / 20)).toFixed(1)} s.d. St. {(pmbEndX / (LBP / 20)).toFixed(1)}.
+              {language === "en" ? (
+                <>Flat bottom center zone (PMB) extends from St. {(pmbStartX / (LBP / 20)).toFixed(1)} to St. {(pmbEndX / (LBP / 20)).toFixed(1)}.</>
+              ) : (
+                <>Zona lunas datar tengah (PMB) membentang dari St. {(pmbStartX / (LBP / 20)).toFixed(1)} s.d. St. {(pmbEndX / (LBP / 20)).toFixed(1)}.</>
+              )}
             </p>
           </div>
         </div>

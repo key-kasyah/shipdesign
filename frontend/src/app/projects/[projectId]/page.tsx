@@ -31,6 +31,7 @@ import {
   Navigation
 } from "lucide-react";
 import { api } from "../../../services/api";
+import { useLanguage } from "../../../context/LanguageContext";
 import {
   ProjectHistory,
   ProjectRevision,
@@ -51,6 +52,7 @@ function PortDropdown({
   selectedPortId: number;
   onChange: (portId: number) => void;
 }) {
+  const { language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ function PortDropdown({
         className="w-full flex items-center justify-between bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white hover:border-blue-500 transition-colors text-left"
       >
         <span className="truncate">
-          {selectedPort ? `${selectedPort.port_name} (${selectedPort.province})` : "Pilih Pelabuhan..."}
+          {selectedPort ? `${selectedPort.port_name} (${selectedPort.province})` : (language === "en" ? "Select Port..." : "Pilih Pelabuhan...")}
         </span>
         <ChevronDown size={14} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -92,7 +94,7 @@ function PortDropdown({
             <Search size={12} className="absolute left-2.5 top-2.5 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari nama pelabuhan / provinsi..."
+              placeholder={language === "en" ? "Search port / province name..." : "Cari nama pelabuhan / provinsi..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-950 border border-slate-800 rounded pl-8 pr-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
@@ -102,7 +104,7 @@ function PortDropdown({
 
           <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
             {filteredPorts.length === 0 ? (
-              <div className="p-3 text-[11px] text-slate-500 text-center">Pelabuhan tidak ditemukan</div>
+              <div className="p-3 text-[11px] text-slate-500 text-center">{language === "en" ? "Port not found" : "Pelabuhan tidak ditemukan"}</div>
             ) : (
               filteredPorts.map((p) => (
                 <button
@@ -134,6 +136,7 @@ function PortDropdown({
 export default function ProjectDetail() {
   const params = useParams();
   const router = useRouter();
+  const { t, language } = useLanguage();
   const projectId = params.projectId as string;
 
   // Tabs
@@ -499,8 +502,12 @@ export default function ProjectDetail() {
       {/* Tabs Menu */}
       <div className="flex border-b border-slate-800 overflow-x-auto select-none">
         {[
-          { id: "form", label: "Parameter Form", icon: <FileText size={16} /> },
-          { id: "ai", label: "AI Explainer", icon: <Cpu size={16} /> }
+          { id: "form", label: language === "en" ? "Specification Form" : "Form Parameter", icon: <FileText size={16} /> },
+          { id: "validation", label: language === "en" ? "Validation Engine" : "Engine Validasi", icon: <AlertTriangle size={16} /> },
+          { id: "revisions", label: language === "en" ? "Revision Audit Trail" : "Audit Trail Revisi", icon: <History size={16} /> },
+          { id: "baseline", label: language === "en" ? "Baseline Approval" : "Persetujuan Baseline", icon: <Lock size={16} /> },
+          { id: "readiness", label: language === "en" ? "Handoff Readiness" : "Laporan Kesiapan Handoff", icon: <Compass size={16} /> },
+          { id: "ai", label: language === "en" ? "AI Co-Pilot" : "AI Co-Pilot", icon: <Cpu size={16} /> }
         ].map((t) => (
           <button
             key={t.id}
@@ -555,7 +562,7 @@ export default function ProjectDetail() {
                   {/* Sec 1: Identity */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
                     <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">
-                      Section 1 — Identitas Proyek
+                      {language === "en" ? "Section 1 — Project Identity" : "Section 1 — Identitas Proyek"}
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -568,7 +575,7 @@ export default function ProjectDetail() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-semibold text-slate-400">Nama Proyek *</label>
+                        <label className="text-[10px] font-semibold text-slate-400">{language === "en" ? "Project Name *" : "Nama Proyek *"}</label>
                         <input
                           type="text"
                           disabled={isReadOnly}
@@ -590,7 +597,7 @@ export default function ProjectDetail() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-semibold text-slate-400">Organisasi</label>
+                        <label className="text-[10px] font-semibold text-slate-400">{language === "en" ? "Organization" : "Organisasi"}</label>
                         <input
                           type="text"
                           disabled={isReadOnly}
@@ -601,7 +608,7 @@ export default function ProjectDetail() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400">Pembuat / Creator *</label>
+                      <label className="text-[10px] font-semibold text-slate-400">{language === "en" ? "Creator Email *" : "Pembuat / Creator *"}</label>
                       <input
                         type="text"
                         disabled={isReadOnly}
@@ -618,10 +625,10 @@ export default function ProjectDetail() {
                   {/* Sec 2: Vessel & Mission */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
                     <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">
-                      Section 2 — Misi & Tipe Kapal
+                      {language === "en" ? "Section 2 — Mission & Vessel Type" : "Section 2 — Misi & Tipe Kapal"}
                     </h4>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400">Tipe Kapal *</label>
+                      <label className="text-[10px] font-semibold text-slate-400">{language === "en" ? "Vessel Type *" : "Tipe Kapal *"}</label>
                       <select
                         disabled={isReadOnly}
                         value={formData.vessel_type || ""}
@@ -642,7 +649,7 @@ export default function ProjectDetail() {
                         <div className="flex items-center space-x-2">
                           <MapPin size={14} className="text-blue-400" />
                           <span className="text-xs font-bold text-white uppercase tracking-wider">
-                            Pemilihan Pelabuhan Singgah & Hitung Jarak Terjauh (S)
+                            {language === "en" ? "Port Stops Selection & Max Leg Distance (S)" : "Pemilihan Pelabuhan Singgah & Hitung Jarak Terjauh (S)"}
                           </span>
                         </div>
                         {!isReadOnly && (
@@ -652,13 +659,15 @@ export default function ProjectDetail() {
                             className="flex items-center space-x-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer"
                           >
                             <Plus size={12} />
-                            <span>Tambah Pelabuhan</span>
+                            <span>{language === "en" ? "Add Port Stop" : "Tambah Pelabuhan"}</span>
                           </button>
                         )}
                       </div>
 
                       <p className="text-[11px] text-slate-400">
-                        Pilih urutan pelabuhan singgah. Sistem akan menghitung jarak maritim (seamiles) antar segmen dan mengambil <span className="font-semibold text-slate-200">jarak leg terjauh (S)</span> secara otomatis dari database pelabuhan.
+                        {language === "en"
+                          ? "Select port voyage sequence. The system will calculate maritime distances (seamiles) and extract the longest leg distance (S) automatically."
+                          : "Pilih urutan pelabuhan singgah. Sistem akan menghitung jarak maritim (seamiles) antar segmen dan mengambil jarak leg terjauh (S) secara otomatis dari database pelabuhan."}
                       </p>
 
                       {/* Ports Selection List */}
@@ -734,9 +743,9 @@ export default function ProjectDetail() {
                       {routeCalcResult && (
                         <div className="bg-slate-900/80 border border-blue-500/20 rounded-lg p-3 space-y-2 text-xs">
                           <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
-                            <span className="font-semibold text-slate-300 truncate">Rute: <span className="text-white">{routeCalcResult.route_name}</span></span>
+                            <span className="font-semibold text-slate-300 truncate">{language === "en" ? "Route:" : "Rute:"} <span className="text-white">{routeCalcResult.route_name}</span></span>
                             <span className="text-slate-400 font-mono text-[10px] shrink-0 ml-2">
-                              {routeCalcResult.legs.length} Segmen
+                              {routeCalcResult.legs.length} {language === "en" ? "Legs" : "Segmen"}
                             </span>
                           </div>
 
@@ -754,13 +763,13 @@ export default function ProjectDetail() {
 
                           <div className="pt-1.5 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                             <div className="bg-blue-500/10 border border-blue-500/20 p-2 rounded-lg flex justify-between items-center">
-                              <span className="text-blue-300 font-medium">Jarak Terjauh (S):</span>
+                              <span className="text-blue-300 font-medium">{language === "en" ? "Max Leg Distance (S):" : "Jarak Terjauh (S):"}</span>
                               <span className="text-xs font-bold text-blue-400 font-mono">
                                 {routeCalcResult.max_leg_nm} seamiles
                               </span>
                             </div>
                             <div className="bg-slate-950 border border-slate-800 p-2 rounded-lg flex justify-between items-center">
-                              <span className="text-slate-400 font-medium">Total Rute:</span>
+                              <span className="text-slate-400 font-medium">{language === "en" ? "Total Route:" : "Total Rute:"}</span>
                               <span className="text-xs font-bold text-slate-200 font-mono">
                                 {routeCalcResult.total_distance_nm} seamiles
                               </span>
@@ -777,7 +786,7 @@ export default function ProjectDetail() {
                   {/* Sec 3: Capacities & Operations */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
                     <h4 className="text-xs font-bold text-white uppercase tracking-wider border-b border-slate-800 pb-2">
-                      Section 3 — Kapasitas & Kinerja Utama
+                      {language === "en" ? "Section 3 — Capacity & Key Performance" : "Section 3 — Kapasitas & Kinerja Utama"}
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -797,7 +806,7 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-semibold text-slate-400">Kecepatan Dinas (V) *</label>
+                        <label className="text-[10px] font-semibold text-slate-400">{language === "en" ? "Service Speed (V) *" : "Kecepatan Dinas (V) *"}</label>
                         <div className="flex items-center bg-slate-950 border border-slate-800 rounded overflow-hidden">
                           <input
                             type="number"
@@ -815,7 +824,7 @@ export default function ProjectDetail() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400">Jarak Leg Terjauh (S)</label>
+                      <label className="text-[10px] font-semibold text-slate-400">{language === "en" ? "Max Leg Distance (S)" : "Jarak Leg Terjauh (S)"}</label>
                       <div className="flex items-center bg-slate-950 border border-slate-800 rounded overflow-hidden">
                         <input
                           type="number"
@@ -830,9 +839,7 @@ export default function ProjectDetail() {
                         </span>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Save Action Button */}
+                              {/* Save Action Button */}
                   {!isReadOnly && (
                     <div className="pt-2 flex justify-end">
                       <button
@@ -840,14 +847,15 @@ export default function ProjectDetail() {
                         className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-2.5 rounded-lg text-xs transition-colors cursor-pointer shadow-lg shadow-blue-600/20"
                       >
                         <Save size={14} />
-                        <span>Simpan & Validasi Draft</span>
+                        <span>{language === "en" ? "Save & Validate Draft" : "Simpan & Validasi Draft"}</span>
                       </button>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
           {/* TAB 2: VALIDATION ENGINE */}
           {activeTab === "validation" && (
@@ -857,7 +865,7 @@ export default function ProjectDetail() {
                   {/* Summary Metric Counters */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Validitas</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{language === "en" ? "Validity" : "Validitas"}</span>
                       <span
                         className={`text-lg font-bold block mt-3 ${
                           validationResult.is_valid ? "text-green-500" : "text-red-500"
@@ -867,29 +875,29 @@ export default function ProjectDetail() {
                       </span>
                     </div>
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Kelengkapan</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{language === "en" ? "Completeness" : "Kelengkapan"}</span>
                       <span
                         className={`text-lg font-bold block mt-3 ${
                           validationResult.is_complete ? "text-blue-400" : "text-amber-500"
                         }`}
                       >
-                        {validationResult.is_complete ? "✓ LENGKAP" : "✗ DRAFT"}
+                        {validationResult.is_complete ? (language === "en" ? "✓ COMPLETE" : "✓ LENGKAP") : "✗ DRAFT"}
                       </span>
                     </div>
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Gate Baseline</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{language === "en" ? "Baseline Gate" : "Gate Baseline"}</span>
                       <span
                         className={`text-lg font-bold block mt-3 ${
                           validationResult.can_approve_baseline ? "text-green-500" : "text-slate-400"
                         }`}
                       >
-                        {validationResult.can_approve_baseline ? "✓ SIAP" : "✗ BELUM LAYAK"}
+                        {validationResult.can_approve_baseline ? (language === "en" ? "✓ READY" : "✓ SIAP") : (language === "en" ? "✗ NOT READY" : "✗ BELUM LAYAK")}
                       </span>
                     </div>
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 text-center">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Temuan</span>
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">{language === "en" ? "Total Findings" : "Total Temuan"}</span>
                       <span className="text-xl font-bold text-white block mt-2">
-                        {validationResult.issues.length} isu
+                        {validationResult.issues.length} {language === "en" ? "issue(s)" : "isu"}
                       </span>
                     </div>
                   </div>
@@ -897,7 +905,7 @@ export default function ProjectDetail() {
                   {/* Issues Detail Lists */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
                     <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                      <h3 className="text-sm font-bold text-white">Daftar Temuan Masalah Validasi</h3>
+                      <h3 className="text-sm font-bold text-white">{language === "en" ? "Validation Findings List" : "Daftar Temuan Masalah Validasi"}</h3>
                       <button
                         onClick={loadAllProjectData}
                         className="flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded cursor-pointer"
@@ -910,8 +918,8 @@ export default function ProjectDetail() {
                     {validationResult.issues.length === 0 ? (
                       <div className="p-8 text-center text-slate-500 space-y-2">
                         <CheckCircle className="text-green-500 mx-auto" size={32} />
-                        <p className="text-sm font-semibold text-white">Semua Parameter Valid & Aman</p>
-                        <p className="text-xs">Tidak ditemukan issue validasi pada snapshot revisi aktif.</p>
+                        <p className="text-sm font-semibold text-white">{language === "en" ? "All Parameters Valid & Safe" : "Semua Parameter Valid & Aman"}</p>
+                        <p className="text-xs">{language === "en" ? "No validation issues found in active revision snapshot." : "Tidak ditemukan issue validasi pada snapshot revisi aktif."}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -945,11 +953,11 @@ export default function ProjectDetail() {
                                     Field: '{issue.field_path}' - {issue.message}
                                   </p>
                                   <p className="text-xs text-slate-400 mt-1">
-                                    Saran: {issue.suggestion}
+                                    {language === "en" ? "Suggestion: " : "Saran: "}{issue.suggestion}
                                   </p>
                                 </div>
                                 <span className="text-[10px] text-slate-500 underline font-medium hover:text-white">
-                                  Klik untuk perbaiki
+                                  {language === "en" ? "Click to fix" : "Klik untuk perbaiki"}
                                 </span>
                               </div>
                             </div>
@@ -971,16 +979,16 @@ export default function ProjectDetail() {
                   {/* Revisions Table */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
                     <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-3">
-                      Riwayat Revisi Dokumen
+                      {language === "en" ? "Document Revision History" : "Riwayat Revisi Dokumen"}
                     </h3>
                     <div className="overflow-x-auto border border-slate-800 rounded-lg">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
                           <tr className="bg-slate-950/30 text-slate-400 border-b border-slate-800 font-medium">
-                            <th className="p-3">Nomor Revisi</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3">Dibuat Oleh</th>
-                            <th className="p-3">Tanggal Dibuat</th>
+                            <th className="p-3">{language === "en" ? "Revision No." : "Nomor Revisi"}</th>
+                            <th className="p-3">{language === "en" ? "Status" : "Status"}</th>
+                            <th className="p-3">{language === "en" ? "Created By" : "Dibuat Oleh"}</th>
+                            <th className="p-3">{language === "en" ? "Date Created" : "Tanggal Dibuat"}</th>
                             <th className="p-3 text-right">Actions</th>
                           </tr>
                         </thead>
@@ -1015,7 +1023,7 @@ export default function ProjectDetail() {
                                   }}
                                   className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded text-[10px] font-medium"
                                 >
-                                  Muat Form
+                                  {language === "en" ? "Load Form" : "Muat Form"}
                                 </button>
                               </td>
                             </tr>
@@ -1028,11 +1036,11 @@ export default function ProjectDetail() {
                   {/* Compare Revisions UI Panel */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
                     <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-2">
-                      Bandingkan Parameter Antar Revisi
+                      {language === "en" ? "Compare Parameters Between Revisions" : "Bandingkan Parameter Antar Revisi"}
                     </h3>
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center space-x-2 text-xs">
-                        <span className="text-slate-400">Revisi A (Nomor):</span>
+                        <span className="text-slate-400">{language === "en" ? "Revision A (Number):" : "Revisi A (Nomor):"}</span>
                         <input
                           type="number"
                           value={compareRev1}
@@ -1042,7 +1050,7 @@ export default function ProjectDetail() {
                         />
                       </div>
                       <div className="flex items-center space-x-2 text-xs">
-                        <span className="text-slate-400">Revisi B (Nomor):</span>
+                        <span className="text-slate-400">{language === "en" ? "Revision B (Number):" : "Revisi B (Nomor):"}</span>
                         <input
                           type="number"
                           value={compareRev2}
@@ -1055,7 +1063,7 @@ export default function ProjectDetail() {
                         onClick={handleCompare}
                         className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-1.5 rounded text-xs cursor-pointer"
                       >
-                        Bandingkan
+                        {language === "en" ? "Compare" : "Bandingkan"}
                       </button>
                     </div>
 
@@ -1065,15 +1073,15 @@ export default function ProjectDetail() {
                           <thead>
                             <tr className="bg-slate-950/30 text-slate-400 border-b border-slate-800 font-medium">
                               <th className="p-3">Field Path</th>
-                              <th className="p-3">Nilai Lama (Rev {compareRev1})</th>
-                              <th className="p-3">Nilai Baru (Rev {compareRev2})</th>
+                              <th className="p-3">{language === "en" ? `Old Value (Rev ${compareRev1})` : `Nilai Lama (Rev ${compareRev1})`}</th>
+                              <th className="p-3">{language === "en" ? `New Value (Rev ${compareRev2})` : `Nilai Baru (Rev ${compareRev2})`}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800">
                             {comparisonResult.length === 0 ? (
                               <tr>
                                 <td colSpan={3} className="p-4 text-center text-slate-500">
-                                  Tidak ada perubahan parameter desain antara kedua revisi.
+                                  {language === "en" ? "No design parameter changes between the two revisions." : "Tidak ada perubahan parameter desain antara kedua revisi."}
                                 </td>
                               </tr>
                             ) : (
@@ -1094,17 +1102,17 @@ export default function ProjectDetail() {
                   {/* System Audit Trail Lists */}
                   <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
                     <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-3">
-                      Audit Trail System Log
+                      {language === "en" ? "System Log Audit Trail" : "Audit Trail System Log"}
                     </h3>
                     <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
                       {history.audit_trail.slice().reverse().map((audit) => (
                         <div key={audit.event_id} className="p-3 bg-slate-950/60 border border-slate-850 rounded-lg text-xs space-y-1.5">
                           <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold">
                             <span>{new Date(audit.timestamp).toLocaleString()}</span>
-                            <span>Aktor: {audit.actor}</span>
+                            <span>{language === "en" ? "Actor: " : "Aktor: "}{audit.actor}</span>
                           </div>
                           <p className="text-slate-200 font-medium">
-                            Aksi: <span className="text-blue-400 font-semibold">{audit.action}</span>
+                            {language === "en" ? "Action: " : "Aksi: "}<span className="text-blue-400 font-semibold">{audit.action}</span>
                           </p>
                           {(audit.old_value || audit.new_value) && (
                             <div className="grid grid-cols-2 gap-2 p-1.5 bg-slate-900/60 rounded text-[10px] font-mono">
@@ -1113,7 +1121,7 @@ export default function ProjectDetail() {
                             </div>
                           )}
                           {audit.reason && (
-                            <p className="text-slate-400 text-[10px]">Alasan: {audit.reason}</p>
+                            <p className="text-slate-400 text-[10px]">{language === "en" ? "Reason: " : "Alasan: "}{audit.reason}</p>
                           )}
                         </div>
                       ))}
@@ -1150,9 +1158,9 @@ export default function ProjectDetail() {
                 {history && history.baselines.length === 0 ? (
                   <div className="p-8 text-center text-slate-500 space-y-3">
                     <Lock className="mx-auto text-slate-600" size={32} />
-                    <p className="text-sm font-semibold text-white">Tidak Ada Baseline Aktif</p>
+                    <p className="text-sm font-semibold text-white">{language === "en" ? "No Active Baseline" : "Tidak Ada Baseline Aktif"}</p>
                     <p className="text-xs">
-                      Revisi ini belum disetujui reviewer. Selesaikan review untuk mengunci baseline.
+                      {language === "en" ? "This revision has not been approved by reviewer yet. Complete review to lock baseline." : "Revisi ini belum disetujui reviewer. Selesaikan review untuk mengunci baseline."}
                     </p>
                   </div>
                 ) : (
@@ -1166,30 +1174,30 @@ export default function ProjectDetail() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-500 font-semibold block">Tanggal Penguncian:</span>
+                          <span className="text-slate-500 font-semibold block">{language === "en" ? "Lock Date:" : "Tanggal Penguncian:"}</span>
                           <span className="text-slate-200">
                             {new Date(history.baselines[history.baselines.length - 1].locked_at).toLocaleString()}
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-500 font-semibold block">Reviewer Persetujuan:</span>
+                          <span className="text-slate-500 font-semibold block">{language === "en" ? "Approval Reviewer:" : "Reviewer Persetujuan:"}</span>
                           <span className="text-slate-200">
                             {history.approvals[history.approvals.length - 1]?.reviewer || "system"}
                           </span>
                         </div>
                         <div>
-                          <span className="text-slate-500 font-semibold block">Catatan Persetujuan:</span>
+                          <span className="text-slate-500 font-semibold block">{language === "en" ? "Approval Note:" : "Catatan Persetujuan:"}</span>
                           <span className="text-slate-200 block italic">
-                            "{history.approvals[history.approvals.length - 1]?.approval_note || "Tidak ada catatan."}"
+                            "{history.approvals[history.approvals.length - 1]?.approval_note || (language === "en" ? "No notes." : "Tidak ada catatan.")}"
                           </span>
                         </div>
                       </div>
 
                       <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 flex flex-col justify-between space-y-4">
                         <div>
-                          <h4 className="font-semibold text-white">Ingin Mengubah Spesifikasi Kapal?</h4>
+                          <h4 className="font-semibold text-white">{language === "en" ? "Want to Modify Ship Specifications?" : "Ingin Mengubah Spesifikasi Kapal?"}</h4>
                           <p className="text-slate-500 text-[10px] mt-1">
-                            Baseline bersifat immutable. Anda harus mencabangkan revisi DRAFT baru dari baseline aktif untuk melakukan modifikasi parameter.
+                            {language === "en" ? "Baseline is immutable. You must branch a new DRAFT revision from active baseline to modify parameters." : "Baseline bersifat immutable. Anda harus mencabangkan revisi DRAFT baru dari baseline aktif untuk melakukan modifikasi parameter."}
                           </p>
                         </div>
                         <button
@@ -1197,7 +1205,7 @@ export default function ProjectDetail() {
                           className="w-full flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded text-xs transition-colors cursor-pointer"
                         >
                           <Plus size={14} />
-                          <span>Cabangkan Revisi Baru</span>
+                          <span>{language === "en" ? "Branch New Revision" : "Cabangkan Revisi Baru"}</span>
                         </button>
                       </div>
                     </div>
@@ -1213,7 +1221,7 @@ export default function ProjectDetail() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-400 block">Nama Reviewer *</label>
+                      <label className="text-xs font-semibold text-slate-400 block">{language === "en" ? "Reviewer Name *" : "Nama Reviewer *"}</label>
                       <input
                         type="text"
                         value={reviewerName}
@@ -1222,7 +1230,7 @@ export default function ProjectDetail() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-400 block">Catatan Keputusan *</label>
+                      <label className="text-xs font-semibold text-slate-400 block">{language === "en" ? "Decision Note *" : "Catatan Keputusan *"}</label>
                       <input
                         type="text"
                         value={reviewNote}
@@ -1236,13 +1244,13 @@ export default function ProjectDetail() {
                       onClick={() => handleReviewDecision("APPROVED")}
                       className="bg-green-600 hover:bg-green-500 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
                     >
-                      Setujui (APPROVE)
+                      {language === "en" ? "Approve (APPROVE)" : "Setujui (APPROVE)"}
                     </button>
                     <button
                       onClick={() => handleReviewDecision("REJECTED")}
                       className="bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer"
                     >
-                      Tolak (REJECT)
+                      {language === "en" ? "Reject (REJECT)" : "Tolak (REJECT)"}
                     </button>
                   </div>
                 </div>
@@ -1252,9 +1260,9 @@ export default function ProjectDetail() {
               {!isReadOnly && (
                 <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Ajukan Dokumen Draf untuk Review</h4>
+                    <h4 className="text-sm font-semibold text-white">{language === "en" ? "Submit Draft Document for Review" : "Ajukan Dokumen Draf untuk Review"}</h4>
                     <p className="text-slate-500 text-[10px] mt-0.5">
-                      Pastikan validasi sudah bersih tanpa error sebelum mengajukan baseline approval.
+                      {language === "en" ? "Ensure validation is clean without errors before submitting baseline approval." : "Pastikan validasi sudah bersih tanpa error sebelum mengajukan baseline approval."}
                     </p>
                   </div>
                   <button
@@ -1262,7 +1270,7 @@ export default function ProjectDetail() {
                     className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-lg text-xs cursor-pointer transition-colors"
                   >
                     <Send size={12} />
-                    <span>Ajukan Review</span>
+                    <span>{language === "en" ? "Submit Review" : "Ajukan Review"}</span>
                   </button>
                 </div>
               )}

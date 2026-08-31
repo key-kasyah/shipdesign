@@ -1,8 +1,15 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #020617; /* Dark slate-950 */
-  --foreground: #f8fafc; /* Slate-50 */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+html.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
 }
 
 @theme inline {
@@ -17,23 +24,389 @@ body {
   color: var(--foreground);
 }
 
-/* Custom dark scrollbars to avoid ugly default browser scrollbars */
+/* =========================================================================
+   LIGHT THEME STYLING (Active by default or when html:not(.dark))
+   ========================================================================= */
+
+html:not(.dark) {
+  color-scheme: light;
+}
+
+/* App Canvas & Layout Backgrounds */
+html:not(.dark) body,
+html:not(.dark) .bg-\[\#070B12\],
+html:not(.dark) .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+/* Main Outer Cards, Modals, Section Containers */
+html:not(.dark) .bg-slate-900,
+html:not(.dark) .bg-slate-900\/90,
+html:not(.dark) .bg-slate-900\/80,
+html:not(.dark) .bg-slate-900\/70,
+html:not(.dark) .bg-slate-900\/60,
+html:not(.dark) .bg-slate-900\/50,
+html:not(.dark) .bg-slate-900\/40,
+html:not(.dark) .bg-slate-900\/30 {
+  background-color: #ffffff !important;
+}
+
+/* Inner Panels, Sub-cards, Nested Form Containers, Code/Data Viewers */
+html:not(.dark) .bg-slate-950\/90,
+html:not(.dark) .bg-slate-950\/80,
+html:not(.dark) .bg-slate-950\/70,
+html:not(.dark) .bg-slate-950\/60,
+html:not(.dark) .bg-slate-950\/50,
+html:not(.dark) .bg-slate-950\/40,
+html:not(.dark) .bg-slate-950\/30,
+html:not(.dark) .bg-slate-950\/20,
+html:not(.dark) .bg-slate-850 {
+  background-color: #f8fafc !important;
+}
+
+/* Secondary Panels, Hoverable List Items, Neutral Badges & Addon Groups */
+html:not(.dark) .bg-slate-800,
+html:not(.dark) .bg-slate-800\/90,
+html:not(.dark) .bg-slate-800\/80,
+html:not(.dark) .bg-slate-800\/70,
+html:not(.dark) .bg-slate-800\/60,
+html:not(.dark) .bg-slate-800\/50,
+html:not(.dark) .bg-slate-800\/40,
+html:not(.dark) .bg-slate-800\/30 {
+  background-color: #f1f5f9 !important;
+}
+
+/* Interactive Hover States */
+html:not(.dark) .hover\:bg-slate-800:hover,
+html:not(.dark) .hover\:bg-slate-800\/90:hover,
+html:not(.dark) .hover\:bg-slate-800\/80:hover,
+html:not(.dark) .hover\:bg-slate-800\/70:hover,
+html:not(.dark) .hover\:bg-slate-800\/60:hover,
+html:not(.dark) .hover\:bg-slate-800\/50:hover,
+html:not(.dark) .hover\:bg-slate-800\/40:hover,
+html:not(.dark) .hover\:bg-slate-700:hover,
+html:not(.dark) .hover\:bg-slate-700\/80:hover,
+html:not(.dark) .hover\:bg-slate-900:hover,
+html:not(.dark) .hover\:bg-slate-900\/80:hover,
+html:not(.dark) .hover\:bg-slate-950\/70:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Subtle Card Borders & Section Dividers */
+html:not(.dark) .border-slate-800,
+html:not(.dark) .border-slate-800\/90,
+html:not(.dark) .border-slate-800\/80,
+html:not(.dark) .border-slate-800\/70,
+html:not(.dark) .border-slate-800\/60,
+html:not(.dark) .border-slate-800\/50,
+html:not(.dark) .border-slate-800\/40,
+html:not(.dark) .border-slate-850,
+html:not(.dark) .border-slate-700,
+html:not(.dark) .border-slate-700\/80,
+html:not(.dark) .border-slate-700\/60,
+html:not(.dark) .border-slate-700\/50 {
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-800\/80 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-700 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+/* High-Quality Typography Hierarchy for Light Mode */
+html:not(.dark) .text-white:not(.bg-clip-text):not(.keep-white) {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .text-slate-300,
+html:not(.dark) .text-slate-350 {
+  color: #334155 !important;
+}
+
+html:not(.dark) .text-slate-400 {
+  color: #475569 !important;
+}
+
+html:not(.dark) .text-slate-500 {
+  color: #64748b !important;
+}
+
+html:not(.dark) .text-slate-600 {
+  color: #64748b !important;
+}
+
+/* Vibrant, High-Contrast Badges & Accents in Light Mode */
+/* Cyan */
+html:not(.dark) .text-cyan-400,
+html:not(.dark) .text-cyan-300,
+html:not(.dark) .text-cyan-200 {
+  color: #0284c7 !important;
+}
+
+html:not(.dark) .bg-cyan-500\/10,
+html:not(.dark) .bg-cyan-500\/20,
+html:not(.dark) .bg-cyan-600\/20 {
+  background-color: #e0f2fe !important;
+  border-color: #bae6fd !important;
+}
+
+/* Blue */
+html:not(.dark) .text-blue-400,
+html:not(.dark) .text-blue-300 {
+  color: #1d4ed8 !important;
+}
+
+html:not(.dark) .bg-blue-500\/10,
+html:not(.dark) .bg-blue-500\/20,
+html:not(.dark) .bg-blue-600\/10,
+html:not(.dark) .bg-blue-600\/15,
+html:not(.dark) .bg-blue-600\/20,
+html:not(.dark) .bg-blue-600\/30 {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+/* Emerald / Green */
+html:not(.dark) .text-emerald-400,
+html:not(.dark) .text-emerald-300,
+html:not(.dark) .text-green-400,
+html:not(.dark) .text-green-300 {
+  color: #047857 !important;
+}
+
+html:not(.dark) .bg-emerald-500\/10,
+html:not(.dark) .bg-emerald-500\/20,
+html:not(.dark) .bg-emerald-600\/15,
+html:not(.dark) .bg-green-500\/10 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+/* Amber / Yellow */
+html:not(.dark) .text-amber-400,
+html:not(.dark) .text-amber-300 {
+  color: #b45309 !important;
+}
+
+html:not(.dark) .bg-amber-500\/10,
+html:not(.dark) .bg-amber-500\/20,
+html:not(.dark) .bg-amber-950\/20 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+/* Rose / Red Alerts & Statuses */
+html:not(.dark) .text-rose-400,
+html:not(.dark) .text-rose-300,
+html:not(.dark) .text-red-400,
+html:not(.dark) .text-red-300 {
+  color: #be123c !important;
+}
+
+html:not(.dark) .bg-rose-500\/10,
+html:not(.dark) .bg-rose-500\/20,
+html:not(.dark) .bg-rose-950\/20,
+html:not(.dark) .bg-red-500\/10,
+html:not(.dark) .bg-red-500\/15,
+html:not(.dark) .bg-red-950\/10 {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+/* Indigo */
+html:not(.dark) .text-indigo-400,
+html:not(.dark) .text-indigo-300 {
+  color: #4338ca !important;
+}
+
+html:not(.dark) .bg-indigo-500\/10,
+html:not(.dark) .bg-indigo-500\/20,
+html:not(.dark) .bg-indigo-600\/40 {
+  background-color: #e0e7ff !important;
+  border-color: #c7d2fe !important;
+}
+
+/* White Text Preservation inside Active / Solid / Gradient Action Buttons */
+html:not(.dark) .bg-gradient-to-r.text-white,
+html:not(.dark) .bg-blue-600,
+html:not(.dark) .bg-blue-600 *,
+html:not(.dark) .bg-emerald-600,
+html:not(.dark) .bg-emerald-600 *,
+html:not(.dark) .bg-red-600,
+html:not(.dark) .bg-red-600 *,
+html:not(.dark) .bg-rose-600,
+html:not(.dark) .bg-rose-600 *,
+html:not(.dark) .bg-indigo-600,
+html:not(.dark) .bg-indigo-600 *,
+html:not(.dark) button.bg-blue-600,
+html:not(.dark) button.bg-emerald-600,
+html:not(.dark) button.bg-indigo-600,
+html:not(.dark) [class*="from-blue-600"] span,
+html:not(.dark) [class*="from-blue-600"],
+html:not(.dark) [class*="from-indigo-600"] span,
+html:not(.dark) [class*="from-indigo-600"],
+html:not(.dark) .text-white.shadow-lg,
+html:not(.dark) .text-white.shadow-md {
+  color: #ffffff !important;
+}
+
+/* Form Inputs, Selects, and Textareas */
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]):focus,
+html:not(.dark) select:focus,
+html:not(.dark) textarea:focus {
+  border-color: #2563eb !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+html:not(.dark) input:disabled,
+html:not(.dark) select:disabled,
+html:not(.dark) textarea:disabled {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Light Card Soft Shadows */
+html:not(.dark) .shadow-xl,
+html:not(.dark) .shadow-2xl {
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 4px 6px -2px rgba(15, 23, 42, 0.02), 0 0 0 1px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Tables in Light Mode */
+html:not(.dark) thead tr {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+html:not(.dark) tbody tr {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+html:not(.dark) tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) tfoot tr {
+  background-color: #f1f5f9 !important;
+  border-top: 2px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+/* Tooltip, Dropdowns, Popovers */
+html:not(.dark) .bg-slate-900.shadow-2xl,
+html:not(.dark) .bg-slate-900.shadow-xl,
+html:not(.dark) .bg-slate-950.shadow-2xl {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05) !important;
+}
+
+/* Engineering Canvas & Blueprints in Light Mode */
+html:not(.dark) svg.bg-slate-950,
+html:not(.dark) svg.bg-slate-900,
+html:not(.dark) .canvas-blueprint {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* SVG grid lines and axis ticks readability */
+html:not(.dark) svg line.stroke-slate-800,
+html:not(.dark) svg line.stroke-slate-700,
+html:not(.dark) svg path.stroke-slate-800,
+html:not(.dark) svg path.stroke-slate-700 {
+  stroke: #e2e8f0 !important;
+}
+
+html:not(.dark) svg line.stroke-slate-500,
+html:not(.dark) svg line.stroke-slate-400 {
+  stroke: #94a3b8 !important;
+}
+
+html:not(.dark) svg text {
+  fill: #1e293b !important;
+}
+
+/* =========================================================================
+   DARK THEME EXPLICIT OVERRIDES (Active when html.dark)
+   ========================================================================= */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark .bg-\[\#070B12\] {
+  background-color: #070b12 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .bg-slate-950 {
+  background-color: #020617 !important;
+}
+
+/* =========================================================================
+   SCROLLBARS (Adapted for Light & Dark)
+   ========================================================================= */
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-::-webkit-scrollbar-track {
-  background: #020617; /* Matches background */
+/* Dark mode scrollbar */
+html.dark ::-webkit-scrollbar-track {
+  background: #020617;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #1e293b; /* Slate-800 */
+html.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6; /* Blue-500 */
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3b82f6;
+}
+
+/* Light mode scrollbar */
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Scrollbar hiding class for sidebar navigation */

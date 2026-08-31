@@ -255,5 +255,18 @@ export const api = {
       body: JSON.stringify({ port_ids: portIds }),
     });
   },
+
+  // Stage 3 Basic Design & Lines Plan Storage
+  async getStage3Data(projectId: string): Promise<any> {
+    return request<any>(`/api/projects/${projectId}/stage3`);
+  },
+
+  async saveStage3Data(projectId: string, payload: any): Promise<any> {
+    return request<any>(`/api/projects/${projectId}/stage3`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
 };
+
 

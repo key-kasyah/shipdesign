@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Activity,
   Download,
@@ -18,16 +19,21 @@ import {
   EyeOff,
   ZoomIn,
   ZoomOut,
-  Maximize
+  Maximize2,
+  Maximize,
+  X,
+  Layers,
+  Table as TableIcon
 } from "lucide-react";
+import { WaterlineConfig, DEFAULT_WATERLINE_LEVELS } from "./WaterPlaneCalculationSheet";
 
 /**
  * Helper: Smooth curve (Monotone Cubic Interpolation)
  * Produces a perfectly fair curve, eliminating micro-wiggles caused by non-uniform point spacing.
  */
-const getSmoothPathD = (points: {x: number, y: number}[]) => {
+const getSmoothPathD = (points: { x: number; y: number }[]) => {
   if (points.length === 0) return "";
-  if (points.length === 1) return ``;
+  if (points.length === 1) return "";
 
   const n = points.length;
   const delta = new Float64Array(n - 1);
@@ -62,12 +68,12 @@ const getSmoothPathD = (points: {x: number, y: number}[]) => {
     }
   }
 
-  let d = ``;
+  let d = "";
   for (let i = 0; i < n - 1; i++) {
     const p0 = points[i];
     const p1 = points[i + 1];
     const dx = (p1.x - p0.x) / 3;
-    
+
     const cp1x = p0.x + dx;
     const cp1y = p0.y + m[i] * dx;
     const cp2x = p1.x - dx;
@@ -75,7 +81,7 @@ const getSmoothPathD = (points: {x: number, y: number}[]) => {
 
     d += ` C ${cp1x.toFixed(3)},${cp1y.toFixed(3)} ${cp2x.toFixed(3)},${cp2y.toFixed(3)} ${p1.x.toFixed(3)},${p1.y.toFixed(3)}`;
   }
-  
+
   return d;
 };
 
@@ -87,17 +93,22 @@ interface MidshipBilgeCalculationProps {
   cb: number;
   cm?: number;
   vesselType?: string;
+  waterlineLevels?: WaterlineConfig[];
+  waterlinesData?: Record<string, Record<number, number>>;
 }
 
 export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps> = ({
   lbp_m = 81.19,
-  breadth_m = 15.00,
-  draft_m = 5.50,
-  depth_m = 7.00,
+  breadth_m = 15.0,
+  draft_m = 5.5,
+  depth_m = 7.0,
   cb = 0.75,
   cm = 0.99,
-  vesselType = "GENERAL_CARGO"
+  vesselType = "GENERAL_CARGO",
+  waterlineLevels,
+  waterlinesData
 }) => {
+  const { language } = useLanguage();
   const LBP = Math.max(10, lbp_m);
   const B = Math.max(2, breadth_m);
   const T = Math.max(0.5, draft_m);
@@ -105,6 +116,10 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const Cb = cb || 0.75;
   const Cm = cm || 0.99;
   const halfB = Number((B / 2).toFixed(3)); // 7.50m
+
+  const effectiveWaterlineLevels = useMemo(() => {
+    return waterlineLevels && waterlineLevels.length > 0 ? waterlineLevels : DEFAULT_WATERLINE_LEVELS;
+  }, [waterlineLevels]);
 
   // Theoretical Bilge Radius calculation:
   // R = Akar( (B * T * (1 - Cm)) / (2 - (pi / 2)) )
@@ -120,39 +135,41 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const l_chord = Number((R * Math.tan((22.5 * Math.PI) / 180)).toFixed(4));
   const r_sub = Number((l_chord / 2).toFixed(4));
 
-  // Helper to generate exactly 20 discrete points on the circular bilge arc (0 to R) plus upper section steps
+  // Helper to generate discrete points on the circular bilge arc (0 to R) plus upper section steps
   const createDefaultDraftSteps = (rVal: number, draftT: number, depthH: number): number[] => {
-    const safeR = Math.max(0.1, rVal || 2.0);
-    // Exactly 20 points along the bilge arc (0 to R)
-    const bilgeSteps = Array.from({ length: 20 }).map((_, i) => {
-      return Number(((i / 19) * safeR).toFixed(3));
+    const safeR = Math.max(0.1, Math.min(rVal || 2.0, draftT));
+    // 16 points along the bilge arc (0 to R)
+    const bilgeSteps = Array.from({ length: 16 }).map((_, i) => {
+      return Number(((i / 15) * safeR).toFixed(3));
     });
 
-    // Standard steps above R up to depth H
-    const maxZ = Math.max(draftT, depthH, safeR + 1);
+    // Upper steps above R up to depth H
+    const maxZ = Math.max(draftT, depthH, safeR + 0.5);
     const upperSteps: number[] = [];
-    let currentZ = Math.ceil((safeR + 0.1) * 2) / 2;
+    let currentZ = Math.ceil((safeR + 0.2) * 2) / 2;
     while (currentZ <= maxZ + 0.01) {
       upperSteps.push(Number(currentZ.toFixed(3)));
       currentZ += 0.5;
     }
-    if (draftT > safeR && !upperSteps.some(z => Math.abs(z - draftT) < 0.01)) {
+    if (draftT > safeR && !upperSteps.some((z) => Math.abs(z - draftT) < 0.01)) {
       upperSteps.push(Number(draftT.toFixed(3)));
     }
 
     return Array.from(new Set([...bilgeSteps, ...upperSteps])).sort((a, b) => a - b);
   };
 
-  // Dynamic state for draft steps (default 20 points on Bilge Arc)
+  // Dynamic state for draft steps
   const [draftSteps, setDraftSteps] = useState<number[]>(() =>
     createDefaultDraftSteps(calculatedRadius, T, H)
   );
-  
-  // Dragging interaction state
+
+  // Interaction states
   const svgRef = useRef<SVGSVGElement>(null);
   const [draggingDraft, setDraggingDraft] = useState<number | null>(null);
   const [hoverDraft, setHoverDraft] = useState<number | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
+  const [isFullHullView, setIsFullHullView] = useState<boolean>(false);
+  const [isFullscreenPlot, setIsFullscreenPlot] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   // Ensure draftSteps is always sorted
@@ -164,12 +181,10 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       return Number(flatOfBottom.toFixed(3));
     }
     if (z < rVal) {
-      // Circular bilge arc
       const diff = rVal - z;
-      const yArc = (halfB - rVal) + Math.sqrt(Math.max(0, Math.pow(rVal, 2) - Math.pow(diff, 2)));
+      const yArc = halfB - rVal + Math.sqrt(Math.max(0, Math.pow(rVal, 2) - Math.pow(diff, 2)));
       return Number(Math.min(halfB, yArc).toFixed(3));
     }
-    // Vertical flat of side shell
     return Number(halfB.toFixed(3));
   };
 
@@ -178,7 +193,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     let sum = 0;
     const n = steps.length;
     if (n < 2) return 0;
-    
+
     for (let i = 0; i < n; i++) {
       let weight = 0;
       if (i === 0) {
@@ -188,28 +203,23 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       } else {
         weight = (steps[i + 1] - steps[i - 1]) / 2;
       }
-      
-      // Limit integration up to T (draft_m)
+
       const z = steps[i];
       if (z > T) {
-        // If the point is above T, we must clip its weight contribution below T
         if (steps[i - 1] < T) {
-           // We only add the trapezoid chunk up to T
-           const partialWeight = (T - steps[i - 1]) / 2;
-           sum += (ordinates[z] || 0) * partialWeight;
+          const partialWeight = (T - steps[i - 1]) / 2;
+          sum += (ordinates[z] || 0) * partialWeight;
         }
-        break; // Ignore any points entirely above T for Am calculation
+        break;
       } else if (i < n - 1 && steps[i + 1] > T) {
-        // Next point is above T, clip the forward weight
         const forwardWeight = (T - z) / 2;
         const backwardWeight = (z - (i > 0 ? steps[i - 1] : z)) / 2;
         weight = forwardWeight + backwardWeight;
       }
-      
+
       sum += (ordinates[z] || 0) * weight;
     }
-    
-    // Multiply by 2 because ordinates are half-breadths
+
     return sum * 2.0;
   };
 
@@ -220,7 +230,6 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       initial[z] = getTheoreticalOrdinateAtZ(z, calculatedRadius);
     });
 
-    // Fine-tune lower bilge arc points iteratively to match target Am
     for (let iter = 0; iter < 20; iter++) {
       const currentAm = calculateTrapezoidalAm(initial, steps);
       const deviance = (currentAm - targetAm) / (currentAm || 1);
@@ -229,7 +238,6 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
       const scale = targetAm / (currentAm || 1);
       steps.forEach((z) => {
-        // Only bend the curve inside the bilge radius to achieve the target volume!
         if (z <= calculatedRadius) {
           const adjusted = initial[z] * (1 + (scale - 1) * 0.85);
           initial[z] = Number(Math.max(0, Math.min(halfB, adjusted)).toFixed(3));
@@ -263,7 +271,6 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     setDraftOrdinates(generateOptimizedDraftOrdinates(Am_rancangan, sortedDraftSteps));
   };
 
-  // Update a single draft ordinate manually via table
   const handleCellChange = (draft_z: number, value: string) => {
     const num = parseFloat(value);
     setDraftOrdinates((prev) => ({
@@ -272,15 +279,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     }));
   };
 
-  // Add new dynamic draft step
   const handleAddDraftStep = () => {
-    // Find the largest gap in the bilge region (between 0 and R)
     let maxGap = 0;
-    let newZ = R / 2; // default if no points in region
-    
+    let newZ = R / 2;
+
     for (let i = 0; i < sortedDraftSteps.length - 1; i++) {
       const z1 = sortedDraftSteps[i];
-      const z2 = sortedDraftSteps[i+1];
+      const z2 = sortedDraftSteps[i + 1];
       if (z2 <= R + 0.1) {
         const gap = z2 - z1;
         if (gap > maxGap) {
@@ -289,30 +294,29 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         }
       }
     }
-    
-    // Round to 3 decimal places to avoid floating point issues
+
     newZ = Number(newZ.toFixed(3));
-    
+
     if (!sortedDraftSteps.includes(newZ)) {
       setDraftSteps([...sortedDraftSteps, newZ]);
     }
   };
 
-  // Compute calculated table rows
+  // Simpson Integration Table Rows
   const calculatedRows = useMemo(() => {
-    const n = sortedDraftSteps.length;
-    return sortedDraftSteps.map((draft_z, i) => {
-      const ord = draftOrdinates[draft_z] ?? 0;
-      
-      // Calculate display weight (Trapezoidal)
+    return sortedDraftSteps.map((draft_z, idx) => {
       let weight = 0;
-      if (n > 1) {
-        if (i === 0) weight = (sortedDraftSteps[1] - sortedDraftSteps[0]) / 2;
-        else if (i === n - 1) weight = (sortedDraftSteps[n - 1] - sortedDraftSteps[n - 2]) / 2;
-        else weight = (sortedDraftSteps[i + 1] - sortedDraftSteps[i - 1]) / 2;
+      if (idx === 0) {
+        weight = (sortedDraftSteps[1] - sortedDraftSteps[0]) / 2;
+      } else if (idx === sortedDraftSteps.length - 1) {
+        weight = (sortedDraftSteps[idx] - sortedDraftSteps[idx - 1]) / 2;
+      } else {
+        weight = (sortedDraftSteps[idx + 1] - sortedDraftSteps[idx - 1]) / 2;
       }
-      
+
+      const ord = draftOrdinates[draft_z] || 0;
       const product = ord * weight;
+
       return {
         draft_z,
         label: draft_z.toFixed(3),
@@ -384,11 +388,20 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     document.body.removeChild(link);
   };
 
-  // SVG Interaction Handlers
+  // Keyboard shortcut for Esc
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreenPlot) {
+        setIsFullscreenPlot(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreenPlot]);
+
+  // SVG Interaction Handlers (Horizontal Dragging along Draft Line z)
   const handlePointerDown = (e: React.PointerEvent, z: number) => {
-    // Only allow dragging points in the bilge region (z <= R)
     if (z > R + 0.1) return;
-    
     e.preventDefault();
     (e.target as Element).setPointerCapture(e.pointerId);
     setDraggingDraft(z);
@@ -396,25 +409,21 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (draggingDraft === null || !svgRef.current) return;
-    
+
     const svg = svgRef.current;
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
-    
-    // Transform screen coordinates to SVG coordinates
+
     const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
-    
-    // Reverse the scale mapping to get the original halfBreadth value
-    // x = ox + halfBreadth * scaleX => halfBreadth = (x - ox) / scaleX
-    const ox = 25;
-    const scaleX = 95 / (halfB || 7.5);
-    
-    // Clamp the value between 0 and halfB
+
+    const ox = isFullHullView ? 82 : 35;
+    const scaleX = isFullHullView ? 56 / (halfB || 7.5) : 80 / (halfB || 7.5);
+
     let newHalfB = (svgP.x - ox) / scaleX;
     newHalfB = Math.max(0, Math.min(halfB, newHalfB));
-    
-    setDraftOrdinates(prev => ({
+
+    setDraftOrdinates((prev) => ({
       ...prev,
       [draggingDraft]: Number(newHalfB.toFixed(3))
     }));
@@ -432,9 +441,507 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     setHoverDraft(null);
   };
 
+  // Active Readout Info
+  const activeHoverZ = hoverDraft ?? draggingDraft ?? R;
+  const activeHoverHalfB = draftOrdinates[activeHoverZ] ?? halfB;
+
+  // Core SVG Blueprint Renderer with Optimized Framing
+  const renderMidshipSvgContent = () => {
+    const ox = isFullHullView ? 82 : 35;
+    const oy = 74;
+    const maxH = Math.max(H, T, 7.0);
+    const scaleZ = 52 / maxH;
+    const scaleX = isFullHullView ? 56 / (halfB || 7.5) : 80 / (halfB || 7.5);
+
+    const deckY = oy - H * scaleZ;
+    const dwlY = oy - T * scaleZ;
+    const rY = oy - R * scaleZ;
+    const outerX = ox + halfB * scaleX;
+
+    // Interactive Curve Points
+    const curvePts = sortedDraftSteps.map((z) => ({
+      z,
+      x: ox + (draftOrdinates[z] || 0) * scaleX,
+      y: oy - z * scaleZ,
+      isBilge: z <= R + 0.001
+    }));
+
+    const smoothCurve = getSmoothPathD(curvePts);
+    const lastPt = curvePts[curvePts.length - 1];
+
+    const hullPath = `
+      M ${ox},${deckY}
+      L ${ox},${oy}
+      L ${curvePts[0].x},${curvePts[0].y}
+      ${smoothCurve}
+      L ${outerX},${lastPt.y}
+      L ${outerX},${deckY}
+      Z
+    `;
+
+    const subHullPath = `
+      M ${ox},${dwlY}
+      L ${ox},${oy}
+      L ${curvePts[0].x},${curvePts[0].y}
+      ${smoothCurve}
+      L ${outerX},${lastPt.y}
+      L ${outerX},${dwlY}
+      Z
+    `;
+
+    return (
+      <g>
+        {/* Submerged Area Water Fill */}
+        <path d={subHullPath} fill="url(#waterHatch)" />
+        <path
+          d={hullPath}
+          fill={isPreviewMode ? "rgba(6, 182, 212, 0.18)" : "rgba(6, 182, 212, 0.08)"}
+          stroke="#06b6d4"
+          strokeWidth="1.2"
+        />
+
+        {/* Port Side Symmetrical Hull (Mirror) */}
+        {isFullHullView && (
+          <g transform={`translate(${2 * ox}, 0) scale(-1, 1)`}>
+            <path d={subHullPath} fill="url(#waterHatch)" />
+            <path
+              d={hullPath}
+              fill={isPreviewMode ? "rgba(6, 182, 212, 0.18)" : "rgba(6, 182, 212, 0.08)"}
+              stroke="#06b6d4"
+              strokeWidth="1.2"
+            />
+          </g>
+        )}
+
+        {/* ========================================================================= */}
+        {/* GARIS HORIZONTAL: HORIZONTAL WATERLINE REFERENCE GRID LINES (SOLID LINES) */}
+        {/* ========================================================================= */}
+        {!isPreviewMode &&
+          sortedDraftSteps.map((z, idx) => {
+            const yPos = oy - z * scaleZ;
+            const isDWL = Math.abs(z - T) < 0.01;
+            const isDeck = Math.abs(z - H) < 0.01;
+            const isTangentR = Math.abs(z - R) < 0.05;
+            const isBase = z === 0;
+            const isHovered = hoverDraft === z || draggingDraft === z;
+
+            const lineX1 = isFullHullView ? ox - halfB * scaleX - 6 : ox - 6;
+            const lineX2 = outerX + (isFullHullView ? 6 : 14);
+
+            return (
+              <g key={`h-grid-${z}-${idx}`}>
+                {/* Horizontal reference line across the midship section (SOLID) */}
+                <line
+                  x1={lineX1}
+                  y1={yPos}
+                  x2={lineX2}
+                  y2={yPos}
+                  stroke={
+                    isHovered
+                      ? "#38bdf8"
+                      : isDWL
+                      ? "#10b981"
+                      : isTangentR
+                      ? "#f59e0b"
+                      : isDeck
+                      ? "#94a3b8"
+                      : isBase
+                      ? "#64748b"
+                      : "#334155"
+                  }
+                  strokeWidth={isHovered ? 0.7 : isDWL || isDeck || isTangentR || isBase ? 0.5 : 0.25}
+                  opacity={isHovered ? 1 : isDWL || isTangentR || isDeck || isBase ? 0.9 : 0.35}
+                />
+              </g>
+            );
+          })}
+
+        {/* ========================================================================= */}
+        {/* WATERLINE PROJECTION PLANES FROM TAB 2 (SOLID WATERLINE LINES)            */}
+        {/* ========================================================================= */}
+        {!isPreviewMode &&
+          effectiveWaterlineLevels.map((wl) => {
+            const z = wl.draftFraction * T;
+            const yPos = oy - z * scaleZ;
+            const b_mid = getTheoreticalOrdinateAtZ(z, R);
+            const midPtX = ox + b_mid * scaleX;
+            const mirroredPtX = ox - b_mid * scaleX;
+
+            return (
+              <g key={`wl-proj-${wl.id}`} className="transition-all duration-200">
+                {/* Horizontal reference line matching Waterline color (SOLID) */}
+                <line
+                  x1={isFullHullView ? mirroredPtX : ox}
+                  y1={yPos}
+                  x2={midPtX}
+                  y2={yPos}
+                  stroke={wl.color}
+                  strokeWidth="0.5"
+                  opacity={0.9}
+                />
+                {/* Intersection Circle Point on Bilge Curve */}
+                <circle
+                  cx={midPtX}
+                  cy={yPos}
+                  r="1.0"
+                  fill={wl.color}
+                  stroke="#ffffff"
+                  strokeWidth="0.25"
+                  className="cursor-pointer shadow-sm"
+                >
+                  <title>{`${wl.name} (Z = ${z.toFixed(2)} m) -> 0.5B Midship = ${b_mid.toFixed(3)} m`}</title>
+                </circle>
+
+                {isFullHullView && (
+                  <circle
+                    cx={mirroredPtX}
+                    cy={yPos}
+                    r="1.0"
+                    fill={wl.color}
+                    stroke="#ffffff"
+                    strokeWidth="0.25"
+                  />
+                )}
+
+                {/* Right Badge Label for Waterline */}
+                {!isFullHullView && (
+                  <text
+                    x={outerX + 16}
+                    y={yPos + 0.8}
+                    fill={wl.color}
+                    fontSize="2.1"
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                  >
+                    {`${wl.shortName} (Z=${z.toFixed(2)}m, 0.5B=${b_mid.toFixed(3)}m)`}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+        {/* Structural Reference Labels on Right (Non-overlapping) */}
+        {!isPreviewMode && !isFullHullView && (
+          <g>
+            {/* Deck Level H */}
+            <text x={outerX + 16} y={deckY + 1.2} fill="#94a3b8" fontSize="2.5" fontFamily="monospace" fontWeight="bold">
+              Deck (H = {H.toFixed(2)}m)
+            </text>
+
+            {/* Bilge Tangent Level R (Positioned with clear distinction) */}
+            <text x={ox - 8} y={rY + 0.8} fill="#f59e0b" fontSize="2.2" fontFamily="monospace" fontWeight="bold" textAnchor="end">
+              R = {R.toFixed(3)}m (Tangen)
+            </text>
+          </g>
+        )}
+
+        {/* Centerline CL & Baseline BL Lines */}
+        {!isPreviewMode && (
+          <>
+            {/* Centerline CL (Solid Clean Axis) */}
+            <line
+              x1={ox}
+              y1="4"
+              x2={ox}
+              y2={oy + 8}
+              stroke="#64748b"
+              strokeWidth="0.8"
+            />
+            <text
+              x={ox - 2}
+              y="7"
+              fill="#64748b"
+              fontSize="2.8"
+              textAnchor="end"
+              fontFamily="monospace"
+              fontWeight="bold"
+            >
+              CL
+            </text>
+
+            {/* Baseline Solid BL Line */}
+            <line
+              x1={isFullHullView ? ox - halfB * scaleX - 10 : ox - 10}
+              y1={oy}
+              x2={outerX + 16}
+              y2={oy}
+              stroke="#64748b"
+              strokeWidth="0.8"
+            />
+
+            {/* Breadth Dimension (B/2) Top Arrow */}
+            <line x1={ox} y1="14" x2={outerX} y2="14" stroke="#38bdf8" strokeWidth="0.5" />
+            <polygon points={`${ox},14 ${ox + 2},13 ${ox + 2},15`} fill="#38bdf8" />
+            <polygon points={`${outerX},14 ${outerX - 2},13 ${outerX - 2},15`} fill="#38bdf8" />
+            <text
+              x={ox + (outerX - ox) / 2}
+              y="11.5"
+              fill="#38bdf8"
+              fontSize="2.7"
+              textAnchor="middle"
+              fontFamily="monospace"
+              fontWeight="bold"
+            >
+              0.5 B = {halfB.toFixed(3)} m (Lebar Total B = {B.toFixed(2)} m)
+            </text>
+
+            {/* Flat of Bottom Dimension Callout (Keel Tangent) */}
+            {flatOfBottom > 0.1 && (
+              <g>
+                <line x1={ox} y1={oy + 5} x2={ox + flatOfBottom * scaleX} y2={oy + 5} stroke="#10b981" strokeWidth="0.4" />
+                <polygon points={`${ox},${oy + 5} ${ox + 1.5},${oy + 4.2} ${ox + 1.5},${oy + 5.8}`} fill="#10b981" />
+                <polygon points={`${ox + flatOfBottom * scaleX},${oy + 5} ${ox + flatOfBottom * scaleX - 1.5},${oy + 4.2} ${ox + flatOfBottom * scaleX - 1.5},${oy + 5.8}`} fill="#10b981" />
+                <text
+                  x={ox + (flatOfBottom * scaleX) / 2}
+                  y={oy + 8.5}
+                  fill="#10b981"
+                  fontSize="2.1"
+                  textAnchor="middle"
+                  fontFamily="monospace"
+                >
+                  Tangen Lunas = {flatOfBottom.toFixed(3)}m
+                </text>
+              </g>
+            )}
+          </>
+        )}
+
+        {/* ========================================================= */}
+        {/* INTERACTIVE DRAGGABLE POINTS ALONG HORIZONTAL LINES       */}
+        {/* ========================================================= */}
+        {!isPreviewMode &&
+          curvePts
+            .filter((p) => p.isBilge)
+            .map((p) => {
+              const isDragging = draggingDraft === p.z;
+              const isHovered = hoverDraft === p.z || isDragging;
+              const currentOrd = draftOrdinates[p.z] || 0;
+
+              return (
+                <g key={`drag-pt-${p.z}`}>
+                  {/* Point Drag Circle */}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={(isHovered ? 1.3 : 0.8) / zoomLevel}
+                    fill={isDragging ? "#38bdf8" : isHovered ? "#67e8f9" : "#f59e0b"}
+                    stroke="#ffffff"
+                    strokeWidth={0.3 / zoomLevel}
+                    className="cursor-ew-resize hover:fill-cyan-300 transition-all filter drop-shadow"
+                    onPointerDown={(e) => handlePointerDown(e, p.z)}
+                    onPointerEnter={() => setHoverDraft(p.z)}
+                    onPointerLeave={() => setHoverDraft(null)}
+                  />
+
+                  {/* Symmetrical Left Point when mirrored */}
+                  {isFullHullView && (
+                    <circle
+                      cx={2 * ox - p.x}
+                      cy={p.y}
+                      r={(isHovered ? 1.3 : 0.8) / zoomLevel}
+                      fill={isDragging ? "#38bdf8" : isHovered ? "#67e8f9" : "#f59e0b"}
+                      stroke="#ffffff"
+                      strokeWidth={0.3 / zoomLevel}
+                      className="opacity-70"
+                    />
+                  )}
+
+                  {/* Hover Tag */}
+                  {isHovered && (
+                    <g>
+                      <rect
+                        x={p.x - 17 / zoomLevel}
+                        y={p.y - 6.5 / zoomLevel}
+                        width={34 / zoomLevel}
+                        height={5.2 / zoomLevel}
+                        rx={1 / zoomLevel}
+                        fill="#020617"
+                        stroke="#38bdf8"
+                        strokeWidth={0.3 / zoomLevel}
+                        opacity={0.95}
+                      />
+                      <text
+                        x={p.x}
+                        y={p.y - 3 / zoomLevel}
+                        fill="#38bdf8"
+                        fontSize={2.2 / zoomLevel}
+                        fontFamily="monospace"
+                        textAnchor="middle"
+                        fontWeight="bold"
+                      >
+                        z={p.z.toFixed(2)}m | y={currentOrd.toFixed(3)}m
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })}
+      </g>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      {/* HEADER: TITLE BLOCK & PARTICULARS */}
+      {/* ========================================================= */}
+      {/* FULLSCREEN STUDIO OVERLAY FOR RADIUS BILGA               */}
+      {/* ========================================================= */}
+      {isFullscreenPlot && (
+        <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-3xl flex flex-col p-2 sm:p-3 overflow-hidden select-none animate-in fade-in duration-200">
+          {/* COMPACT TOP COCKPIT HEADER */}
+          <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 mb-2 shadow-2xl space-y-2 shrink-0">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {/* Left: Studio Title */}
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Activity size={16} />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <h2 className="text-sm font-bold text-white tracking-wide whitespace-nowrap">
+                    Bilge Radius Studio &mdash; <span className="text-cyan-400">Gading 10 (Midship)</span>
+                  </h2>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase whitespace-nowrap">
+                    R = {R.toFixed(3)} m
+                  </span>
+                </div>
+              </div>
+
+              {/* Middle: Live HUD Telemetry Strip */}
+              <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-1 font-mono text-xs shadow-inner">
+                <div className="flex items-center space-x-1.5 whitespace-nowrap">
+                  <span className="text-[10px] text-slate-400 uppercase">Koreksi:</span>
+                  <span className={`font-bold ${isCorrectionValid ? "text-emerald-400" : "text-rose-400"}`}>
+                    {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
+                  </span>
+                  <span
+                    className={`text-[9px] px-1 py-0.2 rounded font-bold ${
+                      isCorrectionValid ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                    }`}
+                  >
+                    {isCorrectionValid ? "MEMENUHI" : "DEVIASI"}
+                  </span>
+                </div>
+                <span className="text-slate-700 hidden md:inline">|</span>
+                <div className="flex items-center space-x-1 whitespace-nowrap">
+                  <span className="text-[10px] text-slate-400">Am:</span>
+                  <span className="font-bold text-cyan-400">{Am_calc.toFixed(2)}</span>
+                  <span className="text-[10px] text-slate-500">/ {Am_rancangan.toFixed(2)}m²</span>
+                </div>
+                <span className="text-slate-700 hidden md:inline">|</span>
+                <div className="flex items-center space-x-1 whitespace-nowrap">
+                  <span className="text-[10px] text-slate-400">Tangen Lunas:</span>
+                  <span className="font-bold text-amber-400">{flatOfBottom.toFixed(3)} m</span>
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center space-x-1.5">
+                <button
+                  onClick={handleAutoFineTune}
+                  className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-mono text-xs font-bold transition-all shadow-md flex items-center space-x-1 cursor-pointer"
+                  title="Otomatis ratakan dan seimbangkan kurva hingga memenuhi syarat <= ±0.05%"
+                >
+                  <Wand2 size={13} />
+                  <span>Auto-Fit</span>
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
+                  title="Reset ke Posisi Desain Awal"
+                >
+                  <RotateCcw size={15} />
+                </button>
+                <button
+                  onClick={() => setIsFullHullView(!isFullHullView)}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
+                    isFullHullView
+                      ? "bg-cyan-500 text-white shadow-sm"
+                      : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
+                  }`}
+                  title="Tampilkan Simetri Penuh Kiri & Kanan (Port & Starboard)"
+                >
+                  <Maximize2 size={13} />
+                  <span>{isFullHullView ? "Simetri Penuh" : "0.5 B"}</span>
+                </button>
+                <button
+                  onClick={() => setIsPreviewMode(!isPreviewMode)}
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                    isPreviewMode
+                      ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
+                      : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
+                  }`}
+                  title={isPreviewMode ? "Tampilkan Garis Bantu (Edit Mode)" : "Sembunyikan Garis Bantu (Preview Mode)"}
+                >
+                  {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+                <button
+                  onClick={() => setIsFullscreenPlot(false)}
+                  className="p-1.5 bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 text-rose-300 hover:text-white rounded-lg transition-all cursor-pointer ml-1"
+                  title="Tutup Mode Layar Penuh (Esc)"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Fullscreen Canvas */}
+          <div className="flex-1 w-full min-h-0 bg-slate-900/95 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-1 sm:p-2.5 shadow-2xl">
+            {draggingDraft !== null && (
+              <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-amber-500/20 border border-amber-500/50 px-3 py-1 rounded-full font-mono text-xs text-amber-300 backdrop-blur-md shadow-lg animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>
+                  Menggeser Sarat Z = {draggingDraft.toFixed(2)} m:{" "}
+                  <strong>0.5 B = {(draftOrdinates[draggingDraft] ?? 0).toFixed(3)} m</strong>
+                </span>
+              </div>
+            )}
+
+            <svg
+              ref={svgRef}
+              className="w-full h-full select-none cursor-crosshair"
+              viewBox="-15 -6 195 96"
+              preserveAspectRatio="xMidYMid meet"
+              style={{ touchAction: "none" }}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerLeave}
+            >
+              <defs>
+                <pattern id="cadGridFs" width="10" height="10" patternUnits="userSpaceOnUse">
+                  <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1e293b" strokeWidth="0.3" />
+                </pattern>
+                <pattern
+                  id="waterHatch"
+                  width="4"
+                  height="4"
+                  patternTransform="rotate(45 0 0)"
+                  patternUnits="userSpaceOnUse"
+                >
+                  <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
+                </pattern>
+              </defs>
+
+              {!isPreviewMode && <rect x="-15" y="-6" width="195" height="96" fill="url(#cadGridFs)" />}
+              {renderMidshipSvgContent()}
+            </svg>
+          </div>
+
+          <div className="w-full flex items-center justify-between pt-1 px-1 text-[11px] font-mono text-slate-400 shrink-0">
+            <span className="flex items-center space-x-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span>
+                Geser titik secara horizontal pada garis sarat air untuk menyesuaikan kelengkungan bilga. Tekan{" "}
+                <strong>Esc</strong> untuk kembali.
+              </span>
+            </span>
+            <span className="text-slate-500">Interval Garis Sarat Horizontal</span>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* EMBEDDED VIEW: HEADER TITLE BLOCK & PARTICULARS MATRIX     */}
+      {/* ========================================================= */}
       <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-800 pb-4 gap-4">
           <div>
@@ -445,7 +952,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <div>
                 <div className="flex items-center space-x-2">
                   <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
-                    Perhitungan Radius Bilga & Luas Midship (Gading 10)
+                    {language === "en"
+                      ? "Bilge Radius & Midship Area Calculation (Station 10)"
+                      : "Perhitungan Radius Bilga & Luas Midship (Gading 10)"}
                   </h2>
                   <span
                     className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
@@ -454,11 +963,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                         : "bg-rose-950 text-rose-300 border-rose-500/40 animate-pulse"
                     }`}
                   >
-                    Toleransi: &le; &plusmn;0.05%
+                    {language === "en" ? "Tolerance: ≤ ±0.05%" : "Toleransi: ≤ ±0.05%"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400">
-                  Penentuan Radius Kelengkungan Bilga (R) dan Integrasi Vertikal Luas Penampang Midship Section 10 dengan Aturan Simpson.
+                  {language === "en"
+                    ? "Determination of Bilge Curvature Radius (R) and Vertical Integration of Midship Section 10 Area with Simpson's Rule."
+                    : "Penentuan Radius Kelengkungan Bilga (R) dan Integrasi Vertikal Luas Penampang Midship Section 10 dengan Aturan Simpson."}
                 </p>
               </div>
             </div>
@@ -496,7 +1007,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         {/* PARAMETERS MATRIX */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 bg-slate-950/80 p-4 rounded-xl border border-slate-800/80 font-mono text-xs">
           <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Lebar (B)</span>
+            <span className="text-[10px] text-slate-500 uppercase">{language === "en" ? "Breadth (B)" : "Lebar (B)"}</span>
             <div className="font-bold text-white">{B.toFixed(2)} m</div>
           </div>
           <div className="space-y-0.5">
@@ -504,23 +1015,23 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <div className="font-bold text-cyan-300">{halfB.toFixed(3)} m</div>
           </div>
           <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Sarat Air (T)</span>
+            <span className="text-[10px] text-slate-500 uppercase">{language === "en" ? "Draft (T)" : "Sarat Air (T)"}</span>
             <div className="font-bold text-emerald-400">{T.toFixed(2)} m</div>
           </div>
           <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Tinggi Geladak (H)</span>
+            <span className="text-[10px] text-slate-500 uppercase">{language === "en" ? "Deck Depth (H)" : "Tinggi Geladak (H)"}</span>
             <div className="font-bold text-slate-300">{H.toFixed(2)} m</div>
           </div>
           <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Koefisien Midship (Cm)</span>
+            <span className="text-[10px] text-slate-500 uppercase">{language === "en" ? "Midship Coeff (Cm)" : "Koefisien Midship (Cm)"}</span>
             <div className="font-bold text-amber-300">{Cm.toFixed(3)}</div>
           </div>
           <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Radius Bilga (R)</span>
+            <span className="text-[10px] text-slate-500 uppercase">{language === "en" ? "Bilge Radius (R)" : "Radius Bilga (R)"}</span>
             <div className="font-bold text-cyan-400">{R.toFixed(4)} m</div>
           </div>
           <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Tangen Dasar (0.5B - R)</span>
+            <span className="text-[10px] text-slate-500 uppercase">{language === "en" ? "Flat of Bottom (0.5B - R)" : "Tangen Dasar (0.5B - R)"}</span>
             <div className="font-bold text-emerald-300">{flatOfBottom.toFixed(4)} m</div>
           </div>
         </div>
@@ -529,10 +1040,12 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] font-mono">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60">
-              Luas Sudut Terpotong Bilga = <strong>{(B * T * (1 - Cm)).toFixed(3)} m&sup2;</strong>
+              {language === "en" ? "Bilge Corner Cut Area" : "Luas Sudut Terpotong Bilga"} ={" "}
+              <strong>{(B * T * (1 - Cm)).toFixed(3)} m&sup2;</strong>
             </span>
             <span className="px-3 py-1 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60">
-              Target Luas Midship (Am) = <strong>{Am_rancangan.toFixed(2)} m&sup2;</strong>
+              {language === "en" ? "Target Midship Area (Am)" : "Target Luas Midship (Am)"} ={" "}
+              <strong>{Am_rancangan.toFixed(2)} m&sup2;</strong>
             </span>
           </div>
 
@@ -545,256 +1058,158 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           >
             {isCorrectionValid ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
             <span>
-              Koreksi Luas Midship: {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`} (Maksimal &plusmn;0.05%)
+              {language === "en"
+                ? `Midship Area Correction: ${correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`} (Max ±0.05%)`
+                : `Koreksi Luas Midship: ${correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`} (Maksimal ±0.05%)`}
             </span>
           </div>
         </div>
       </div>
 
-      {/* BILGE GEOMETRY & MIDSHIP PROFILE CAD BLUEPRINT VISUALIZATION */}
-      <div className="w-full">
-        {/* Detailed CAD Naval Blueprint SVG for Station 10 & Bilge Arc */}
-        <div className="w-full bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4 flex flex-col">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-800 pb-2 gap-3">
-            <div className="flex items-center space-x-2">
-              <TrendingUp size={15} className="text-cyan-400" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                Visual Blueprint Penampang Midship (Gading 10 & Konstruksi Busur Bilga)
-              </h3>
-            </div>
-            <div className="flex items-center justify-between lg:justify-end w-full lg:w-auto gap-4">
-              <div className="flex items-center space-x-3 text-[10px] font-mono">
-                <span className="text-cyan-400 flex items-center space-x-1">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
-                  <span>Profil Gading 10 (Separuh B/2)</span>
-                </span>
-                <span className="text-emerald-400 flex items-center space-x-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-                  <span>Garis Sarat T = {T.toFixed(2)}m</span>
-                </span>
-                <span className="text-amber-400 flex items-center space-x-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-                  <span>Busur Bilga R = {R.toFixed(3)}m</span>
-                </span>
-              </div>
-              <button
-                onClick={() => setIsPreviewMode(!isPreviewMode)}
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow ${
-                  isPreviewMode 
-                    ? "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/50" 
-                    : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
-                }`}
-              >
-                {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
-                <span>{isPreviewMode ? "Matikan Preview" : "Preview Penuh"}</span>
-              </button>
-            </div>
+      {/* ========================================================= */}
+      {/* BILGE GEOMETRY & MIDSHIP PROFILE CAD BLUEPRINT VISUAL     */}
+      {/* ========================================================= */}
+      <div className="w-full bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 backdrop-blur-xl shadow-2xl space-y-4 flex flex-col">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-800 pb-3 gap-3">
+          <div className="flex items-center space-x-2">
+            <TrendingUp size={16} className="text-cyan-400" />
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+              {language === "en"
+                ? "Visual Blueprint Midship Section (Station 10 Horizontal Waterlines)"
+                : "Visual Blueprint Penampang Midship (Garis Horizontal Sarat Air Gading 10)"}
+            </h3>
           </div>
 
-          {/* SVG Blueprint Canvas */}
-          <div className="w-full flex-1 min-h-[280px] bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800/90 flex items-center justify-center p-3 group">
-            
-            {/* Zoom Controls Overlay */}
-            <div className="absolute right-4 top-4 flex flex-col bg-slate-900/80 p-1 rounded-lg border border-slate-700 backdrop-blur-md z-10 opacity-50 group-hover:opacity-100 transition-opacity shadow-lg">
-              <button 
-                onClick={() => setZoomLevel(z => Math.min(z + 0.5, 4))}
-                className="p-1.5 hover:bg-slate-700 text-slate-300 rounded transition-colors flex justify-center items-center"
-                title="Zoom In"
-              >
-                <ZoomIn size={16} />
-              </button>
-              <button 
-                onClick={() => setZoomLevel(1)}
-                className="p-1 hover:bg-slate-700 text-slate-300 rounded transition-colors text-[10px] font-bold text-center"
-                title="Reset Zoom"
-              >
-                {Math.round(zoomLevel * 100)}%
-              </button>
-              <button 
-                onClick={() => setZoomLevel(z => Math.max(z - 0.5, 1))}
-                className="p-1.5 hover:bg-slate-700 text-slate-300 rounded transition-colors flex justify-center items-center"
-                title="Zoom Out"
-              >
-                <ZoomOut size={16} />
-              </button>
-            </div>
-
-            {(() => {
-              const vbWidth = 160 / zoomLevel;
-              const vbHeight = 90 / zoomLevel;
-              // To zoom into the bilge, we shift the origin.
-              // If preview mode, zoom to center. Otherwise, zoom to bottom right.
-              const vbX = isPreviewMode ? (160 - vbWidth) / 2 : (160 - vbWidth) * 0.8;
-              const vbY = isPreviewMode ? (90 - vbHeight) / 2 : (90 - vbHeight) * 0.95;
-
-              return (
-                <svg 
-                  ref={svgRef}
-                  className="w-full h-full cursor-crosshair transition-all duration-300 ease-in-out" 
-                  viewBox={`${vbX} ${vbY} ${vbWidth} ${vbHeight}`} 
-                  preserveAspectRatio="xMidYMid meet"
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerLeave}
-                >
-                  <defs>
-                    {/* CAD Grid Pattern */}
-                    <pattern id="cadGrid" width="10" height="10" patternUnits="userSpaceOnUse">
-                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1e293b" strokeWidth="0.3" />
-                    </pattern>
-                    {/* Water Hatch */}
-                    <pattern id="waterHatch" width="4" height="4" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                      <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
-                    </pattern>
-                  </defs>
-
-                  {/* Background Grid */}
-                  {!isPreviewMode && <rect x="0" y="0" width="160" height="90" fill="url(#cadGrid)" />}
-
-                {/* COORDINATE MAPPING */}
-                {(() => {
-                  const ox = isPreviewMode ? 80 : 25;
-                  const oy = 78;
-                  const scaleX = isPreviewMode ? 70 / (halfB || 7.5) : 95 / (halfB || 7.5);
-                  const scaleZ = 62 / (H || 7.0);
-
-                  const deckY = oy - H * scaleZ;
-                  const dwlY = oy - T * scaleZ;
-                  const outerX = ox + halfB * scaleX;
-                  
-                  // Interactive Curve Points (Tepat 20 Titik pada Busur Bilga 0 s/d R)
-                  const curvePts = sortedDraftSteps.map(z => ({
-                    z,
-                    x: ox + (draftOrdinates[z] || 0) * scaleX,
-                    y: oy - z * scaleZ,
-                    isBilge: z <= R + 0.001
-                  }));
-                  
-                  const smoothCurve = getSmoothPathD(curvePts);
-                  
-                  // Top connection
-                  const lastPt = curvePts[curvePts.length - 1];
-
-                  const hullPath = `
-                    M ${ox},${deckY}
-                    L ${ox},${oy}
-                    L ${curvePts[0].x},${curvePts[0].y}
-                    ${smoothCurve}
-                    L ${outerX},${lastPt.y}
-                    L ${outerX},${deckY}
-                    Z
-                  `;
-
-                  const subHullPath = `
-                    M ${ox},${dwlY}
-                    L ${ox},${oy}
-                    L ${curvePts[0].x},${curvePts[0].y}
-                    ${smoothCurve}
-                    L ${outerX},${lastPt.y}
-                    L ${outerX},${dwlY}
-                    Z
-                  `;
-
-                  return (
-                    <g>
-                      {/* Submerged Area Fill */}
-                      <path d={subHullPath} fill="url(#waterHatch)" />
-                      <path d={hullPath} fill={isPreviewMode ? "rgba(6, 182, 212, 0.15)" : "rgba(6, 182, 212, 0.08)"} stroke="#06b6d4" strokeWidth="1.2" />
-
-                      {/* Mirror Port Side for Preview Mode */}
-                      {isPreviewMode && (
-                        <g transform={`translate(${2 * ox}, 0) scale(-1, 1)`}>
-                          <path d={subHullPath} fill="url(#waterHatch)" />
-                          <path d={hullPath} fill="rgba(6, 182, 212, 0.15)" stroke="#06b6d4" strokeWidth="1.2" />
-                        </g>
-                      )}
-
-                      {!isPreviewMode ? (
-                        <>
-                          {/* Baseline BL & Extension */}
-                          <line x1="12" y1={oy} x2="145" y2={oy} stroke="#64748b" strokeWidth="0.8" />
-                          <text x="146" y={oy + 2} fill="#64748b" fontSize="3.0" fontFamily="monospace" fontWeight="bold">
-                            BL (Lunas)
-                          </text>
-
-                          {/* Centerline CL & Extension */}
-                          <line x1={ox} y1="6" x2={ox} y2="85" stroke="#64748b" strokeWidth="0.8" strokeDasharray="3,1.5" />
-                          <text x={ox - 2} y="10" fill="#64748b" fontSize="3.0" textAnchor="end" fontFamily="monospace" fontWeight="bold">
-                            CL (Centerline)
-                          </text>
-
-                          {/* Deck Line at H */}
-                          <line x1={ox - 5} y1={deckY} x2={outerX + 15} y2={deckY} stroke="#94a3b8" strokeWidth="0.7" strokeDasharray="2,2" />
-                          <text x={outerX + 17} y={deckY + 1.5} fill="#94a3b8" fontSize="2.8" fontFamily="monospace">
-                            Geladak H = {H.toFixed(2)}m
-                          </text>
-
-                          {/* DWL Sarat Line at T */}
-                          <line x1={ox - 8} y1={dwlY} x2={outerX + 18} y2={dwlY} stroke="#10b981" strokeWidth="0.9" strokeDasharray="4,2" />
-                          <text x={outerX + 20} y={dwlY + 1.5} fill="#10b981" fontSize="3.0" fontFamily="monospace" fontWeight="bold">
-                            DWL (T = {T.toFixed(2)}m)
-                          </text>
-                          
-                          {/* Interactive Drag Points on Bilge Curve */}
-                          {curvePts.filter(p => p.isBilge).map((p, idx) => (
-                            <g key={`drag-${p.z}`}>
-                              <line x1={p.x} y1={p.y} x2={outerX} y2={p.y} stroke="#f59e0b" strokeWidth={0.2 / zoomLevel} strokeDasharray={`${1 / zoomLevel},${1 / zoomLevel}`} opacity="0.5" />
-                              <circle
-                                cx={p.x}
-                                cy={p.y}
-                                r={(draggingDraft === p.z || hoverDraft === p.z ? 1.2 : 0.7) / zoomLevel}
-                                fill={draggingDraft === p.z ? "#fbbf24" : "#f59e0b"}
-                                stroke="#ffffff"
-                                strokeWidth={0.3 / zoomLevel}
-                                className="cursor-pointer hover:fill-amber-300 transition-all"
-                                onPointerDown={(e) => handlePointerDown(e, p.z)}
-                                onPointerEnter={() => setHoverDraft(p.z)}
-                                onPointerLeave={() => setHoverDraft(null)}
-                              />
-                              {(draggingDraft === p.z || hoverDraft === p.z) && (
-                                <text x={p.x - (4 / zoomLevel)} y={p.y - (3 / zoomLevel)} fill="#fbbf24" fontSize={2.5 / zoomLevel} fontFamily="monospace" textAnchor="end" fontWeight="bold">
-                                  y = {(draftOrdinates[p.z] || 0).toFixed(3)}
-                                </text>
-                              )}
-                            </g>
-                          ))}
-
-                          {/* Breadth Dimension (B/2) */}
-                          <line x1={ox} y1="18" x2={outerX} y2="18" stroke="#38bdf8" strokeWidth="0.6" />
-                          <polygon points={`${ox},18 ${ox + 2},16.8 ${ox + 2},19.2`} fill="#38bdf8" />
-                          <polygon points={`${outerX},18 ${outerX - 2},16.8 ${outerX - 2},19.2`} fill="#38bdf8" />
-                          <text x={ox + (outerX - ox) / 2} y="15.5" fill="#38bdf8" fontSize="2.8" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
-                            0.5 B = {halfB.toFixed(3)} m (Lebar Total B = {B.toFixed(2)} m)
-                          </text>
-                        </>
-                      ) : (
-                        <>
-                          {/* Preview Mode Overlays (Minimal) */}
-                          <line x1={ox - 75} y1={dwlY} x2={ox + 75} y2={dwlY} stroke="#10b981" strokeWidth="0.6" strokeDasharray="4,2" />
-                          <text x={ox} y={dwlY - 2} fill="#10b981" fontSize="2.5" textAnchor="middle" fontFamily="monospace" fontWeight="bold">DWL (T = {T.toFixed(2)}m)</text>
-                          <line x1={ox} y1="5" x2={ox} y2="85" stroke="#64748b" strokeWidth="0.5" strokeDasharray="3,1.5" />
-                          <text x={ox} y="9" fill="#64748b" fontSize="2.5" textAnchor="middle" fontFamily="monospace">CL</text>
-                        </>
-                      )}
-                    </g>
-                  );
-              })()}
-            </svg>
-          )
-        })()}
+          {/* Real-time Value Readout Pill */}
+          <div className="flex items-center space-x-2.5 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1 rounded-xl font-mono text-xs">
+            <span className="text-cyan-400 font-bold">
+              0.5 B = <strong className="text-white">{activeHoverHalfB.toFixed(3)} m</strong>
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-300">
+              Sarat Z = <strong className="text-amber-400">{activeHoverZ.toFixed(2)} m</strong>
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="text-slate-400">
+              Am = <strong className="text-emerald-400">{Am_calc.toFixed(2)} m²</strong>
+            </span>
           </div>
+
+          {/* Canvas Controls */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsFullHullView(!isFullHullView)}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow ${
+                isFullHullView
+                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
+              }`}
+              title="Tampilkan Simetri Penuh Kiri & Kanan (Port & Starboard)"
+            >
+              <Layers size={14} />
+              <span>{isFullHullView ? "Simetri Penuh" : "0.5 B (Half)"}</span>
+            </button>
+
+            <button
+              onClick={() => setIsPreviewMode(!isPreviewMode)}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow ${
+                isPreviewMode
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
+              }`}
+              title={isPreviewMode ? "Tampilkan Garis Bantu (Edit Mode)" : "Sembunyikan Garis Bantu (Preview Mode)"}
+            >
+              {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
+              <span>{isPreviewMode ? "Preview" : "Edit Mode"}</span>
+            </button>
+
+            <button
+              onClick={() => setIsFullscreenPlot(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+              title="Buka Mode Layar Penuh (Fullscreen Studio)"
+            >
+              <Maximize size={14} />
+              <span>{language === "en" ? "Fullscreen" : "Layar Penuh"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* SVG Blueprint Canvas */}
+        <div className="w-full h-80 sm:h-96 md:h-[420px] bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-800/90 flex items-center justify-center p-3 group">
+          {/* Zoom Controls Overlay */}
+          <div className="absolute right-4 top-4 flex flex-col bg-slate-900/80 p-1 rounded-lg border border-slate-700 backdrop-blur-md z-10 opacity-60 group-hover:opacity-100 transition-opacity shadow-lg">
+            <button
+              onClick={() => setZoomLevel((z) => Math.min(z + 0.5, 4))}
+              className="p-1.5 hover:bg-slate-700 text-slate-300 rounded transition-colors flex justify-center items-center"
+              title="Zoom In"
+            >
+              <ZoomIn size={16} />
+            </button>
+            <button
+              onClick={() => setZoomLevel(1)}
+              className="p-1 hover:bg-slate-700 text-slate-300 rounded transition-colors text-[10px] font-bold text-center"
+              title="Reset Zoom"
+            >
+              {Math.round(zoomLevel * 100)}%
+            </button>
+            <button
+              onClick={() => setZoomLevel((z) => Math.max(z - 0.5, 1))}
+              className="p-1.5 hover:bg-slate-700 text-slate-300 rounded transition-colors flex justify-center items-center"
+              title="Zoom Out"
+            >
+              <ZoomOut size={16} />
+            </button>
+          </div>
+
+          <svg
+            ref={svgRef}
+            className="w-full h-full cursor-crosshair transition-all duration-300 ease-in-out select-none"
+            viewBox="-15 -6 195 96"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ touchAction: "none" }}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerLeave}
+          >
+            <defs>
+              <pattern id="cadGridEmbedded" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1e293b" strokeWidth="0.3" />
+              </pattern>
+              <pattern
+                id="waterHatch"
+                width="4"
+                height="4"
+                patternTransform="rotate(45 0 0)"
+                patternUnits="userSpaceOnUse"
+              >
+                <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
+              </pattern>
+            </defs>
+
+            {!isPreviewMode && <rect x="-15" y="-6" width="195" height="96" fill="url(#cadGridEmbedded)" />}
+            {renderMidshipSvgContent()}
+          </svg>
         </div>
       </div>
 
-      {/* TABLE: STATION 10 DRAFT-WISE SIMPSON INTEGRATION */}
+      {/* ========================================================= */}
+      {/* TABLE: STATION 10 DRAFT-WISE SIMPSON INTEGRATION          */}
+      {/* ========================================================= */}
       <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-              <span>Tabel Integrasi Ordinat Midship Gading 10 Terhadap Sarat Air (z)</span>
+              <TableIcon size={16} className="text-cyan-400" />
+              <span>
+                {language === "en"
+                  ? "Station 10 Midship Ordinate Integration Table Against Draft (z)"
+                  : "Tabel Integrasi Ordinat Midship Gading 10 Terhadap Sarat Air (z)"}
+              </span>
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Integrasi ordinat separuh lebar gading 10 pada tiap level sarat air. Nilai <strong className="text-cyan-300">0.5 B (m)</strong> dapat diedit langsung atau ditarik pada grafik.
+              {language === "en"
+                ? "Integration of half-breadth ordinates at station 10 for each horizontal draft level. 0.5 B (m) values can be edited directly or dragged on the plot."
+                : "Integrasi ordinat separuh lebar gading 10 pada tiap level garis horizontal sarat air. Nilai 0.5 B (m) dapat diedit langsung atau ditarik pada grafik."}
             </p>
           </div>
           <button
@@ -802,7 +1217,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             className="flex items-center space-x-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg"
           >
             <Plus size={14} />
-            <span>Tambah Titik (Z) di Bilga</span>
+            <span>{language === "en" ? "Add Draft Step (z)" : "Tambah Garis Sarat (z)"}</span>
           </button>
         </div>
 
@@ -812,19 +1227,29 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <thead>
               <tr className="bg-slate-950/90 text-slate-300 border-b border-slate-800 text-[11px]">
                 <th className="py-3 px-3.5 font-bold text-center border-r border-slate-800/60 w-24">
-                  (I)<br />GADING
+                  (I)
+                  <br />
+                  {language === "en" ? "FRAME" : "GADING"}
                 </th>
                 <th className="py-3 px-3.5 font-bold text-center text-amber-400 border-r border-slate-800/60 w-32">
-                  (II)<br />SARAT z (m)
+                  (II)
+                  <br />
+                  {language === "en" ? "DRAFT z (m)" : "SARAT z (m)"}
                 </th>
                 <th className="py-3 px-3.5 font-bold text-cyan-300 border-r border-slate-800/60 min-w-[140px]">
-                  (III)<br />0.5 B (m)
+                  (III)
+                  <br />
+                  0.5 B (m)
                 </th>
                 <th className="py-3 px-3 font-semibold text-slate-400 text-center border-r border-slate-800/60 w-28">
-                  (IV)<br />FAKTOR PENGALI
+                  (IV)
+                  <br />
+                  {language === "en" ? "SIMPSON MULTIPLIER" : "FAKTOR PENGALI"}
                 </th>
                 <th className="py-3 px-4 font-bold text-emerald-400 text-right min-w-[140px]">
-                  (V) = (III)&times;(IV)<br />HASIL KALI
+                  (V) = (III)&times;(IV)
+                  <br />
+                  {language === "en" ? "PRODUCT" : "HASIL KALI"}
                 </th>
               </tr>
             </thead>
@@ -879,11 +1304,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
               {/* SUMMARY ROW */}
               <tr className="bg-slate-950 border-t-2 border-slate-700 font-bold text-xs text-white">
-                <td colSpan={4} className="py-3 px-4 text-right uppercase tracking-wider text-slate-300 border-r border-slate-800">
-                  Total Sigma Hasil Kali (&Sigma;):
+                <td
+                  colSpan={4}
+                  className="py-3 px-4 text-right uppercase tracking-wider text-slate-300 border-r border-slate-800"
+                >
+                  {language === "en" ? "Total Product Sigma (Σ):" : "Total Sigma Hasil Kali (Σ):"}
                 </td>
                 <td className="py-3 px-4 text-right text-emerald-400 text-sm">
-                  <div className="text-[9px] text-slate-500 uppercase">Luas (1 Sisi) =</div>
+                  <div className="text-[9px] text-slate-500 uppercase">
+                    {language === "en" ? "Area (1 Side) =" : "Luas (1 Sisi) ="}
+                  </div>
                   <div>{(Am_calc / 2).toFixed(4)}</div>
                 </td>
               </tr>
@@ -892,17 +1322,21 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         </div>
       </div>
 
-      {/* SUMMARY RESULT CARDS & VERIFICATION FORMULAS */}
+      {/* ========================================================= */}
+      {/* SUMMARY RESULT CARDS & VERIFICATION FORMULAS             */}
+      {/* ========================================================= */}
       <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-6">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center space-x-2">
             <Sparkles size={18} className="text-cyan-400" />
             <h3 className="text-sm font-bold text-white">
-              Hasil Integrasi & Koreksi Luas Penampang Midship (Section 10 Verification)
+              {language === "en"
+                ? "Midship Integration Results & Area Verification (Section 10 Verification)"
+                : "Hasil Integrasi & Koreksi Luas Penampang Midship (Section 10 Verification)"}
             </h3>
           </div>
           <div className="text-xs font-mono">
-            <span className="text-slate-400">Target Deviasi Maksimal: </span>
+            <span className="text-slate-400">{language === "en" ? "Max Deviation Target:" : "Target Deviasi Maksimal:"} </span>
             <strong className="text-emerald-400">&le; &plusmn;0.05%</strong>
           </div>
         </div>
@@ -912,21 +1346,23 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           {/* Card 1: Luas Midship Hasil Integrasi */}
           <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1.5 shadow">
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Luas Midship Integrasi (Am_calc)</span>
-              <span className="text-[10px] font-mono text-cyan-400">2 &middot; Luas (Satu Sisi)</span>
+              <span>{language === "en" ? "Integrated Midship Area (Am_calc)" : "Luas Midship Integrasi (Am_calc)"}</span>
+              <span className="text-[10px] font-mono text-cyan-400">
+                {language === "en" ? "2 · Area (One Side)" : "2 · Luas (Satu Sisi)"}
+              </span>
             </div>
             <div className="text-2xl font-black font-mono text-emerald-400">
               {Am_calc.toFixed(3)} <span className="text-sm font-normal text-slate-400">m&sup2;</span>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">
-              = 2 &times; Luas Satu Sisi ({(Am_calc / 2).toFixed(3)})
+              = 2 &times; {language === "en" ? "One Side Area" : "Luas Satu Sisi"} ({(Am_calc / 2).toFixed(3)})
             </div>
           </div>
 
           {/* Card 2: Luas Midship Target */}
           <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1.5 shadow">
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Luas Midship Target (Am)</span>
+              <span>{language === "en" ? "Target Midship Area (Am)" : "Luas Midship Target (Am)"}</span>
               <span className="text-[10px] font-mono text-cyan-400">Am = B &middot; T &middot; Cm</span>
             </div>
             <div className="text-2xl font-black font-mono text-cyan-300">
@@ -940,14 +1376,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           {/* Card 3: Selisih Luas */}
           <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-1.5 shadow">
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>Selisih Luasan (&Delta;Am)</span>
+              <span>{language === "en" ? "Area Difference (ΔAm)" : "Selisih Luasan (&Delta;Am)"}</span>
               <span className="text-[10px] font-mono text-cyan-400">Am_calc - Am</span>
             </div>
             <div className="text-2xl font-black font-mono text-amber-300">
               {(Am_calc - Am_rancangan).toFixed(3)} <span className="text-sm font-normal text-slate-400">m&sup2;</span>
             </div>
             <div className="text-[11px] text-slate-500 font-mono">
-              Deviasi absolut integrasi
+              {language === "en" ? "Absolute integration deviation" : "Deviasi absolut integrasi"}
             </div>
           </div>
 
@@ -962,21 +1398,104 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold flex items-center space-x-1.5">
                 {isCorrectionValid ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
-                <span>Koreksi Midship</span>
+                <span>{language === "en" ? "Midship Correction" : "Koreksi Midship"}</span>
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800">
-                Syarat: &le; &plusmn;0.05%
+                {language === "en" ? "Requirement: ≤ ±0.05%" : "Syarat: ≤ ±0.05%"}
               </span>
             </div>
             <div className="text-2xl font-black font-mono">
               {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
             </div>
             <div className="text-[11px] opacity-90 font-mono flex items-center justify-between">
-              <span>Target: &le; &plusmn;0.05%</span>
+              <span>{language === "en" ? "Target: ≤ ±0.05%" : "Target: ≤ ±0.05%"}</span>
               <span className={`font-bold ${isCorrectionValid ? "text-emerald-400" : "text-rose-400"}`}>
-                {isCorrectionValid ? "MEMENUHI SYARAT" : "DEVASIAN MELEBIHI 0.05%"}
+                {isCorrectionValid
+                  ? language === "en"
+                    ? "MEETS REQUIREMENT"
+                    : "MEMENUHI SYARAT"
+                  : language === "en"
+                  ? "DEVIATION EXCEEDS 0.05%"
+                  : "DEVASIAN MELEBIHI 0.05%"}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* TABEL KORELASI GARIS AIR & MIDSHIP GADING 10 (LINES PLAN INTEGRITY)       */}
+        {/* ========================================================================= */}
+        <div className="bg-slate-950/90 p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+            <div className="flex items-center space-x-2">
+              <Layers size={18} className="text-cyan-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                {language === "en"
+                  ? "Waterlines & Midship (Station 10) Bilge Alignment"
+                  : "Korelasi Garis Air & Midship (Gading 10) Radius Bilga"}
+              </h3>
+            </div>
+            <div className="text-xs text-slate-400 font-mono">
+              Total {effectiveWaterlineLevels.length} Garis Air Terhubung
+            </div>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-inner">
+            <table className="w-full text-left text-xs font-mono border-collapse min-w-[620px]">
+              <thead>
+                <tr className="bg-slate-900/90 text-slate-300 border-b border-slate-800 text-[11px]">
+                  <th className="py-2.5 px-3 font-bold">GARIS AIR</th>
+                  <th className="py-2.5 px-3 text-center">SARAT Z (m)</th>
+                  <th className="py-2.5 px-3 text-center">FRAKSI SARAT (%T)</th>
+                  <th className="py-2.5 px-3 text-right">0.5B MIDSHIP (m)</th>
+                  <th className="py-2.5 px-3 text-right">0.5B WATERPLANE (m)</th>
+                  <th className="py-2.5 px-3 text-center">STATUS KESELARASAN</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60 bg-slate-950/40">
+                {effectiveWaterlineLevels.map((wl) => {
+                  const z = wl.draftFraction * T;
+                  const b_mid_bilge = getTheoreticalOrdinateAtZ(z, R);
+                  const b_mid_wl = waterlinesData?.[wl.id]?.[10.0] ?? (halfB * wl.maxBreadthFactor);
+                  const diff = Math.abs(b_mid_bilge - b_mid_wl);
+                  const isMatch = diff <= 0.01;
+
+                  return (
+                    <tr key={`mid-wl-${wl.id}`} className="hover:bg-slate-800/30 transition-colors">
+                      <td className="py-2 px-3 flex items-center space-x-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: wl.color }} />
+                        <span className="font-bold text-white">{wl.name}</span>
+                        <span className="text-[10px] text-slate-400">({wl.shortName})</span>
+                      </td>
+                      <td className="py-2 px-3 text-center text-cyan-300 font-bold">
+                        {z.toFixed(2)} m
+                      </td>
+                      <td className="py-2 px-3 text-center text-slate-400">
+                        {(wl.draftFraction * 100).toFixed(1)}%
+                      </td>
+                      <td className="py-2 px-3 text-right text-emerald-300 font-bold">
+                        {b_mid_bilge.toFixed(3)} m
+                      </td>
+                      <td className="py-2 px-3 text-right text-cyan-300 font-bold">
+                        {b_mid_wl.toFixed(3)} m
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        <span
+                          className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            isMatch
+                              ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+                              : "bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                          }`}
+                        >
+                          <CheckCircle2 size={11} />
+                          <span>{isMatch ? "100% SELARAS" : `Selisih ${diff.toFixed(3)}m`}</span>
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -984,28 +1503,63 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         <div className="bg-slate-950/90 p-4 rounded-xl border border-slate-800 text-xs space-y-2 text-slate-300 font-mono leading-relaxed">
           <div className="text-[11px] font-bold text-white uppercase tracking-wider mb-1 flex items-center space-x-2">
             <HelpCircle size={14} className="text-cyan-400" />
-            <span>Rumus Midship & Radius Bilga (Plain-Text Reference):</span>
+            <span>
+              {language === "en"
+                ? "Midship & Bilge Radius Formulas (Plain-Text Reference):"
+                : "Rumus Midship & Radius Bilga (Plain-Text Reference):"}
+            </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-[11px]">
             <div className="space-y-1 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-              <p className="text-cyan-300 font-bold">1. Radius Kelengkungan Bilga (R):</p>
+              <p className="text-cyan-300 font-bold">
+                {language === "en" ? "1. Bilge Radius of Curvature (R):" : "1. Radius Kelengkungan Bilga (R):"}
+              </p>
               <p className="text-slate-400">Radius_Bilga = Akar( (B * T * (1 - Cm)) / (2 - (pi / 2)) )</p>
-              <p className="text-slate-400">R = Akar( ({B} * {T} * (1 - {Cm})) / 0.4292 ) = <strong className="text-cyan-300">{R.toFixed(4)} m</strong></p>
+              <p className="text-slate-400">
+                R = Akar( ({B} * {T} * (1 - {Cm})) / 0.4292 ) ={" "}
+                <strong className="text-cyan-300">{R.toFixed(4)} m</strong>
+              </p>
             </div>
             <div className="space-y-1 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-              <p className="text-cyan-300 font-bold">2. Luas Midship Hasil Integrasi (Am_calc):</p>
-              <p className="text-slate-400">Am_calc = 2 &times; Total Luas (Satu Sisi)</p>
-              <p className="text-slate-400">Am_calc = 2 &times; {(Am_calc / 2).toFixed(4)} = <strong className="text-emerald-400">{Am_calc.toFixed(3)} m&sup2;</strong></p>
+              <p className="text-cyan-300 font-bold">
+                {language === "en" ? "2. Integrated Midship Area (Am_calc):" : "2. Luas Midship Hasil Integrasi (Am_calc):"}
+              </p>
+              <p className="text-slate-400">
+                Am_calc = 2 &times; {language === "en" ? "Total Area (One Side)" : "Total Luas (Satu Sisi)"}
+              </p>
+              <p className="text-slate-400">
+                Am_calc = 2 &times; {(Am_calc / 2).toFixed(4)} ={" "}
+                <strong className="text-emerald-400">{Am_calc.toFixed(3)} m&sup2;</strong>
+              </p>
             </div>
             <div className="space-y-1 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-              <p className="text-cyan-300 font-bold">3. Luas Midship Target Rancangan:</p>
+              <p className="text-cyan-300 font-bold">
+                {language === "en" ? "3. Target Design Midship Area:" : "3. Luas Midship Target Rancangan:"}
+              </p>
               <p className="text-slate-400">Am_rancangan = B * T * Cm</p>
-              <p className="text-slate-400">Am_rancangan = {B} * {T} * {Cm} = <strong className="text-cyan-300">{Am_rancangan.toFixed(3)} m&sup2;</strong></p>
+              <p className="text-slate-400">
+                Am_rancangan = {B} * {T} * {Cm} ={" "}
+                <strong className="text-cyan-300">{Am_rancangan.toFixed(3)} m&sup2;</strong>
+              </p>
             </div>
             <div className="space-y-1 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80">
-              <p className="text-cyan-300 font-bold">4. Persentase Koreksi Midship (Wajib &le; &plusmn;0.05%):</p>
-              <p className="text-slate-400">Koreksi = ((Am_calc - Am_rancangan) / Am_calc) * 100%</p>
-              <p className="text-slate-400">Koreksi = (({Am_calc.toFixed(2)} - {Am_rancangan.toFixed(2)}) / {Am_calc.toFixed(2)}) * 100% = <strong className={isCorrectionValid ? "text-emerald-300" : "text-rose-300"}>{correctionPercent.toFixed(3)}%</strong></p>
+              <p className="text-cyan-300 font-bold">
+                {language === "en"
+                  ? "4. Midship Correction Percentage (Required ≤ ±0.05%):"
+                  : "4. Persentase Koreksi Midship (Wajib ≤ ±0.05%):"}
+              </p>
+              <p className="text-slate-400">
+                {language === "en"
+                  ? "Correction = ((Am_calc - Am_design) / Am_calc) * 100%"
+                  : "Koreksi = ((Am_calc - Am_rancangan) / Am_calc) * 100%"}
+              </p>
+              <p className="text-slate-400">
+                {language === "en" ? "Correction" : "Koreksi"} = (({Am_calc.toFixed(2)} - {Am_rancangan.toFixed(2)}) /{" "}
+                {Am_calc.toFixed(2)}) * 100% ={" "}
+                <strong className={isCorrectionValid ? "text-emerald-300" : "text-rose-300"}>
+                  {correctionPercent.toFixed(3)}%
+                </strong>
+              </p>
             </div>
           </div>
         </div>

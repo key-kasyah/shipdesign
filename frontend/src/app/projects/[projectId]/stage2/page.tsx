@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { api } from "../../../../services/api";
 import { SideProfileNurbsEditor } from "../../../../components/design/SideProfileNurbsEditor";
+import { useLanguage } from "../../../../context/LanguageContext";
 
 const COMPARABLE_SHIPS_DATABASE = [
   // --- GENERAL CARGO ---
@@ -466,6 +467,7 @@ const normalizeVesselCategory = (typeStr: string): string => {
 export default function Stage2PreliminaryDesign() {
   const params = useParams();
   const router = useRouter();
+  const { t, language } = useLanguage();
   const projectId = params.projectId as string;
 
   // Active sub-tab in Stage 2
@@ -1111,13 +1113,15 @@ export default function Stage2PreliminaryDesign() {
           <div>
             <div className="flex items-center space-x-2.5">
               <h1 className="font-bold text-base tracking-tight text-white">
-                Tahap 2 — Pra-Rancangan Kapal
+                {language === "en" ? "Stage 2 — Preliminary Design" : "Tahap 2 — Pra-Rancangan Kapal"}
               </h1>
               <span className="text-[11px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-0.5 rounded-full">
                 {projectId}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">Penyelarasan parameter hidrostatik, hambatan, berat, dan stabilitas empiris.</p>
+            <p className="text-[11px] text-slate-400">
+              {language === "en" ? "Empirical hydrostatic, resistance, weight, and stability alignment." : "Penyelarasan parameter hidrostatik, hambatan, berat, dan stabilitas empiris."}
+            </p>
           </div>
         </div>
       </header>
@@ -1129,12 +1133,12 @@ export default function Stage2PreliminaryDesign() {
           {/* Sub Navigation Tabs */}
           <nav className="h-14 bg-slate-950/80 border-b border-slate-800/80 flex px-4 space-x-1.5 overflow-x-auto items-center shrink-0 no-scrollbar backdrop-blur-md">
             {[
-              { id: "comparable", label: "Kapal Pembanding", icon: <Scale size={14} /> },
-              { id: "dimensions", label: "Ukuran & Koefisien", icon: <Compass size={14} /> },
-              { id: "weight", label: "Berat & Kapasitas", icon: <Layers size={14} /> },
-              { id: "geometry", label: "Geometri CSA & Daya NSP", icon: <Activity size={14} /> },
-              { id: "profile", label: "Tampak Samping & NURBS", icon: <Compass size={14} /> },
-              { id: "ai", label: "AI Explainer", icon: <Cpu size={14} /> }
+              { id: "comparable", label: language === "en" ? "Comparable Ships" : "Kapal Pembanding", icon: <Scale size={14} /> },
+              { id: "dimensions", label: language === "en" ? "Dimensions & Coefficients" : "Ukuran & Koefisien", icon: <Compass size={14} /> },
+              { id: "weight", label: language === "en" ? "Weight & Capacity" : "Berat & Kapasitas", icon: <Layers size={14} /> },
+              { id: "geometry", label: language === "en" ? "CSA Geometry & NSP Power" : "Geometri CSA & Daya NSP", icon: <Activity size={14} /> },
+              { id: "profile", label: language === "en" ? "Side Profile & NURBS" : "Tampak Samping & NURBS", icon: <Compass size={14} /> },
+              { id: "ai", label: language === "en" ? "AI Co-Pilot" : "AI Explainer", icon: <Cpu size={14} /> }
             ].map((tab) => {
               const isLocked = !hasAppliedScaling 
                 ? tab.id !== "comparable" 
@@ -1143,8 +1147,8 @@ export default function Stage2PreliminaryDesign() {
                   : false;
 
               const lockReason = !hasAppliedScaling
-                ? "Silakan klik 'Hitung & Terapkan Skala DWT' pada modul Kapal Pembanding terlebih dahulu untuk membuka tahap selanjutnya."
-                : "Terdapat perubahan parameter! Silakan klik 'Hitung & Terapkan Skala DWT' atau 'Simpan Perubahan & Hitung' untuk melakukan kalkulasi ulang sebelum melanjutkan ke tahap ini.";
+                ? (language === "en" ? "Please click 'Calculate & Apply DWT Scaling' on the Comparable Ships module first to unlock next steps." : "Silakan klik 'Hitung & Terapkan Skala DWT' pada modul Kapal Pembanding terlebih dahulu untuk membuka tahap selanjutnya.")
+                : (language === "en" ? "Parameters changed! Please click 'Calculate & Apply DWT Scaling' or 'Save Changes & Calculate' to recalculate before proceeding." : "Terdapat perubahan parameter! Silakan klik 'Hitung & Terapkan Skala DWT' atau 'Simpan Perubahan & Hitung' untuk melakukan kalkulasi ulang sebelum melanjutkan ke tahap ini.");
 
               return (
                 <button
@@ -1183,10 +1187,10 @@ export default function Stage2PreliminaryDesign() {
                       <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
                         <FolderOpen size={16} />
                       </div>
-                      <span>Katalog & Rekomendasi Kapal Pembanding AI ({COMPARABLE_SHIPS_DATABASE.length} Kapal)</span>
+                      <span>{language === "en" ? "AI Comparable Ships Catalog & Recommendations" : "Katalog & Rekomendasi Kapal Pembanding AI"} ({COMPARABLE_SHIPS_DATABASE.length} {language === "en" ? "Ships" : "Kapal"})</span>
                     </h3>
                     <div className="flex items-center space-x-2 text-xs">
-                      <span className="text-slate-400 font-medium">Target Proyek:</span>
+                      <span className="text-slate-400 font-medium">{language === "en" ? "Project Target:" : "Target Proyek:"}</span>
                       <span className="bg-blue-500/10 border border-blue-500/30 text-blue-300 font-bold px-3 py-1 rounded-full font-mono">
                         {targetType} • {targetDwt} Ton
                       </span>
@@ -1194,7 +1198,9 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Sistem AI menganalisis armada kapal terdaftar dan mengurutkan kapal pembanding berdasarkan <span className="text-cyan-300 font-semibold">kesesuaian tipe & DWT proyek</span>. Kapal dengan skor tertinggi direkomendasikan secara otomatis untuk akurasi scaling presisi tinggi.
+                    {language === "en"
+                      ? "The AI system analyzes registered fleet vessels and ranks comparable ships based on project type & DWT suitability. The highest-scoring ship is recommended automatically for high-precision scaling."
+                      : "Sistem AI menganalisis armada kapal terdaftar dan mengurutkan kapal pembanding berdasarkan kesesuaian tipe & DWT proyek. Kapal dengan skor tertinggi direkomendasikan secara otomatis untuk akurasi scaling presisi tinggi."}
                   </p>
 
                   {/* Search & Filter Controls */}
@@ -1203,7 +1209,7 @@ export default function Stage2PreliminaryDesign() {
                       <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
                       <input
                         type="text"
-                        placeholder="Cari nama kapal atau referensi register..."
+                        placeholder={language === "en" ? "Search ship name or register reference..." : "Cari nama kapal atau referensi register..."}
                         value={shipSearch}
                         onChange={(e) => setShipSearch(e.target.value)}
                         className="w-full bg-slate-950/80 border border-slate-800/80 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-100 placeholder-slate-500 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all font-sans"
@@ -1213,14 +1219,14 @@ export default function Stage2PreliminaryDesign() {
                     <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar shrink-0">
                       <Filter size={14} className="text-slate-500 shrink-0" />
                       {[
-                        { id: "ALL", label: "Semua Tipe" },
+                        { id: "ALL", label: language === "en" ? "All Types" : "Semua Tipe" },
                         { id: "GENERAL_CARGO", label: "General Cargo" },
                         { id: "TANKER", label: "Tanker" },
                         { id: "CONTAINER", label: "Container" },
                         { id: "BULK_CARRIER", label: "Bulk Carrier" },
                         { id: "PASSENGER", label: "Ferry / Pass" },
                         { id: "TUG_BOAT", label: "Tugboat" },
-                        { id: "FISHING_VESSEL", label: "Perikanan/Patroli" },
+                        { id: "FISHING_VESSEL", label: language === "en" ? "Fishing/Patrol" : "Perikanan/Patroli" },
                       ].map((f) => (
                         <button
                           key={f.id}
@@ -1238,13 +1244,13 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1 font-mono">
-                    <span>Menampilkan {displayedComparableShips.length} dari {COMPARABLE_SHIPS_DATABASE.length} kapal pembanding</span>
+                    <span>{language === "en" ? `Showing ${displayedComparableShips.length} of ${COMPARABLE_SHIPS_DATABASE.length} comparable ships` : `Menampilkan ${displayedComparableShips.length} dari ${COMPARABLE_SHIPS_DATABASE.length} kapal pembanding`}</span>
                   </div>
 
                   {displayedComparableShips.length === 0 ? (
                     <div className="p-8 text-center bg-slate-950/60 border border-slate-800/80 rounded-2xl space-y-2 backdrop-blur-md">
                       <AlertCircle size={28} className="mx-auto text-slate-500" />
-                      <p className="text-xs text-slate-400">Tidak ada kapal pembanding yang cocok dengan kriteria pencarian.</p>
+                      <p className="text-xs text-slate-400">{language === "en" ? "No comparable ships match search criteria." : "Tidak ada kapal pembanding yang cocok dengan kriteria pencarian."}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1270,12 +1276,12 @@ export default function Stage2PreliminaryDesign() {
                                 {ship.isExactMatch ? (
                                   <span className="inline-flex items-center space-x-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] px-2.5 py-1 rounded-md uppercase tracking-wider shadow font-mono">
                                     <span>🌟</span>
-                                    <span>Perfek Match 100%</span>
+                                    <span>{language === "en" ? "Perfect Match 100%" : "Perfek Match 100%"}</span>
                                   </span>
                                 ) : isTopRank ? (
                                   <span className="inline-flex items-center space-x-1 bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[10px] px-2.5 py-1 rounded-md uppercase tracking-wider shadow font-mono">
                                     <span>⭐</span>
-                                    <span>Rekomendasi ({ship.matchScore}%)</span>
+                                    <span>{language === "en" ? "Recommendation" : "Rekomendasi"} ({ship.matchScore}%)</span>
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center bg-slate-900 text-slate-400 border border-slate-800 text-[10px] font-mono px-2.5 py-1 rounded-md font-semibold">
@@ -1302,15 +1308,15 @@ export default function Stage2PreliminaryDesign() {
                                 <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.dwt_ton.toLocaleString()} Ton</span>
                               </div>
                               <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">Panjang LBP</span>
+                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">{language === "en" ? "LBP Length" : "Panjang LBP"}</span>
                                 <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.lbp_m} m</span>
                               </div>
                               <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">Lebar (B)</span>
+                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">{language === "en" ? "Breadth (B)" : "Lebar (B)"}</span>
                                 <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.breadth_m} m</span>
                               </div>
                               <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">Sarat Draft (T)</span>
+                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">{language === "en" ? "Draft (T)" : "Sarat Draft (T)"}</span>
                                 <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.draft_m} m</span>
                               </div>
                             </div>
@@ -1346,7 +1352,7 @@ export default function Stage2PreliminaryDesign() {
                                 : "bg-slate-800 hover:bg-slate-700 text-slate-200"
                             }`}
                           >
-                            {isSelected ? "✓ Terpilih Sebagai Acuan Utama" : isTopRank ? "Gunakan Rekomendasi Ini" : "Pilih Kapal Ini"}
+                            {isSelected ? (language === "en" ? "✓ Selected as Primary Reference" : "✓ Terpilih Sebagai Acuan Utama") : isTopRank ? (language === "en" ? "Use This Recommendation" : "Gunakan Rekomendasi Ini") : (language === "en" ? "Select This Ship" : "Pilih Kapal Ini")}
                           </button>
                         </div>
                       );
@@ -1360,15 +1366,17 @@ export default function Stage2PreliminaryDesign() {
                     <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
                       <Scale size={18} />
                     </div>
-                    <span>Spesifikasi Kapal Pembanding Acuan</span>
+                    <span>{language === "en" ? "Primary Reference Ship Specifications" : "Spesifikasi Kapal Pembanding Acuan"}</span>
                   </h3>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Sistem akan menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional menggunakan formula scaling rasio DWT pangkat 1/3.
+                    {language === "en"
+                      ? "The system will use this primary reference ship data to estimate main hull dimensions proportionally using DWT power 1/3 scaling formula."
+                      : "Sistem akan menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional menggunakan formula scaling rasio DWT pangkat 1/3."}
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Nama Kapal Pembanding *</label>
+                      <label className="block text-xs font-semibold text-slate-400 mb-2">{language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}</label>
                       <input
                         type="text"
                         value={compForm.ship_name}
@@ -1441,7 +1449,7 @@ export default function Stage2PreliminaryDesign() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Sumber/Referensi *</label>
+                      <label className="block text-xs font-semibold text-slate-400 mb-2">{language === "en" ? "Source/Reference *" : "Sumber/Referensi *"}</label>
                       <input
                         type="text"
                         value={compForm.source_reference}
@@ -1457,7 +1465,7 @@ export default function Stage2PreliminaryDesign() {
                       className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-lg shadow-blue-600/20 active:scale-[0.98]"
                     >
                       <Scale size={16} />
-                      <span>Hitung & Terapkan Skala DWT</span>
+                      <span>{language === "en" ? "Calculate & Apply DWT Scaling" : "Hitung & Terapkan Skala DWT"}</span>
                     </button>
                   </div>
                 </div>
@@ -1474,16 +1482,18 @@ export default function Stage2PreliminaryDesign() {
                         <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
                           <Activity size={18} />
                         </div>
-                        <span>Optimasi Skenario Sesuai Buku "Ship Basic Design" (Hal. 10)</span>
+                        <span>{language === "en" ? 'Scenario Optimization per "Ship Basic Design" Book (p. 10)' : 'Optimasi Skenario Sesuai Buku "Ship Basic Design" (Hal. 10)'}</span>
                       </h3>
                       <p className="text-xs text-slate-400 mt-1">
-                        Perhitungan iteratif nilai koefisien kepenuhan Cb dan parameter hidrostatik berdasarkan rasio kecepatan Vs dan panjang Lbp.
+                        {language === "en"
+                          ? "Iterative calculation of block coefficient Cb and hydrostatic parameters based on service speed Vs and Lbp length ratio."
+                          : "Perhitungan iteratif nilai koefisien kepenuhan Cb dan parameter hidrostatik berdasarkan rasio kecepatan Vs dan panjang Lbp."}
                       </p>
                     </div>
 
                     <div className="flex items-center space-x-3 shrink-0">
                       <span className="bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs px-3 py-1 rounded-full font-bold font-mono">
-                        Iterasi Ke-{optimizationCount}
+                        {language === "en" ? `Iteration #${optimizationCount}` : `Iterasi Ke-${optimizationCount}`}
                       </span>
                       <button
                         onClick={() => handleRunOptimization(1)}
@@ -1491,14 +1501,14 @@ export default function Stage2PreliminaryDesign() {
                         className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shadow-lg shadow-blue-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
                       >
                         <RefreshCw size={14} className={isOptimizing ? "animate-spin" : ""} />
-                        <span>⚡ Jalankan 1x Optimasi</span>
+                        <span>{language === "en" ? "⚡ Run 1x Optimization" : "⚡ Jalankan 1x Optimasi"}</span>
                       </button>
                       <button
                         onClick={() => handleRunOptimization(5)}
                         disabled={isOptimizing}
                         className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shadow-lg shadow-indigo-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
                       >
-                        <span>🚀 Jalankan 5x Iterasi</span>
+                        <span>{language === "en" ? "🚀 Run 5x Iterations" : "🚀 Jalankan 5x Iterasi"}</span>
                       </button>
                     </div>
                   </div>
@@ -1507,9 +1517,11 @@ export default function Stage2PreliminaryDesign() {
                   {!hasOptimized || !optResultData ? (
                     <div className="bg-slate-950/80 p-8 rounded-2xl border border-slate-800/80 text-center space-y-3 shadow-inner backdrop-blur-md">
                       <Activity size={32} className="mx-auto text-blue-400/70 animate-pulse" />
-                      <h4 className="text-sm font-bold text-white">Belum Ada Data Hasil Optimasi</h4>
+                      <h4 className="text-sm font-bold text-white">{language === "en" ? "No Optimization Results Data Yet" : "Belum Ada Data Hasil Optimasi"}</h4>
                       <p className="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
-                        Tabel <span className="text-white font-semibold">"Data Kapal Rancangan Setelah Optimasi"</span> belum dihitung. Silakan klik tombol <span className="text-cyan-400 font-bold">"⚡ Jalankan 1x Optimasi"</span> di atas untuk menghitung nilai Cb dan hidrostatik dari angka-angka ukuran utama yang dimasukkan.
+                        {language === "en"
+                          ? "The table 'Design Ship Data After Optimization' has not been calculated yet. Click '⚡ Run 1x Optimization' above to calculate Cb and hydrostatic values from entered main dimensions."
+                          : "Tabel \"Data Kapal Rancangan Setelah Optimasi\" belum dihitung. Silakan klik tombol \"⚡ Jalankan 1x Optimasi\" di atas untuk menghitung nilai Cb dan hidrostatik dari angka-angka ukuran utama yang dimasukkan."}
                       </p>
                     </div>
                   ) : (
