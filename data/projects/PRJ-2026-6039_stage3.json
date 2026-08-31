@@ -200,11 +200,11 @@
   "aft_overhang": null,
   "lbp_m": 87.823,
   "breadth_m": 15.16,
-  "draft_m": 5.437,
+  "draft_m": 5.2,
   "depth_m": 7.528,
   "cb": 0.75,
   "cm": 0.98,
   "vessel_type": "TANKER",
-  "updated_at": "2026-08-28T01:28:38.155514+00:00",
+  "updated_at": "2026-08-31T11:01:00.000000+00:00",
   "project_id": "PRJ-2026-6039"
 }

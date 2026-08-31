@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { api } from "../../../../services/api";
 import { SideProfileNurbsEditor } from "../../../../components/design/SideProfileNurbsEditor";
-import { WaterPlaneCalculationSheet, WaterlineConfig, DEFAULT_WATERLINE_LEVELS } from "../../../../components/design/WaterPlaneCalculationSheet";
+import { WaterPlaneCalculationSheet, WaterlineConfig, DEFAULT_WATERLINE_LEVELS, generateWaterlinePresets } from "../../../../components/design/WaterPlaneCalculationSheet";
 import { MidshipBilgeCalculationSheet } from "../../../../components/design/MidshipBilgeCalculationSheet";
+import { UnifiedWaterplaneBilgeHarmonizer } from "../../../../components/design/UnifiedWaterplaneBilgeHarmonizer";
 import { LinesPlanThreeView } from "../../../../components/design/LinesPlanThreeView";
 import { useLanguage } from "../../../../context/LanguageContext";
 
@@ -31,13 +32,14 @@ export default function Stage3BasicDesignPage() {
   const projectId = params.projectId as string;
 
   const [activeTab, setActiveTab] = useState<
-    "profile" | "waterplane" | "midshipBilge" | "csaProjection" | "ai"
+    "profile" | "waterplane" | "midshipBilge" | "unifiedHarmonizer" | "csaProjection" | "ai"
   >("profile");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [projectData, setProjectData] = useState<any>({});
   const [stage2Data, setStage2Data] = useState<any>({});
+  const [savedDraftSnapshot, setSavedDraftSnapshot] = useState<number | null>(null);
 
   // Dynamic calculated dimensions from Profile NURBS Editor
   const [exactLoa, setExactLoa] = useState<number | null>(null);
@@ -100,6 +102,7 @@ export default function Stage3BasicDesignPage() {
             if (res3.exact_loa) setExactLoa(res3.exact_loa);
             if (res3.fore_overhang) setForeOverhang(res3.fore_overhang);
             if (res3.aft_overhang) setAftOverhang(res3.aft_overhang);
+            if (res3.draft_m) setSavedDraftSnapshot(res3.draft_m);
             if (res3.updated_at) {
               const dt = new Date(res3.updated_at);
               setLastSaved(dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -119,6 +122,7 @@ export default function Stage3BasicDesignPage() {
               if (parsed.exact_loa) setExactLoa(parsed.exact_loa);
               if (parsed.fore_overhang) setForeOverhang(parsed.fore_overhang);
               if (parsed.aft_overhang) setAftOverhang(parsed.aft_overhang);
+              if (parsed.draft_m) setSavedDraftSnapshot(parsed.draft_m);
               if (parsed.updated_at) {
                 const dt = new Date(parsed.updated_at);
                 setLastSaved(dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -151,6 +155,20 @@ export default function Stage3BasicDesignPage() {
   const csaOrdinates = stage2Data.geometry?.csa_ordinates;
 
   const currentLoa = exactLoa || Number((lbp * 1.055).toFixed(2));
+
+  // Automatic Reactive Synchronization from Stage 2 (Auto-Sync)
+  useEffect(() => {
+    if (stage2Data.draft_m || projectData.draft_m) {
+      const activeDraft = Number(stage2Data.draft_m || projectData.draft_m || 5.5);
+      const activeBreadth = Number(stage2Data.breadth_m || projectData.breadth_m || 16.0);
+      const activeCm = Number(stage2Data.cm || 0.98);
+      
+      setWaterlineLevels((prevLevels) => {
+        const count = prevLevels?.length || 4;
+        return generateWaterlinePresets(count, activeDraft, activeBreadth, activeCm);
+      });
+    }
+  }, [stage2Data.draft_m, stage2Data.breadth_m, stage2Data.cm, projectData.draft_m, projectData.breadth_m]);
 
   // Permanent Save Handler (Server Disk + Browser LocalStorage)
   const handleSaveAll = async (manualNotify = true) => {
@@ -285,8 +303,9 @@ export default function Stage3BasicDesignPage() {
     { id: "profile", label: language === "en" ? "1. Side Profile (Sheer & Profile)" : "1. Tampak Samping (Sheer & Profile)", icon: <Compass size={15} /> },
     { id: "waterplane", label: language === "en" ? "2. Waterplane Calculation (AWL & LCF)" : "2. Kalkulasi Garis Air (AWL & LCF)", icon: <Layers size={15} /> },
     { id: "midshipBilge", label: language === "en" ? "3. Bilge Radius & Midship Area (St 10)" : "3. Radius Bilga & Luas Midship (St 10)", icon: <Activity size={15} /> },
-    { id: "csaProjection", label: language === "en" ? "4. Projection" : "4. Proyeksi", icon: <Activity size={15} /> },
-    { id: "ai", label: language === "en" ? "5. AI Co-Pilot" : "5. AI Assistant", icon: <Cpu size={15} /> }
+    { id: "unifiedHarmonizer", label: language === "en" ? "4. Harmonized Waterplane & Bilge" : "4. Harmonisasi Garis Air & Bilga", icon: <Sparkles size={15} /> },
+    { id: "csaProjection", label: language === "en" ? "5. Projection" : "5. Proyeksi", icon: <Activity size={15} /> },
+    { id: "ai", label: language === "en" ? "6. AI Co-Pilot" : "6. AI Assistant", icon: <Cpu size={15} /> }
   ];
 
   if (loading) {
@@ -493,7 +512,29 @@ export default function Stage3BasicDesignPage() {
           />
         </div>
 
-        {/* TAB 4: PROYEKSI */}
+        {/* TAB 4: HARMONISASI SINKRON GARIS AIR & RADIUS BILGA (UNIFIED STUDIO) */}
+        <div className={activeTab === "unifiedHarmonizer" ? "block space-y-6" : "hidden"}>
+          <UnifiedWaterplaneBilgeHarmonizer
+            lbp_m={lbp}
+            breadth_m={breadth}
+            draft_m={draft}
+            depth_m={depth}
+            cb={cb}
+            cm={cm}
+            csaOrdinates={csaOrdinates}
+            vesselType={vesselType}
+            waterlineLevels={waterlineLevels}
+            waterlinesData={waterlinesData}
+            onUpdateWaterlinesData={(newData) => {
+              setWaterlinesData(newData);
+              setHasUnsavedChanges(true);
+            }}
+            onSave={() => handleSaveAll(true)}
+            isSaving={saving}
+          />
+        </div>
+
+        {/* TAB 5: PROYEKSI (LINES PLAN THREE VIEW) */}
         <div className={activeTab === "csaProjection" ? "block space-y-6" : "hidden"}>
           <LinesPlanThreeView
             lbp_m={lbp}
@@ -508,7 +549,7 @@ export default function Stage3BasicDesignPage() {
           />
         </div>
 
-        {/* TAB 5: AI BASIC DESIGN ASSISTANT */}
+        {/* TAB 6: AI BASIC DESIGN ASSISTANT */}
         <div
           className={activeTab === "ai" ? "flex flex-col bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl space-y-4 backdrop-blur-xl shadow-2xl" : "hidden"}
           style={{ height: "calc(100vh - 210px)", minHeight: "520px" }}

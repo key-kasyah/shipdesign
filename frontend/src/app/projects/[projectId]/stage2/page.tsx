@@ -1469,6 +1469,128 @@ export default function Stage2PreliminaryDesign() {
                     </button>
                   </div>
                 </div>
+
+                {/* SILSILAH & KONEKTIVITAS SARAT AIR (DRAFT LINEAGE & MULTI-STAGE CONNECTIVITY) */}
+                {compForm.dwt_ton > 0 && targetDwt > 0 && (
+                  <div className="bg-slate-900/70 border border-blue-500/30 p-6 rounded-2xl space-y-4 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+                    
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800/80 gap-2">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300">
+                          <Compass size={18} />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center space-x-2">
+                            <span>Silsilah & Konektivitas Sarat Air (Draft Lineage Multi-Stage)</span>
+                            <span className="text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">
+                              Tahap 1 ➔ Tahap 2 ➔ Tahap 3
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-slate-400">
+                            Transparansi perhitungan perubahan sarat air dari kapal pembanding menuju sarat rancangan hingga terhubung ke Basic Design.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-[11px] font-mono bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
+                        Rasio Skala: <strong className="text-cyan-400">{(targetDwt / compForm.dwt_ton).toFixed(3)}x DWT</strong>
+                      </div>
+                    </div>
+
+                    {/* Visual 3-Stage Connected Workflow Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1 font-mono">
+                      {/* Step 1: Kapal Pembanding */}
+                      <div className="p-4 bg-slate-950/90 rounded-xl border border-slate-800 relative space-y-2">
+                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-sans font-semibold uppercase">
+                          <span>1. Kapal Pembanding</span>
+                          <span className="text-amber-400 font-mono">Tahap 2 Awal</span>
+                        </div>
+                        <div className="text-xs text-white font-bold font-sans line-clamp-1">{compForm.ship_name || "MT Samudra Pasifik"}</div>
+                        <div className="text-2xl font-black text-amber-400">{compForm.draft_m?.toFixed(2) || "5.20"} m</div>
+                        <div className="text-[10px] text-slate-400 space-y-0.5 font-sans">
+                          <div>• DWT Acuan: <strong className="text-slate-200">{compForm.dwt_ton} Ton</strong></div>
+                          <div>• Sarat asal terdaftar di database kapal pembanding</div>
+                        </div>
+                      </div>
+
+                      {/* Step 2: Hasil Scaling DWT (1/3) */}
+                      <div className="p-4 bg-blue-950/40 rounded-xl border border-blue-500/40 relative space-y-2">
+                        <div className="flex items-center justify-between text-[10px] text-blue-300 font-sans font-semibold uppercase">
+                          <span>2. Hasil Skala Geometri</span>
+                          <span className="text-cyan-300 font-mono font-bold">DWT ^ (1/3)</span>
+                        </div>
+                        {(() => {
+                          const scaleFac = (targetDwt / Math.max(1, compForm.dwt_ton)) ** (1 / 3);
+                          const scaledDraft = (compForm.draft_m || 5.2) * scaleFac;
+                          return (
+                            <>
+                              <div className="text-xs text-cyan-200 font-bold font-sans">
+                                Target Proyek: {targetDwt} Ton ({(scaleFac * 100 - 100 >= 0 ? `+${(scaleFac * 100 - 100).toFixed(1)}%` : `${(scaleFac * 100 - 100).toFixed(1)}%`)})
+                              </div>
+                              <div className="text-2xl font-black text-cyan-300">{scaledDraft.toFixed(2)} m</div>
+                              <div className="text-[10px] text-slate-300 space-y-0.5 font-sans">
+                                <div>• Rumus: <code className="text-cyan-300">Sarat = {compForm.draft_m} * {scaleFac.toFixed(4)}</code></div>
+                                <div>• Dimensi bertambah proporsional menampung payload</div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Step 3: Terhubung ke Tahap 3 Basic Design */}
+                      <div className="p-4 bg-emerald-950/40 rounded-xl border border-emerald-500/40 relative space-y-2">
+                        <div className="flex items-center justify-between text-[10px] text-emerald-300 font-sans font-semibold uppercase">
+                          <span>3. Terhubung ke Basic Design</span>
+                          <span className="text-emerald-400 font-mono font-bold">Tahap 3 DWL</span>
+                        </div>
+                        <div className="text-xs text-emerald-200 font-bold font-sans">
+                          Sarat Desain Terpilih (T)
+                        </div>
+                        <div className="text-2xl font-black text-emerald-400">
+                          {(Number(designData.draft_m) || Number(compForm.draft_m) || 5.44).toFixed(2)} m
+                        </div>
+                        <div className="text-[10px] text-slate-300 space-y-0.5 font-sans">
+                          <div>• Menjadi acuan <strong className="text-emerald-300">WL DWL 100% T</strong></div>
+                          <div>• Menentukan garis air AWL, LCF & Radius Bilga</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Action Pills for Draft Customization */}
+                    <div className="bg-slate-950/90 p-3.5 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                      <div className="text-slate-400 text-[11px] leading-relaxed">
+                        <strong className="text-white">Pilihan Desain:</strong> Anda dapat menggunakan sarat hasil skala proporsional atau mengunci sarat kapal di nilai tertentu jika terdapat batasan kedalaman alur pelabuhan.
+                      </div>
+                      <div className="flex items-center space-x-2 shrink-0">
+                        {compForm.draft_m && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const scaleFac = (targetDwt / Math.max(1, compForm.dwt_ton)) ** (1 / 3);
+                              const scaledDraft = Number(((compForm.draft_m || 5.2) * scaleFac).toFixed(2));
+                              handleParamChange("draft_m", scaledDraft);
+                            }}
+                            className="px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-blue-200 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            Set Sarat Skala ({((compForm.draft_m || 5.2) * ((targetDwt / Math.max(1, compForm.dwt_ton)) ** (1 / 3))).toFixed(2)} m)
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (compForm.draft_m) {
+                              handleParamChange("draft_m", Number(compForm.draft_m));
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/40 text-amber-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                        >
+                          Kunci Sarat Pembanding ({compForm.draft_m || 5.20} m)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1645,16 +1767,69 @@ export default function Stage2PreliminaryDesign() {
                 </div>
 
                 <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-2xl">
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                      <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
-                        <Compass size={18} />
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+                    <div>
+                      <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
+                          <Compass size={18} />
+                        </div>
+                        <span>Ukuran Utama Lambung & Koefisien (Editor Parameter Skenario)</span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Form editor parameter untuk melihat, memasukkan, atau mengubah dimensi utama lambung (LBP, B, T, H) dan koefisien bentuk (Cb, Cm, Cw) secara manual atau otomatis dari hasil scaling & optimasi.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0">
+                      <span className="text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5">
+                        <span>🔗</span>
+                        <span>Sarat T = {Number(designData.draft_m || 5.44).toFixed(2)} m ➔ Tahap 3 DWL</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* INFO KETERHUBUNGAN SARAT AIR */}
+                  <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center space-x-3 text-slate-300">
+                      <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
+                        <Info size={16} />
                       </div>
-                      <span>Ukuran Utama Lambung & Koefisien (Editor Parameter Skenario)</span>
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Form editor parameter untuk melihat, memasukkan, atau mengubah dimensi utama lambung (LBP, B, T, H) dan koefisien bentuk (Cb, Cm, Cw) secara manual atau otomatis dari hasil scaling & optimasi.
-                    </p>
+                      <div className="space-y-0.5">
+                        <div className="font-semibold text-white">
+                          Konektivitas Sarat Desain (T) Antar Tahapan:
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          Kapal Pembanding: <strong className="text-amber-400">{compForm.draft_m || 5.20} m</strong> ➔ Skala DWT: <strong className="text-cyan-400">{((compForm.draft_m || 5.20) * ((targetDwt / Math.max(1, compForm.dwt_ton || 3500)) ** (1/3))).toFixed(2)} m</strong> ➔ Aktif: <strong className="text-emerald-400">{Number(designData.draft_m || 5.44).toFixed(2)} m</strong> (DWL Tahap 3).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 self-end sm:self-auto shrink-0">
+                      {compForm.draft_m && Number(designData.draft_m) !== Number(compForm.draft_m) && (
+                        <button
+                          type="button"
+                          onClick={() => handleParamChange("draft_m", Number(compForm.draft_m))}
+                          className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
+                          title="Ubah sarat desain kembali sama persis dengan kapal pembanding"
+                        >
+                          Gunakan {compForm.draft_m} m
+                        </button>
+                      )}
+                      {compForm.draft_m && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const scaleFac = (targetDwt / Math.max(1, compForm.dwt_ton || 3500)) ** (1 / 3);
+                            const scaledDraft = Number(((compForm.draft_m || 5.2) * scaleFac).toFixed(2));
+                            handleParamChange("draft_m", scaledDraft);
+                          }}
+                          className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
+                          title="Terapkan sarat hasil formula scaling DWT proporsional"
+                        >
+                          Gunakan Skala {((compForm.draft_m || 5.20) * ((targetDwt / Math.max(1, compForm.dwt_ton || 3500)) ** (1/3))).toFixed(2)} m
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

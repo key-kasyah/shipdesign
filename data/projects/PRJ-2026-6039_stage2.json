@@ -5659,15 +5659,15 @@
         "loa_m": 94.096,
         "breadth_m": 15.16,
         "depth_m": 7.528,
-        "draft_m": 5.437,
+        "draft_m": 5.2,
         "lwl_m": 89.579,
         "froude_number": 0.208,
         "cb": 0.75,
         "cm": 0.98,
         "cw": 0.78,
         "cp": 0.765,
-        "displacement_m3": 5429.1,
-        "displacement_ton": 5564.83,
+        "displacement_m3": 5192.49,
+        "displacement_ton": 5322.3,
         "water_density_t_m3": 1.025,
         "weight_items": [
           {
