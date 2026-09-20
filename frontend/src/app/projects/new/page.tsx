@@ -21,7 +21,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { api } from "../../../services/api";
-import { VesselType } from "../../../types";
+import { VesselType, formatVesselType } from "../../../types";
 
 import { useLanguage } from "../../../context/LanguageContext";
 
@@ -342,7 +342,7 @@ export default function NewProject() {
               <div><span className="text-slate-500">Project ID:</span> <span className="font-mono">{createdProjectId}</span></div>
               <div><span className="text-slate-500">{language === "en" ? "Project Name:" : "Nama Proyek:"}</span> {projectName}</div>
               <div><span className="text-slate-500">Owner:</span> {owner}</div>
-              <div><span className="text-slate-500">{language === "en" ? "Vessel Type:" : "Tipe Kapal:"}</span> {vesselType}</div>
+              <div><span className="text-slate-500">{language === "en" ? "Vessel Type:" : "Tipe Kapal:"}</span> {formatVesselType(vesselType)}</div>
               <div><span className="text-slate-500">Target DWT:</span> {targetDwt} Ton</div>
               <div><span className="text-slate-500">V ({language === "en" ? "Service Speed" : "Kecepatan"}):</span> {serviceSpeed} knot</div>
               <div className="col-span-2">
@@ -501,7 +501,7 @@ export default function NewProject() {
                   >
                     {Object.values(VesselType).map((t) => (
                       <option key={t} value={t}>
-                        {t}
+                        {formatVesselType(t)}
                       </option>
                     ))}
                   </select>

@@ -8,6 +8,36 @@ export enum VesselType {
   PASSENGER_SHIP = "PASSENGER_SHIP",
 }
 
+export function formatVesselType(type?: string | null): string {
+  if (!type) return "-";
+  const clean = type.replace(/_/g, " ").trim();
+  const titleMap: Record<string, string> = {
+    "GENERAL CARGO": "General Cargo",
+    "CONTAINER SHIP": "Container Ship",
+    "CONTAINER": "Container Ship",
+    "BULK CARRIER": "Bulk Carrier",
+    "TANKER": "Tanker",
+    "TUG BOAT": "Tug Boat",
+    "TUGBOAT": "Tug Boat",
+    "TUG": "Tug Boat",
+    "FISHING VESSEL": "Fishing Vessel",
+    "PASSENGER SHIP": "Passenger Ship",
+    "PASSENGER": "Passenger Ship",
+    "FERRY": "Ferry",
+    "PATROL VESSEL": "Patrol Vessel",
+    "CUSTOM": "Custom",
+  };
+  const upper = clean.toUpperCase();
+  if (titleMap[upper]) {
+    return titleMap[upper];
+  }
+  return clean
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export enum WaterType {
   SEAWATER = "SEAWATER",
   FRESHWATER = "FRESHWATER",

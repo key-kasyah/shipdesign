@@ -35,12 +35,15 @@ html:not(.dark) {
 /* App Canvas & Layout Backgrounds */
 html:not(.dark) body,
 html:not(.dark) .bg-\[\#070B12\],
-html:not(.dark) .bg-slate-950 {
+html:not(.dark) .bg-\[\#02050e\],
+html:not(.dark) .bg-slate-950,
+html:not(.dark) .bg-slate-950\/95 {
   background-color: #f8fafc !important;
 }
 
 /* Main Outer Cards, Modals, Section Containers */
 html:not(.dark) .bg-slate-900,
+html:not(.dark) .bg-slate-900\/95,
 html:not(.dark) .bg-slate-900\/90,
 html:not(.dark) .bg-slate-900\/80,
 html:not(.dark) .bg-slate-900\/70,
@@ -76,6 +79,70 @@ html:not(.dark) .bg-slate-800\/30 {
   background-color: #f1f5f9 !important;
 }
 
+/* Neutralize Dark Gradients in Light Mode */
+html:not(.dark) [class*="from-slate-9"],
+html:not(.dark) [class*="from-slate-8"],
+html:not(.dark) [class*="from-[#0"],
+html:not(.dark) [class*="from-[#1"] {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+
+/* Custom Light Gradients for Highlighted Cards */
+html:not(.dark) [class*="from-blue-950"] {
+  background-image: linear-gradient(to bottom, #eff6ff, #ffffff) !important;
+  border-color: #3b82f6 !important;
+}
+
+html:not(.dark) [class*="from-amber-950"] {
+  background-image: linear-gradient(to bottom, #fffbeb, #ffffff) !important;
+  border-color: #f59e0b !important;
+}
+
+/* Sub-Navigation Tabs in Light Mode */
+html:not(.dark) .bg-slate-950\/95 {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05) !important;
+}
+
+html:not(.dark) button.bg-slate-900\/50,
+html:not(.dark) button.bg-slate-900\/30 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
+}
+
+html:not(.dark) button.bg-slate-900\/50:hover,
+html:not(.dark) button.bg-slate-900\/30:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Metric Boxes inside Cards in Light Mode */
+html:not(.dark) .bg-slate-950\/60 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Unselected Secondary Action Buttons in Light Mode */
+html:not(.dark) button.bg-slate-950\/70,
+html:not(.dark) button.bg-slate-100,
+html:not(.dark) div.bg-slate-950\/70 {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+html:not(.dark) button.bg-slate-950\/70:hover,
+html:not(.dark) button.bg-slate-100:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
 /* Interactive Hover States */
 html:not(.dark) .hover\:bg-slate-800:hover,
 html:not(.dark) .hover\:bg-slate-800\/90:hover,
@@ -89,7 +156,7 @@ html:not(.dark) .hover\:bg-slate-700\/80:hover,
 html:not(.dark) .hover\:bg-slate-900:hover,
 html:not(.dark) .hover\:bg-slate-900\/80:hover,
 html:not(.dark) .hover\:bg-slate-950\/70:hover {
-  background-color: #e2e8f0 !important;
+  background-color: #f1f5f9 !important;
 }
 
 /* Subtle Card Borders & Section Dividers */
@@ -102,6 +169,7 @@ html:not(.dark) .border-slate-800\/50,
 html:not(.dark) .border-slate-800\/40,
 html:not(.dark) .border-slate-850,
 html:not(.dark) .border-slate-700,
+html:not(.dark) .border-slate-700\/90,
 html:not(.dark) .border-slate-700\/80,
 html:not(.dark) .border-slate-700\/60,
 html:not(.dark) .border-slate-700\/50 {
@@ -116,7 +184,9 @@ html:not(.dark) .divide-slate-700 > :not([hidden]) ~ :not([hidden]) {
 }
 
 /* High-Quality Typography Hierarchy for Light Mode */
-html:not(.dark) .text-white:not(.bg-clip-text):not(.keep-white) {
+html:not(.dark) .bg-white .text-white:not(button):not(a):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="from-"]):not(.keep-white),
+html:not(.dark) .bg-slate-50 .text-white:not(button):not(a):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="from-"]):not(.keep-white),
+html:not(.dark) .bg-slate-100 .text-white:not(button):not(a):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="from-"]):not(.keep-white) {
   color: #0f172a !important;
 }
 
@@ -125,12 +195,12 @@ html:not(.dark) .text-slate-100 {
 }
 
 html:not(.dark) .text-slate-200 {
-  color: #1e293b !important;
+  color: #0f172a !important;
 }
 
 html:not(.dark) .text-slate-300,
 html:not(.dark) .text-slate-350 {
-  color: #334155 !important;
+  color: #1e293b !important;
 }
 
 html:not(.dark) .text-slate-400 {
@@ -138,11 +208,11 @@ html:not(.dark) .text-slate-400 {
 }
 
 html:not(.dark) .text-slate-500 {
-  color: #64748b !important;
+  color: #334155 !important;
 }
 
 html:not(.dark) .text-slate-600 {
-  color: #64748b !important;
+  color: #1e293b !important;
 }
 
 /* Vibrant, High-Contrast Badges & Accents in Light Mode */
@@ -238,8 +308,10 @@ html:not(.dark) .bg-indigo-600\/40 {
 
 /* White Text Preservation inside Active / Solid / Gradient Action Buttons */
 html:not(.dark) .bg-gradient-to-r.text-white,
-html:not(.dark) .bg-blue-600,
-html:not(.dark) .bg-blue-600 *,
+html:not(.dark) button.bg-blue-600,
+html:not(.dark) button.bg-blue-600 *,
+html:not(.dark) a.bg-blue-600,
+html:not(.dark) a.bg-blue-600 *,
 html:not(.dark) .bg-emerald-600,
 html:not(.dark) .bg-emerald-600 *,
 html:not(.dark) .bg-red-600,
@@ -248,15 +320,34 @@ html:not(.dark) .bg-rose-600,
 html:not(.dark) .bg-rose-600 *,
 html:not(.dark) .bg-indigo-600,
 html:not(.dark) .bg-indigo-600 *,
-html:not(.dark) button.bg-blue-600,
 html:not(.dark) button.bg-emerald-600,
 html:not(.dark) button.bg-indigo-600,
-html:not(.dark) [class*="from-blue-600"] span,
 html:not(.dark) [class*="from-blue-600"],
-html:not(.dark) [class*="from-indigo-600"] span,
+html:not(.dark) [class*="from-blue-600"] *,
 html:not(.dark) [class*="from-indigo-600"],
+html:not(.dark) [class*="from-indigo-600"] *,
 html:not(.dark) .text-white.shadow-lg,
 html:not(.dark) .text-white.shadow-md {
+  color: #ffffff !important;
+}
+
+/* Secondary Action Buttons text color in Light Mode */
+html:not(.dark) button.bg-slate-100:not(:hover),
+html:not(.dark) button.bg-slate-100:not(:hover) *,
+html:not(.dark) button.bg-slate-50:not(:hover),
+html:not(.dark) button.bg-slate-50:not(:hover) *,
+html:not(.dark) button.bg-white:not(:hover),
+html:not(.dark) button.bg-white:not(:hover) *,
+html:not(.dark) button.bg-slate-800:not(:hover),
+html:not(.dark) button.bg-slate-800:not(:hover) * {
+  color: #0f172a !important;
+}
+
+/* Hover state on light secondary buttons that transition to blue */
+html:not(.dark) button.bg-slate-100:hover,
+html:not(.dark) button.bg-slate-100:hover *,
+html:not(.dark) button.hover\:bg-blue-600:hover,
+html:not(.dark) button.hover\:bg-blue-600:hover * {
   color: #ffffff !important;
 }
 
@@ -348,10 +439,6 @@ html:not(.dark) svg path.stroke-slate-700 {
 html:not(.dark) svg line.stroke-slate-500,
 html:not(.dark) svg line.stroke-slate-400 {
   stroke: #94a3b8 !important;
-}
-
-html:not(.dark) svg text {
-  fill: #1e293b !important;
 }
 
 /* =========================================================================

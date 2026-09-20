@@ -240,32 +240,35 @@ const translations: Record<string, Record<Language, string>> = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>("id");
+  const [language, setLanguageState] = useState<Language>("en");
 
   useEffect(() => {
-    const savedLang = localStorage.getItem("app_language") as Language;
-    if (savedLang === "en" || savedLang === "id") {
-      setLanguageState(savedLang);
-    }
+    // Set English as default language
+    setLanguageState("en");
+    try {
+      localStorage.setItem("app_language", "en");
+    } catch (_) {}
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem("app_language", lang);
+    try {
+      localStorage.setItem("app_language", lang);
+    } catch (_) {}
   };
 
   const toggleLanguage = () => {
-    const nextLang = language === "id" ? "en" : "id";
+    const nextLang = language === "en" ? "id" : "en";
     setLanguage(nextLang);
   };
 
   const t = (keyOrObj: string | TranslationObject, fallback?: string): string => {
     if (typeof keyOrObj === "object" && keyOrObj !== null) {
-      return keyOrObj[language] || keyOrObj.id || fallback || "";
+      return keyOrObj[language] || keyOrObj.en || keyOrObj.id || fallback || "";
     }
     if (typeof keyOrObj === "string") {
-      if (translations[keyOrObj] && translations[keyOrObj][language]) {
-        return translations[keyOrObj][language];
+      if (translations[keyOrObj]) {
+        return translations[keyOrObj][language] || translations[keyOrObj]["en"] || fallback || keyOrObj;
       }
     }
     return fallback || (typeof keyOrObj === "string" ? keyOrObj : "");
@@ -282,12 +285,12 @@ export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (!context) {
     return {
-      language: "id",
+      language: "en",
       setLanguage: () => {},
       toggleLanguage: () => {},
       t: (keyOrObj: string | TranslationObject, fallback?: string) => {
         if (typeof keyOrObj === "object" && keyOrObj !== null) {
-          return keyOrObj.id;
+          return keyOrObj.en || keyOrObj.id || fallback || "";
         }
         return fallback || (typeof keyOrObj === "string" ? keyOrObj : "");
       }

@@ -15,18 +15,19 @@ import {
   Download,
   Info,
   ChevronRight,
+  ChevronDown,
   Eye,
   EyeOff,
   Sparkles,
   Table as TableIcon,
-  Anchor,
-  Activity,
-  Box,
   Lock,
   Plus,
   Trash2,
   Crosshair,
-  MousePointer
+  MousePointer,
+  Save,
+  Clock,
+  X
 } from "lucide-react";
 
 export interface ControlPoint {
@@ -39,6 +40,16 @@ export interface ControlPoint {
   description: string;
 }
 
+export interface SideProfileData {
+  stern: ControlPoint[];
+  bow: ControlPoint[];
+  sheer: ControlPoint[];
+  preset?: string;
+  exactLoa?: number;
+  foreOverhang?: number;
+  aftOverhang?: number;
+}
+
 export interface SideProfileProps {
   lbp_m?: number;
   depth_m?: number;
@@ -46,7 +57,11 @@ export interface SideProfileProps {
   breadth_m?: number;
   cb?: number;
   vesselType?: string;
+  projectId?: string;
+  initialProfileData?: SideProfileData;
   onUpdateLoa?: (exactLoa: number, bowOverhang: number, sternOverhang: number) => void;
+  onChangeProfile?: (data: SideProfileData) => void;
+  onSave?: (data: SideProfileData) => Promise<void> | void;
 }
 
 // Generate smooth parametric Catmull-Rom Spline through control points
@@ -100,6 +115,47 @@ function generateCatmullRomSpline(points: { x: number; y: number }[], samplesPer
   return result;
 }
 
+// Geometrically insert a new point between the two closest adjacent points along the curve
+function insertPointIntoCurve(points: ControlPoint[], newPoint: ControlPoint): ControlPoint[] {
+  if (points.length <= 1) return [...points, newPoint];
+
+  const distToSegment = (px: number, py: number, ax: number, ay: number, bx: number, by: number) => {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return Math.hypot(px - ax, py - ay);
+    let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const projX = ax + t * dx;
+    const projY = ay + t * dy;
+    return Math.hypot(px - projX, py - projY);
+  };
+
+  let bestIndex = 1;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = distToSegment(newPoint.x, newPoint.y, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+    if (d < minDistance) {
+      minDistance = d;
+      bestIndex = i + 1;
+    }
+  }
+
+  const dStart = Math.hypot(newPoint.x - points[0].x, newPoint.y - points[0].y);
+  const dEnd = Math.hypot(newPoint.x - points[points.length - 1].x, newPoint.y - points[points.length - 1].y);
+
+  if (dStart < minDistance && dStart < dEnd) {
+    bestIndex = 0;
+  } else if (dEnd < minDistance && dEnd <= dStart) {
+    bestIndex = points.length;
+  }
+
+  const updated = [...points];
+  updated.splice(bestIndex, 0, newPoint);
+  return updated;
+}
+
 export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
   lbp_m = 90.0,
   depth_m = 8.0,
@@ -107,41 +163,77 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
   breadth_m = 16.0,
   cb = 0.76,
   vesselType = "GENERAL_CARGO",
-  onUpdateLoa
+  projectId,
+  initialProfileData,
+  onUpdateLoa,
+  onChangeProfile,
+  onSave
 }) => {
   const { language } = useLanguage();
   const LBP = Math.max(10, lbp_m);
   const H = Math.max(2, depth_m);
   const T = Math.max(1, draft_m);
 
+  const englishPointText = (text: string) => {
+    const translations: Record<string, string> = {
+      "Forefoot Tangent (Dasar)": "Forefoot Tangent (Baseline)",
+      "Pangkal awal kelengkungan haluan": "Start of bow curvature",
+      "Haluan Bawah Air (Elevasi Rendah)": "Low Underwater Bow",
+      "Kepadatan titik bawah sarat (Dosen)": "Low-draft bow control point",
+      "Haluan Bawah Air (Mid-Draft)": "Mid-Draft Underwater Bow",
+      "Kelengkungan linggi haluan": "Bow stem curvature",
+      "Linggi Haluan FP (DWL)": "Fore Peak FP (DWL)",
+      "Intersep FP pada garis sarat air DWL (Acuan Statis Konstan LBP)": "FP intersection at DWL (fixed LBP reference)",
+      "Haluan Flaring Atas": "Upper Bow Flare",
+      "Kemiringan linggi haluan (flare)": "Upper bow stem flare",
+      "Puncak Haluan (Forecastle Peak)": "Forecastle Peak",
+      "Ujung terdepan geladak akhir haluan": "Forwardmost forecastle deck point",
+      "Lunas Buritan (Aft Keel)": "Aft Keel",
+      "Pangkal lunas sebelum kurva poros": "Keel origin before the shaft curve",
+      "Garis Air Buritan (AP / DWL)": "Aft Waterline (AP / DWL)",
+      "Intersep AP pada sarat muat DWL (Acuan Statis Konstan LBP)": "AP intersection at design draft DWL (fixed LBP reference)",
+      "Knuckle Transom Buritan": "Aft Transom Knuckle",
+      "Sudut lipatan transom belakang": "Aft transom break angle",
+      "Puncak Geladak Buritan": "Aft Deck Peak",
+      "Ujung tertinggi poop deck buritan": "Highest point of the aft poop deck",
+      "Sheer Buritan (AP)": "Aft Sheer (AP)",
+      "Tinggi sheer ujung buritan": "Aft stern sheer height",
+      "Sheer Midship (St. 10)": "Midship Sheer (St. 10)",
+      "Titik terendah sheer di midship": "Lowest sheer point at midship",
+      "Sheer Haluan (FP)": "Fore Sheer (FP)",
+      "Tinggi sheer ujung haluan (forecastle)": "Forecastle sheer height"
+    };
+    return translations[text] || text;
+  };
+
   type PresetDict = Record<string, { name: string; stern: ControlPoint[]; bow: ControlPoint[]; sheer: ControlPoint[] }>;
 
   // Preset Configurations
   const getPresets = (baseLbp: number, baseH: number, baseT: number): PresetDict => {
     const defaultCargoStern: ControlPoint[] = [
-      { id: "st-1", name: "Lunas Buritan (Aft Keel)", category: "stern", x: baseLbp * 0.05, y: 0.0, description: "Pangkal lunas sebelum kurva poros" },
-      { id: "st-2", name: "Lengkung Bossing (Bawah)", category: "stern", x: baseLbp * 0.02, y: baseT * 0.22, description: "Kepadatan titik bawah sarat (Dosen)" },
-      { id: "st-3", name: "Poros Propeller (Boss)", category: "stern", x: baseLbp * 0.005, y: baseT * 0.52, description: "Tinggi pusat poros baling-baling" },
-      { id: "st-4", name: "Garis Air Buritan (AP / DWL)", category: "stern", x: 0.0, y: baseT, locked: true, description: "Intersep AP pada sarat muat DWL (Acuan Statis Konstan LBP)" },
-      { id: "st-5", name: "Knuckle Transom Buritan", category: "stern", x: -baseLbp * 0.025, y: baseT + (baseH - baseT) * 0.5, description: "Sudut lipatan transom belakang" },
-      { id: "st-6", name: "Puncak Geladak Buritan", category: "stern", x: -baseLbp * 0.035, y: baseH + 1.1, description: "Ujung tertinggi poop deck buritan" }
+      { id: "st-1", name: "Aft Keel", category: "stern", x: baseLbp * 0.05, y: 0.0, description: "Keel origin before the shaft curve" },
+      { id: "st-2", name: "Bossing Curve (Lower)", category: "stern", x: baseLbp * 0.02, y: baseT * 0.22, description: "Lower draft transition point" },
+      { id: "st-3", name: "Propeller Shaft (Boss)", category: "stern", x: baseLbp * 0.005, y: baseT * 0.52, description: "Propeller shaft center height" },
+      { id: "st-4", name: "Aft Waterline (AP / DWL)", category: "stern", x: 0.0, y: baseT, locked: true, description: "AP intersection at design draft DWL (fixed LBP reference)" },
+      { id: "st-5", name: "Aft Transom Knuckle", category: "stern", x: -baseLbp * 0.025, y: baseT + (baseH - baseT) * 0.5, description: "Aft transom break angle" },
+      { id: "st-6", name: "Aft Deck Peak", category: "stern", x: -baseLbp * 0.035, y: baseH + 1.1, description: "Highest point of the aft poop deck" }
     ];
 
     const defaultCargoBow: ControlPoint[] = [
-      { id: "bw-1", name: "Forefoot Tangent (Dasar)", category: "bow", x: baseLbp * 0.94, y: 0.0, description: "Pangkal awal kelengkungan haluan" },
-      { id: "bw-2", name: "Haluan Bawah Air (Elevasi Rendah)", category: "bow", x: baseLbp * 0.975, y: baseT * 0.3, description: "Kepadatan titik bawah sarat (Dosen)" },
-      { id: "bw-3", name: "Haluan Bawah Air (Mid-Draft)", category: "bow", x: baseLbp * 0.99, y: baseT * 0.65, description: "Kelengkungan linggi haluan" },
-      { id: "bw-4", name: "Linggi Haluan FP (DWL)", category: "bow", x: baseLbp * 1.0, y: baseT, locked: true, description: "Intersep FP pada garis sarat air DWL (Acuan Statis Konstan LBP)" },
-      { id: "bw-5", name: "Haluan Flaring Atas", category: "bow", x: baseLbp * 1.025, y: baseT + (baseH - baseT) * 0.55, description: "Kemiringan linggi haluan (flare)" },
-      { id: "bw-6", name: "Puncak Haluan (Forecastle Peak)", category: "bow", x: baseLbp * 1.045, y: baseH + 1.8, description: "Ujung terdepan geladak akil haluan" }
+      { id: "bw-1", name: "Forefoot Tangent (Baseline)", category: "bow", x: baseLbp * 0.94, y: 0.0, description: "Start of bow curvature" },
+      { id: "bw-2", name: "Low Underwater Bow", category: "bow", x: baseLbp * 0.975, y: baseT * 0.3, description: "Low-draft bow control point" },
+      { id: "bw-3", name: "Mid-Draft Underwater Bow", category: "bow", x: baseLbp * 0.99, y: baseT * 0.65, description: "Bow stem curvature" },
+      { id: "bw-4", name: "Fore Peak FP (DWL)", category: "bow", x: baseLbp * 1.0, y: baseT, locked: true, description: "FP intersection at DWL (fixed LBP reference)" },
+      { id: "bw-5", name: "Upper Bow Flare", category: "bow", x: baseLbp * 1.025, y: baseT + (baseH - baseT) * 0.55, description: "Upper bow stem flare" },
+      { id: "bw-6", name: "Forecastle Peak", category: "bow", x: baseLbp * 1.045, y: baseH + 1.8, description: "Forwardmost forecastle deck point" }
     ];
 
     const defaultSheer: ControlPoint[] = [
-      { id: "sh-1", name: "Sheer Buritan (AP)", category: "sheer", x: -baseLbp * 0.035, y: baseH + 1.1, description: "Tinggi sheer ujung buritan" },
-      { id: "sh-2", name: "Sheer 1/6 LBP", category: "sheer", x: baseLbp * 0.166, y: baseH + 0.3, description: "Kurva sheer transisi buritan" },
-      { id: "sh-3", name: "Sheer Midship (St. 10)", category: "sheer", x: baseLbp * 0.5, y: baseH, description: "Titik terendah sheer di midship" },
-      { id: "sh-4", name: "Sheer 5/6 LBP", category: "sheer", x: baseLbp * 0.833, y: baseH + 0.55, description: "Kurva sheer transisi haluan" },
-      { id: "sh-5", name: "Sheer Haluan (FP)", category: "sheer", x: baseLbp * 1.045, y: baseH + 1.8, description: "Tinggi sheer ujung haluan (forecastle)" }
+      { id: "sh-1", name: "Aft Sheer (AP)", category: "sheer", x: -baseLbp * 0.035, y: baseH + 1.1, description: "Aft stern sheer height" },
+      { id: "sh-2", name: "Sheer 1/6 LBP", category: "sheer", x: baseLbp * 0.166, y: baseH + 0.3, description: "Aft sheer transition curve" },
+      { id: "sh-3", name: "Midship Sheer (St. 10)", category: "sheer", x: baseLbp * 0.5, y: baseH, description: "Lowest sheer point at midship" },
+      { id: "sh-4", name: "Sheer 5/6 LBP", category: "sheer", x: baseLbp * 0.833, y: baseH + 0.55, description: "Bow sheer transition curve" },
+      { id: "sh-5", name: "Fore Sheer (FP)", category: "sheer", x: baseLbp * 1.045, y: baseH + 1.8, description: "Forecastle sheer height" }
     ];
 
     return {
@@ -149,10 +241,10 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
       tanker: {
         name: "Tanker / Curah (Bulbous Bow + Cruiser Stern)",
         stern: [
-          { id: "st-1", name: "Lunas Buritan (Aft Keel)", category: "stern", x: baseLbp * 0.08, y: 0.0, description: "Pangkal lunas buritan" },
+          { id: "st-1", name: "Aft Keel", category: "stern", x: baseLbp * 0.08, y: 0.0, description: "Aft keel base" },
           { id: "st-2", name: "Lengkung Skeg Poros", category: "stern", x: baseLbp * 0.03, y: baseT * 0.25, description: "Lengkung bawah sarat" },
           { id: "st-3", name: "Poros Propeller", category: "stern", x: baseLbp * 0.008, y: baseT * 0.5, description: "Pusat bossing baling-baling" },
-          { id: "st-4", name: "Garis Air AP (DWL)", category: "stern", x: 0.0, y: baseT, locked: true, description: "Intersep AP pada DWL (Acuan Statis Konstan LBP)" },
+          { id: "st-4", name: "Aft Waterline (DWL)", category: "stern", x: 0.0, y: baseT, locked: true, description: "AP intersection at DWL (fixed LBP reference)" },
           { id: "st-5", name: "Lengkung Cruiser Stern", category: "stern", x: -baseLbp * 0.04, y: baseT + (baseH - baseT) * 0.45, description: "Bulatan cruiser stern melengkung" },
           { id: "st-6", name: "Puncak Geladak Poop", category: "stern", x: -baseLbp * 0.045, y: baseH + 0.9, description: "Geladak buritan tanker" }
         ],
@@ -161,15 +253,15 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
           { id: "bw-2", name: "Bawah Bulbous Bow", category: "bow", x: baseLbp * 0.99, y: baseT * 0.15, description: "Dasar bulbous bow" },
           { id: "bw-3", name: "Ujung Depan Bulbous Bow", category: "bow", x: baseLbp * 1.035, y: baseT * 0.45, description: "Hidung terdepan bulb bawah air" },
           { id: "bw-4", name: "Cekungan Atas Bulb (DWL)", category: "bow", x: baseLbp * 1.0, y: baseT, locked: true, description: "Intersep FP pada sarat muat DWL (Acuan Statis Konstan LBP)" },
-          { id: "bw-5", name: "Linggi Haluan Tegak", category: "bow", x: baseLbp * 1.015, y: baseT + (baseH - baseT) * 0.6, description: "Kemiringan stem atas" },
-          { id: "bw-6", name: "Puncak Haluan Forecastle", category: "bow", x: baseLbp * 1.03, y: baseH + 1.6, description: "Puncak haluan tanker" }
+          { id: "bw-5", name: "Vertical Bow Stem", category: "bow", x: baseLbp * 1.015, y: baseT + (baseH - baseT) * 0.6, description: "Upper stem rake" },
+          { id: "bw-6", name: "Forecastle Bow Peak", category: "bow", x: baseLbp * 1.03, y: baseH + 1.6, description: "Tanker bow peak" }
         ],
         sheer: defaultSheer
       },
       axeBow: {
         name: "Container / Patrol (Axe Bow + Flat Transom)",
         stern: [
-          { id: "st-1", name: "Lunas Buritan", category: "stern", x: baseLbp * 0.04, y: 0.0, description: "Lunas buritan datar" },
+          { id: "st-1", name: "Aft Keel", category: "stern", x: baseLbp * 0.04, y: 0.0, description: "Flat aft keel" },
           { id: "st-2", name: "Lengkung Skeg", category: "stern", x: baseLbp * 0.015, y: baseT * 0.25, description: "Lengkung bawah air" },
           { id: "st-3", name: "Poros Propeller", category: "stern", x: baseLbp * 0.005, y: baseT * 0.5, description: "Poros kemudi" },
           { id: "st-4", name: "AP pada DWL", category: "stern", x: 0.0, y: baseT, locked: true, description: "Intersep AP (Acuan Statis Konstan LBP)" },
@@ -178,38 +270,38 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
         ],
         bow: [
           { id: "bw-1", name: "Forefoot Vertikal", category: "bow", x: baseLbp * 0.98, y: 0.0, description: "Ujung lunas depan" },
-          { id: "bw-2", name: "Linggi Haluan Bawah (Axe)", category: "bow", x: baseLbp * 0.995, y: baseT * 0.35, description: "Garis haluan kapak vertikal" },
-          { id: "bw-3", name: "Linggi Haluan Mid", category: "bow", x: baseLbp * 1.002, y: baseT * 0.7, description: "Garis haluan lurus vertikal" },
-          { id: "bw-4", name: "Haluan FP (DWL)", category: "bow", x: baseLbp * 1.0, y: baseT, locked: true, description: "Intersep FP pada DWL (Acuan Statis Konstan LBP)" },
-          { id: "bw-5", name: "Haluan Atas", category: "bow", x: baseLbp * 1.01, y: baseT + (baseH - baseT) * 0.55, description: "Haluan ramping" },
-          { id: "bw-6", name: "Puncak Haluan Axe", category: "bow", x: baseLbp * 1.015, y: baseH + 1.4, description: "Puncak haluan kapak" }
+          { id: "bw-2", name: "Lower Axe Bow Stem", category: "bow", x: baseLbp * 0.995, y: baseT * 0.35, description: "Vertical axe bow line" },
+          { id: "bw-3", name: "Mid Bow Stem", category: "bow", x: baseLbp * 1.002, y: baseT * 0.7, description: "Straight vertical bow line" },
+          { id: "bw-4", name: "Fore Peak (DWL)", category: "bow", x: baseLbp * 1.0, y: baseT, locked: true, description: "FP intersection at DWL (fixed LBP reference)" },
+          { id: "bw-5", name: "Upper Bow", category: "bow", x: baseLbp * 1.01, y: baseT + (baseH - baseT) * 0.55, description: "Fine bow entrance" },
+          { id: "bw-6", name: "Axe Bow Peak", category: "bow", x: baseLbp * 1.015, y: baseH + 1.4, description: "Axe bow peak" }
         ],
         sheer: defaultSheer
       },
       barge: {
         name: "Tongkang / Ponton (Box Hull / Full PMB)",
         stern: [
-          { id: "st-1", name: "Dasar Rake Buritan", category: "stern", x: baseLbp * 0.08, y: 0.0, description: "Awal kemiringan buritan" },
-          { id: "st-2", name: "Rake Buritan Bawah", category: "stern", x: baseLbp * 0.04, y: baseT * 0.3, description: "Kemiringan bawah sarat" },
-          { id: "st-3", name: "Rake Buritan Tengah", category: "stern", x: baseLbp * 0.015, y: baseT * 0.65, description: "Kemiringan tengah sarat" },
+          { id: "st-1", name: "Aft Rake Base", category: "stern", x: baseLbp * 0.08, y: 0.0, description: "Start of aft rake" },
+          { id: "st-2", name: "Lower Aft Rake", category: "stern", x: baseLbp * 0.04, y: baseT * 0.3, description: "Lower draft rake" },
+          { id: "st-3", name: "Mid Aft Rake", category: "stern", x: baseLbp * 0.015, y: baseT * 0.65, description: "Mid-draft rake" },
           { id: "st-4", name: "AP pada DWL", category: "stern", x: 0.0, y: baseT, locked: true, description: "Garis AP pada DWL (Acuan Statis Konstan LBP)" },
           { id: "st-5", name: "Transom Tongkang", category: "stern", x: -baseLbp * 0.015, y: baseT + (baseH - baseT) * 0.5, description: "Dinding buritan tongkang" },
-          { id: "st-6", name: "Ujung Geladak Buritan", category: "stern", x: -baseLbp * 0.02, y: baseH, description: "Geladak rata buritan tongkang" }
+          { id: "st-6", name: "Aft Deck End", category: "stern", x: -baseLbp * 0.02, y: baseH, description: "Flat barge aft deck" }
         ],
         bow: [
-          { id: "bw-1", name: "Dasar Rake Haluan", category: "bow", x: baseLbp * 0.92, y: 0.0, description: "Awal kemiringan haluan" },
-          { id: "bw-2", name: "Rake Haluan Bawah", category: "bow", x: baseLbp * 0.96, y: baseT * 0.3, description: "Kemiringan bawah sarat" },
-          { id: "bw-3", name: "Rake Haluan Tengah", category: "bow", x: baseLbp * 0.985, y: baseT * 0.65, description: "Kemiringan tengah sarat" },
+          { id: "bw-1", name: "Bow Rake Base", category: "bow", x: baseLbp * 0.92, y: 0.0, description: "Start of bow rake" },
+          { id: "bw-2", name: "Lower Bow Rake", category: "bow", x: baseLbp * 0.96, y: baseT * 0.3, description: "Lower draft rake" },
+          { id: "bw-3", name: "Mid Bow Rake", category: "bow", x: baseLbp * 0.985, y: baseT * 0.65, description: "Mid-draft rake" },
           { id: "bw-4", name: "FP pada DWL", category: "bow", x: baseLbp * 1.0, y: baseT, locked: true, description: "Garis FP pada DWL (Acuan Statis Konstan LBP)" },
           { id: "bw-5", name: "Transom Depan", category: "bow", x: baseLbp * 1.015, y: baseT + (baseH - baseT) * 0.5, description: "Dinding haluan tongkang" },
-          { id: "bw-6", name: "Ujung Geladak Haluan", category: "bow", x: baseLbp * 1.02, y: baseH, description: "Geladak rata haluan tongkang" }
+          { id: "bw-6", name: "Bow Deck End", category: "bow", x: baseLbp * 1.02, y: baseH, description: "Flat barge bow deck" }
         ],
         sheer: [
-          { id: "sh-1", name: "Sheer Buritan", category: "sheer", x: -baseLbp * 0.02, y: baseH, description: "Geladak datar" },
+          { id: "sh-1", name: "Aft Sheer", category: "sheer", x: -baseLbp * 0.02, y: baseH, description: "Flat deck" },
           { id: "sh-2", name: "Sheer 1/6 LBP", category: "sheer", x: baseLbp * 0.166, y: baseH, description: "Geladak datar" },
           { id: "sh-3", name: "Sheer Midship", category: "sheer", x: baseLbp * 0.5, y: baseH, description: "Geladak datar" },
           { id: "sh-4", name: "Sheer 5/6 LBP", category: "sheer", x: baseLbp * 0.833, y: baseH, description: "Geladak datar" },
-          { id: "sh-5", name: "Sheer Haluan", category: "sheer", x: baseLbp * 1.02, y: baseH, description: "Geladak datar" }
+          { id: "sh-5", name: "Fore Sheer", category: "sheer", x: baseLbp * 1.02, y: baseH, description: "Flat deck" }
         ]
       }
     };
@@ -217,12 +309,61 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
   const initialPresets = useMemo(() => getPresets(LBP, H, T), [LBP, H, T]);
 
-  // Initial State: Select preset based on vesselType
-  const defaultKey = vesselType === "TANKER" || vesselType === "BULK_CARRIER" ? "tanker" : "cargo";
-  const [selectedPreset, setSelectedPreset] = useState<string>(defaultKey);
-  const [sternPoints, setSternPoints] = useState<ControlPoint[]>(initialPresets[defaultKey].stern);
-  const [bowPoints, setBowPoints] = useState<ControlPoint[]>(initialPresets[defaultKey].bow);
-  const [sheerPoints, setSheerPoints] = useState<ControlPoint[]>(initialPresets[defaultKey].sheer);
+  // Initial State: Select preset based on vesselType or restored initialProfileData / localStorage
+  const vTypeUpper = (vesselType || "").toUpperCase();
+  const defaultKey = vTypeUpper.includes("TANK") || vTypeUpper.includes("BULK") ? "tanker" : "cargo";
+
+  const getInitialState = () => {
+    if (initialProfileData?.stern && initialProfileData?.bow && initialProfileData?.sheer) {
+      return {
+        preset: initialProfileData.preset || defaultKey,
+        stern: initialProfileData.stern,
+        bow: initialProfileData.bow,
+        sheer: initialProfileData.sheer,
+      };
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const storageKey = projectId ? `side_profile_saved_${projectId}` : "side_profile_saved_default";
+        const cached = localStorage.getItem(storageKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.stern && parsed.bow && parsed.sheer) {
+            return {
+              preset: parsed.preset || defaultKey,
+              stern: parsed.stern,
+              bow: parsed.bow,
+              sheer: parsed.sheer,
+            };
+          }
+        }
+      } catch (e) {
+        console.warn("Could not parse saved side profile:", e);
+      }
+    }
+    const p = initialPresets[defaultKey] || initialPresets.cargo;
+    return {
+      preset: defaultKey,
+      stern: p.stern,
+      bow: p.bow,
+      sheer: p.sheer,
+    };
+  };
+
+  const initialLoaded = useMemo(() => getInitialState(), [initialProfileData, projectId]);
+
+  const [selectedPreset, setSelectedPreset] = useState<string>(initialLoaded.preset);
+  const [sternPoints, setSternPoints] = useState<ControlPoint[]>(initialLoaded.stern);
+  const [bowPoints, setBowPoints] = useState<ControlPoint[]>(initialLoaded.bow);
+  const [sheerPoints, setSheerPoints] = useState<ControlPoint[]>(initialLoaded.sheer);
+
+  // Table visibility toggle state
+  const [showCoordinateTables, setShowCoordinateTables] = useState<boolean>(true);
+
+  // Save State
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
 
   // Synchronize with parent dimension changes if preset changes
   const applyPreset = (key: string) => {
@@ -231,6 +372,14 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
     setSternPoints(p.stern);
     setBowPoints(p.bow);
     setSheerPoints(p.sheer);
+    if (onChangeProfile) {
+      onChangeProfile({
+        stern: p.stern,
+        bow: p.bow,
+        sheer: p.sheer,
+        preset: key,
+      });
+    }
   };
 
   // Enforce static locked coordinates for AP (0, T) and FP (LBP, T) when LBP/T changes
@@ -277,12 +426,25 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
   const loaRatio = useMemo(() => Number((exactLoa / LBP).toFixed(3)), [exactLoa, LBP]);
   const loaApproximation = useMemo(() => Number((1.025 * LBP).toFixed(2)), [LBP]);
 
-  // Sync to parent callback if provided
+  // Sync to parent callback if provided (guarded against infinite re-renders)
+  const onUpdateLoaRef = useRef(onUpdateLoa);
   useEffect(() => {
-    if (onUpdateLoa) {
-      onUpdateLoa(exactLoa, foreOverhang, aftOverhang);
+    onUpdateLoaRef.current = onUpdateLoa;
+  });
+
+  const lastReportedLoaRef = useRef<{ loa?: number; fore?: number; aft?: number }>({});
+
+  useEffect(() => {
+    if (
+      onUpdateLoaRef.current &&
+      (lastReportedLoaRef.current.loa !== exactLoa ||
+        lastReportedLoaRef.current.fore !== foreOverhang ||
+        lastReportedLoaRef.current.aft !== aftOverhang)
+    ) {
+      lastReportedLoaRef.current = { loa: exactLoa, fore: foreOverhang, aft: aftOverhang };
+      onUpdateLoaRef.current(exactLoa, foreOverhang, aftOverhang);
     }
-  }, [exactLoa, foreOverhang, aftOverhang, onUpdateLoa]);
+  }, [exactLoa, foreOverhang, aftOverhang]);
 
   // Parallel Middle Body (PMB) boundaries (Zone where bottom is flat and sides parallel)
   const pmbStartX = useMemo(() => {
@@ -403,11 +565,11 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
     setSheerPoints(updater);
   };
 
-  // Add Point Handler at exact meter coordinates
-  const handleAddPointAtCoord = (xMeter: number, yMeter: number) => {
-    let cat = addCategory;
+  // Add Point Handler at exact meter coordinates with intelligent geometric curve insertion
+  const handleAddPointAtCoord = (xMeter: number, yMeter: number, forcedCat?: "bow" | "stern" | "sheer") => {
+    let cat = forcedCat || addCategory;
     if (cat === "auto") {
-      if (yMeter > H * 0.85 && xMeter > LBP * 0.15 && xMeter < LBP * 0.85) {
+      if (yMeter > H * 0.82 && xMeter > LBP * 0.12 && xMeter < LBP * 0.88) {
         cat = "sheer";
       } else if (xMeter >= LBP * 0.5) {
         cat = "bow";
@@ -417,7 +579,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
     }
 
     const newId = `custom-${Date.now()}`;
-    const catTitle = cat === "bow" ? "Haluan" : cat === "stern" ? "Buritan" : "Sheer";
+    const catTitle = cat === "bow" ? "Bow" : cat === "stern" ? "Stern" : "Sheer";
     const clampedX = Math.round(xMeter * 100) / 100;
     const clampedY = Math.max(0, Math.round(yMeter * 100) / 100);
 
@@ -427,15 +589,15 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
       category: cat,
       x: clampedX,
       y: clampedY,
-      description: `Titik kontrol ${catTitle} tambahan manual (dapat digeser bebas)`
+      description: `Manual ${catTitle} control point (freely draggable)`
     };
 
     if (cat === "bow") {
-      setBowPoints((prev) => [...prev, newPoint].sort((a, b) => a.y - b.y));
+      setBowPoints((prev) => insertPointIntoCurve(prev, newPoint));
     } else if (cat === "stern") {
-      setSternPoints((prev) => [...prev, newPoint].sort((a, b) => a.y - b.y));
+      setSternPoints((prev) => insertPointIntoCurve(prev, newPoint));
     } else {
-      setSheerPoints((prev) => [...prev, newPoint].sort((a, b) => a.x - b.x));
+      setSheerPoints((prev) => insertPointIntoCurve(prev, newPoint));
     }
 
     setSelectedPointId(newId);
@@ -451,21 +613,93 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
     if (selectedPointId === id) setSelectedPointId(null);
   };
 
+  // Auto-sync working changes to parent & draft storage (guarded against infinite re-renders)
+  const onChangeProfileRef = useRef(onChangeProfile);
+  useEffect(() => {
+    onChangeProfileRef.current = onChangeProfile;
+  });
+
+  const lastEmittedProfileRef = useRef<string>("");
+
+  useEffect(() => {
+    const payload = {
+      stern: sternPoints,
+      bow: bowPoints,
+      sheer: sheerPoints,
+      preset: selectedPreset,
+      exactLoa,
+      foreOverhang,
+      aftOverhang
+    };
+    const serialized = JSON.stringify(payload);
+    if (serialized === lastEmittedProfileRef.current) return;
+    lastEmittedProfileRef.current = serialized;
+
+    if (onChangeProfileRef.current) {
+      onChangeProfileRef.current(payload);
+    }
+    if (typeof window !== "undefined") {
+      const draftKey = projectId ? `side_profile_draft_${projectId}` : "side_profile_draft_default";
+      try {
+        localStorage.setItem(draftKey, serialized);
+      } catch (e) {
+        // ignore quota errors
+      }
+    }
+  }, [sternPoints, bowPoints, sheerPoints, selectedPreset, exactLoa, foreOverhang, aftOverhang, projectId]);
+
+  // Save Side Profile Handler
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+
+    const profilePayload: SideProfileData = {
+      stern: sternPoints,
+      bow: bowPoints,
+      sheer: sheerPoints,
+      preset: selectedPreset,
+      exactLoa,
+      foreOverhang,
+      aftOverhang,
+    };
+
+    if (typeof window !== "undefined") {
+      const storageKey = projectId ? `side_profile_saved_${projectId}` : "side_profile_saved_default";
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(profilePayload));
+      } catch (e) {}
+    }
+
+    if (onSave) {
+      try {
+        await onSave(profilePayload);
+      } catch (err) {
+        console.error("Save profile error:", err);
+      }
+    }
+
+    const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    setLastSavedTime(timeStr);
+    setIsSaving(false);
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3500);
+  };
+
   return (
-    <div className="space-y-6 font-sans text-slate-100">
+    <div className="space-y-6 font-sans text-slate-900 dark:text-slate-100">
       {/* Header Banner: Title & Educational Directives */}
-      <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-                <Compass size={18} />
+      <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl backdrop-blur-md">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 shrink-0">
+                <Compass size={20} />
               </div>
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-white tracking-wide">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
                   {language === "en" ? "Side Profile & Hull Profile Studio (NURBS Spline)" : "Studio Tampak Samping & Profil Lambung (NURBS Spline)"}
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                   {language === "en"
                     ? "Design bow, stern, baseline, and deck sheer curves with interactive control points."
                     : "Perancangan kurva linggi haluan (bow), linggi buritan (stern), garis dasar (baseline), dan sheer geladak dengan titik kontrol interaktif."}
@@ -474,106 +708,69 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             </div>
           </div>
 
-          {/* Quick Preset Selector */}
-          <div className="flex items-center space-x-2 bg-slate-900/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shrink-0">
-            <span className="text-xs text-slate-400 font-medium">Preset:</span>
-            <select
-              value={selectedPreset}
-              onChange={(e) => applyPreset(e.target.value)}
-              className="bg-slate-950 border border-slate-700 text-cyan-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer font-medium"
+          {/* Quick Preset Selector & Save Button */}
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-900/80 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Preset:</span>
+              <select
+                value={selectedPreset}
+                onChange={(e) => applyPreset(e.target.value)}
+                className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-cyan-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer font-medium shadow-sm"
+              >
+                <option value="cargo">General Cargo (Raked Bow + Transom)</option>
+                <option value="tanker">Tanker / Bulk (Bulbous Bow + Cruiser)</option>
+                <option value="axeBow">Container / Fast (Axe Bow + Transom)</option>
+                <option value="barge">{language === "en" ? "Barge / Pontoon (Box Hull / Full PMB)" : "Tongkang / Ponton (Box Hull / Full PMB)"}</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 shadow-lg cursor-pointer ${
+                saveSuccess
+                  ? "bg-emerald-600 text-white border border-emerald-400 shadow-emerald-900/40"
+                  : "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border border-cyan-400/30 shadow-cyan-900/20 active:scale-95"
+              }`}
+              title="Save the side profile (bow, stern & sheer control points) to the database"
             >
-              <option value="cargo">General Cargo (Raked Bow + Transom)</option>
-              <option value="tanker">Tanker / Bulk (Bulbous Bow + Cruiser)</option>
-              <option value="axeBow">Container / Fast (Axe Bow + Transom)</option>
-              <option value="barge">{language === "en" ? "Barge / Pontoon (Box Hull / Full PMB)" : "Tongkang / Ponton (Box Hull / Full PMB)"}</option>
-            </select>
-          </div>
-        </div>
-
-        {/* 4 Core Principles Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
-          <div className="p-3.5 bg-slate-900/50 rounded-xl border border-slate-800/80 space-y-1.5 hover:border-slate-700 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-cyan-400 font-semibold">
-                <Anchor size={14} />
-                <span>{language === "en" ? "1. Fixed LBP Constraint" : "1. Batasan Tetap LBP"}</span>
-              </div>
-              <span className="text-[10px] bg-cyan-950 text-cyan-400 px-1.5 py-0.5 rounded font-mono font-bold">{language === "en" ? "Fixed" : "Tetap"}</span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              {language === "en" ? (
-                <>LBP (<strong className="text-white font-mono">{LBP.toFixed(2)} m</strong>) is constant from AP (St. 0) to FP (St. 20).</>
+              {isSaving ? (
+                <RotateCcw size={14} className="animate-spin text-white" />
+              ) : saveSuccess ? (
+                <CheckCircle2 size={14} className="text-white" />
               ) : (
-                <>LBP (<strong className="text-white font-mono">{LBP.toFixed(2)} m</strong>) bersifat konstan dari AP (St. 0) hingga FP (St. 20).</>
+                <Save size={14} />
               )}
-            </p>
-          </div>
-
-          <div className="p-3.5 bg-slate-900/50 rounded-xl border border-slate-800/80 space-y-1.5 hover:border-slate-700 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-amber-400 font-semibold">
-                <Activity size={14} />
-                <span>{language === "en" ? "2. Sub-Draft Density" : "2. Kepadatan Bawah Sarat"}</span>
-              </div>
-              <span className="text-[10px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded font-mono font-bold">NURBS</span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              {language === "en"
-                ? "Control points are densely arranged below draft for smooth stem & stern curvature."
-                : "Titik kontrol dibuat rapat di bawah sarat air agar kelengkungan linggi haluan & buritan mulus (smooth)."}
-            </p>
-          </div>
-
-          <div className="p-3.5 bg-slate-900/50 rounded-xl border border-slate-800/80 space-y-1.5 hover:border-slate-700 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-emerald-400 font-semibold">
-                <Maximize2 size={14} />
-                <span>{language === "en" ? "3. Exact LOA Value" : "3. Nilai Pasti LOA"}</span>
-              </div>
-              <span className="text-[10px] bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold">Real-Time</span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              {language === "en" ? (
-                <>LOA calculated from difference between bow peak and stern tip: <strong className="text-emerald-300 font-mono font-bold">{exactLoa.toFixed(2)} m</strong>.</>
-              ) : (
-                <>LOA dihitung dari selisih puncak haluan dan ujung buritan: <strong className="text-emerald-300 font-mono font-bold">{exactLoa.toFixed(2)} m</strong>.</>
+              <span>
+                {isSaving
+                  ? language === "en" ? "Saving..." : "Menyimpan..."
+                  : saveSuccess
+                  ? language === "en" ? "Saved!" : "Tersimpan!"
+                  : language === "en" ? "Save Side Profile" : "Simpan Profil Samping"}
+              </span>
+              {lastSavedTime && !isSaving && !saveSuccess && (
+                <span className="text-[10px] font-mono opacity-75 ml-0.5">({lastSavedTime})</span>
               )}
-            </p>
-          </div>
-
-          <div className="p-3.5 bg-slate-900/50 rounded-xl border border-slate-800/80 space-y-1.5 hover:border-slate-700 transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1.5 text-purple-400 font-semibold">
-                <Box size={14} />
-                <span>{language === "en" ? "4. Parallel Middle Body" : "4. Parallel Middle Body"}</span>
-              </div>
-              <span className="text-[10px] bg-purple-950 text-purple-400 px-1.5 py-0.5 rounded font-mono font-bold">PMB</span>
-            </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              {language === "en" ? (
-                <>Flat bottom center zone (PMB) extends from St. {(pmbStartX / (LBP / 20)).toFixed(1)} to St. {(pmbEndX / (LBP / 20)).toFixed(1)}.</>
-              ) : (
-                <>Zona lunas datar tengah (PMB) membentang dari St. {(pmbStartX / (LBP / 20)).toFixed(1)} s.d. St. {(pmbEndX / (LBP / 20)).toFixed(1)}.</>
-              )}
-            </p>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Studio Work Area */}
-      <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 md:p-6 space-y-4 shadow-2xl relative overflow-hidden backdrop-blur-md">
+      <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 md:p-6 space-y-4 shadow-sm dark:shadow-2xl relative overflow-hidden backdrop-blur-md">
         {/* Top Control Bar for View Toggles & Add Point Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-slate-800/80 pb-3">
-          {/* Left: View Layer Switches */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-slate-200 dark:border-slate-800/80 pb-3">
+          {/* Left: View Layer Switches (Unified CAD Layer Toggles) */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowStations(!showStations)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
                 showStations
-                  ? "bg-cyan-500/20 border-cyan-500/40 text-cyan-300 font-semibold"
-                  : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showStations ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
               <span>St. 0-20</span>
             </button>
 
@@ -581,21 +778,23 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
               onClick={() => setShowWaterlines(!showWaterlines)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
                 showWaterlines
-                  ? "bg-blue-500/20 border-blue-500/40 text-blue-300 font-semibold"
-                  : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
-              <span>Garis Air (WL / DWL)</span>
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showWaterlines ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+              <span>Waterlines (WL / DWL)</span>
             </button>
 
             <button
               onClick={() => setShowPmbZone(!showPmbZone)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
                 showPmbZone
-                  ? "bg-purple-500/20 border-purple-500/40 text-purple-300 font-semibold"
-                  : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showPmbZone ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
               <span>Zona PMB</span>
             </button>
 
@@ -603,60 +802,62 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
               onClick={() => setShowControlNodes(!showControlNodes)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
                 showControlNodes
-                  ? "bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold"
-                  : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
-              <span>Titik Kontrol (Nodes)</span>
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showControlNodes ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+              <span>Control Points (Nodes)</span>
             </button>
 
             <button
               onClick={() => setShowWaterlineShading(!showWaterlineShading)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
                 showWaterlineShading
-                  ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-semibold"
-                  : "bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200"
+                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
               }`}
             >
-              <span>Arsiran Sarat (T)</span>
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showWaterlineShading ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+              <span>Draft Shading (T)</span>
             </button>
           </div>
 
           {/* Right: Add Point Mode & Reset Controls */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Add Point Toolbar Toggle & Category Pill */}
-            <div className="flex items-center space-x-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+            <div className="flex items-center space-x-1.5 bg-slate-100/80 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <button
                 onClick={() => setIsAddMode(!isAddMode)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
                   isAddMode
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-900/40 border border-emerald-400/50 ring-2 ring-emerald-500/20"
-                    : "bg-emerald-950/50 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-700/40 hover:border-emerald-500/50"
+                    ? "bg-cyan-600 text-white shadow-sm border border-cyan-500"
+                    : "bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                 }`}
                 title="Klik untuk mengaktifkan mode penambahan titik baru pada profil kapal"
               >
-                <Plus size={14} className={isAddMode ? "rotate-45 transition-transform" : ""} />
-                <span>{isAddMode ? "Tutup Mode Tambah" : "+ Tambah Titik (Add Point)"}</span>
+                <Plus size={13} className={isAddMode ? "rotate-45 transition-transform" : "transition-transform"} />
+                <span>{isAddMode ? "Close Add Mode" : "Add Control Point"}</span>
               </button>
 
               {isAddMode && (
-                <div className="flex items-center space-x-1 pl-1.5 border-l border-slate-700/80">
+                <div className="flex items-center space-x-1 pl-1.5 border-l border-slate-300 dark:border-slate-700/80">
                   {(
                     [
-                      { key: "auto", label: "⚡ Otomatis", desc: "Deteksi otomatis berdasarkan posisi klik" },
-                      { key: "bow", label: "🟢 Haluan", desc: "Titik profil linggi haluan" },
-                      { key: "stern", label: "🟠 Buritan", desc: "Titik profil linggi buritan" },
-                      { key: "sheer", label: "🟡 Sheer", desc: "Titik profil sheer geladak" }
+                      { key: "auto", label: "Otomatis", desc: "Deteksi otomatis berdasarkan posisi klik" },
+                      { key: "bow", label: "Bow", desc: "Bow stem profile point" },
+                      { key: "stern", label: "Stern", desc: "Stern profile point" },
+                      { key: "sheer", label: "Sheer", desc: "Deck sheer profile point" }
                     ] as const
                   ).map((cat) => (
                     <button
                       key={cat.key}
                       onClick={() => setAddCategory(cat.key)}
                       title={cat.desc}
-                      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
                         addCategory === cat.key
-                          ? "bg-emerald-900/90 text-white shadow-sm border border-emerald-500/60"
-                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                          ? "bg-cyan-600 text-white shadow-xs border border-cyan-500"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
                       }`}
                     >
                       <span>{cat.label}</span>
@@ -668,51 +869,142 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
             <button
               onClick={() => applyPreset(selectedPreset)}
-              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer"
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
               title="Reset ke posisi default preset"
             >
               <RotateCcw size={13} />
-              <span>Reset Titik</span>
+              <span>Reset Points</span>
             </button>
           </div>
         </div>
 
         {/* Interactive SVG Profile View Canvas */}
-        <div className="w-full h-[520px] bg-[#01040a] rounded-xl border border-slate-800/80 relative overflow-hidden flex items-center justify-center select-none shadow-inner">
-          {/* Add Point Active Banner */}
+        <div className="w-full h-[540px] bg-slate-50 dark:bg-[#01040a] rounded-xl border border-slate-300 dark:border-slate-800/80 relative overflow-hidden flex items-center justify-center select-none shadow-inner">
+          {/* Add Point Active Center Banner */}
           {isAddMode && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 bg-emerald-950/95 border border-emerald-500/80 text-emerald-200 px-4 py-2 rounded-xl text-xs flex items-center space-x-3 shadow-2xl backdrop-blur-md animate-pulse">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <span className="font-bold text-emerald-300">Mode Tambah Titik Aktif:</span>
-              <span className="text-slate-200">
-                Klik pada area kanvas untuk menempatkan titik kontrol{" "}
-                <span className="font-bold text-emerald-400">
-                  ({addCategory === "auto" ? "Otomatis" : addCategory === "bow" ? "Haluan" : addCategory === "stern" ? "Buritan" : "Sheer"})
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-slate-900/95 dark:bg-slate-950/95 border border-cyan-500/60 text-slate-200 px-4 py-2 rounded-xl text-xs flex items-center space-x-3 shadow-2xl backdrop-blur-md animate-fadeIn">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="font-semibold text-cyan-300">Add Point Mode:</span>
+              <span className="text-slate-300 text-[11px]">
+                Klik pada garis profil untuk menempatkan titik{" "}
+                <span className="font-semibold text-white font-mono">
+                  ({addCategory === "auto" ? "Automatic" : addCategory === "bow" ? "Bow" : addCategory === "stern" ? "Stern" : "Sheer"})
                 </span>
               </span>
               <button
                 onClick={() => setIsAddMode(false)}
-                className="px-2.5 py-1 bg-emerald-900 hover:bg-emerald-800 border border-emerald-500/50 text-white rounded-lg text-[11px] font-bold cursor-pointer transition-all"
+                className="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-200 rounded-lg text-[11px] font-medium cursor-pointer transition-all ml-1"
               >
-                Selesai / Batal
+                Selesai
               </button>
             </div>
           )}
 
+          {/* Floating Selected Node Quick Inspector (Bottom-Left) */}
+          {(() => {
+            const selectedPt = allPoints.find((p) => p.id === selectedPointId);
+            if (!selectedPt) return null;
+            const isLocked = selectedPt.locked || selectedPt.id === "st-4" || selectedPt.id === "bw-4";
+            return (
+              <div className="absolute bottom-3 left-3 z-30 bg-white/95 dark:bg-slate-950/95 border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 shadow-2xl backdrop-blur-md flex items-center space-x-3 text-xs font-mono animate-fadeIn">
+                <div className="flex items-center space-x-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${
+                    selectedPt.category === "bow"
+                      ? "bg-emerald-500"
+                      : selectedPt.category === "stern"
+                      ? "bg-orange-500"
+                      : "bg-amber-500"
+                  }`} />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900 dark:text-white text-[11px] truncate max-w-[140px]">{selectedPt.name}</span>
+                    <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">
+                      {selectedPt.category === "bow" ? "Bow" : selectedPt.category === "stern" ? "Stern" : "Sheer"}
+                      {isLocked && " • Statis"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
+
+                {/* X input */}
+                <div className="flex items-center space-x-1">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">X:</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    disabled={isLocked}
+                    value={selectedPt.x}
+                    onChange={(e) => handleNumericUpdate(selectedPt.id, "x", parseFloat(e.target.value) || 0)}
+                    className={`w-16 px-1.5 py-0.5 rounded border text-center font-bold text-[11px] ${
+                      isLocked
+                        ? "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                        : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-cyan-300 focus:border-cyan-500 shadow-sm"
+                    }`}
+                  />
+                  <span className="text-slate-400 dark:text-slate-500 text-[10px]">m</span>
+                </div>
+
+                {/* Y input */}
+                <div className="flex items-center space-x-1">
+                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Y:</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    disabled={isLocked}
+                    value={selectedPt.y}
+                    onChange={(e) => handleNumericUpdate(selectedPt.id, "y", parseFloat(e.target.value) || 0)}
+                    className={`w-16 px-1.5 py-0.5 rounded border text-center font-bold text-[11px] ${
+                      isLocked
+                        ? "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                        : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-cyan-300 focus:border-cyan-500 shadow-sm"
+                    }`}
+                  />
+                  <span className="text-slate-400 dark:text-slate-500 text-[10px]">m</span>
+                </div>
+
+                {!isLocked && (
+                  <button
+                    onClick={() => handleDeletePoint(selectedPt.id)}
+                    className="p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-white hover:bg-red-50 dark:hover:bg-red-950/80 rounded-lg transition-colors cursor-pointer"
+                    title="Delete this control point"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setSelectedPointId(null)}
+                  className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    title="Close Inspector"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            );
+          })()}
+
           {/* Coordinate HUD (Live Meter Tracker) */}
-          <div className="absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-slate-800/90 rounded-lg px-3 py-1.5 text-[11px] font-mono text-slate-300 flex items-center space-x-2.5 pointer-events-none backdrop-blur-md shadow-xl">
-            <Crosshair size={13} className="text-cyan-400" />
-            <span>X: <strong className="text-white">{hoverCoords ? `${hoverCoords.x.toFixed(2)} m` : "--"}</strong></span>
-            <span className="text-slate-700">|</span>
-            <span>Y: <strong className="text-white">{hoverCoords ? `${hoverCoords.y.toFixed(2)} m` : "--"}</strong></span>
-            <span className="text-slate-700">|</span>
-            <span>Stasi: <strong className="text-cyan-400">{hoverCoords ? (hoverCoords.x / (LBP / 20)).toFixed(1) : "--"}</strong></span>
+          <div className="absolute bottom-3 right-3 z-20 bg-white/95 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/90 rounded-lg px-3 py-1.5 text-[11px] font-mono text-slate-600 dark:text-slate-300 flex items-center space-x-2.5 pointer-events-none backdrop-blur-md shadow-xl">
+            <Crosshair size={13} className="text-cyan-600 dark:text-cyan-400" />
+            <span>X: <strong className="text-slate-900 dark:text-white">{hoverCoords ? `${hoverCoords.x.toFixed(2)} m` : "--"}</strong></span>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span>Y: <strong className="text-slate-900 dark:text-white">{hoverCoords ? `${hoverCoords.y.toFixed(2)} m` : "--"}</strong></span>
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span>Station: <strong className="text-cyan-600 dark:text-cyan-400">{hoverCoords ? (hoverCoords.x / (LBP / 20)).toFixed(1) : "--"}</strong></span>
           </div>
 
           <svg
             ref={svgRef}
             className={`w-full h-full ${isAddMode ? "cursor-crosshair" : "cursor-default"}`}
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+            onDoubleClick={(e) => {
+              if (!svgRef.current) return;
+              const rect = svgRef.current.getBoundingClientRect();
+              const rawSvgX = ((e.clientX - rect.left) / rect.width) * svgWidth;
+              const rawSvgY = ((e.clientY - rect.top) / rect.height) * svgHeight;
+              const { xMeter, yMeter } = fromSvgCoords(rawSvgX, rawSvgY);
+              handleAddPointAtCoord(xMeter, yMeter);
+            }}
             onClick={(e) => {
               if (!isAddMode || !svgRef.current) return;
               const rect = svgRef.current.getBoundingClientRect();
@@ -737,12 +1029,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <defs>
               {/* Pattern for Submerged Region */}
               <pattern id="submerged-hatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="8" stroke="#0ea5e9" strokeWidth="0.8" strokeOpacity="0.3" />
+                <line x1="0" y1="0" x2="0" y2="8" stroke="#0284c7" className="dark:stroke-[#0ea5e9]" strokeWidth="0.8" strokeOpacity="0.3" />
               </pattern>
 
               {/* Grid Background Pattern */}
               <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#0f172a" strokeWidth="0.5" />
+                <path d="M 20 0 L 0 0 0 20" fill="none" className="stroke-slate-200 dark:stroke-[#0f172a]" strokeWidth="0.5" />
               </pattern>
             </defs>
 
@@ -757,16 +1049,14 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                   y={toSvgY(H * 1.15)}
                   width={toSvgX(pmbEndX) - toSvgX(pmbStartX)}
                   height={toSvgY(0) - toSvgY(H * 1.15)}
-                  fill="rgba(168, 85, 247, 0.06)"
-                  stroke="#a855f7"
+                  className="fill-purple-500/10 dark:fill-purple-500/10 stroke-purple-500/50 dark:stroke-purple-400/40"
                   strokeWidth="1"
                   strokeDasharray="4,4"
-                  strokeOpacity="0.4"
                 />
                 <text
                   x={(toSvgX(pmbStartX) + toSvgX(pmbEndX)) / 2}
                   y={toSvgY(H * 1.1) - 4}
-                  fill="#c084fc"
+                  className="fill-purple-700 dark:fill-purple-300"
                   fontSize="10"
                   fontWeight="bold"
                   textAnchor="middle"
@@ -794,14 +1084,30 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y1={y}
                         x2={svgWidth - margin.right + 15}
                         y2={y}
-                        stroke={isDwl ? "#0284c7" : isDeck ? "#eab308" : isBase ? "#94a3b8" : "#1e293b"}
+                        className={
+                          isDwl
+                            ? "stroke-sky-600 dark:stroke-sky-400"
+                            : isDeck
+                            ? "stroke-amber-500 dark:stroke-yellow-400"
+                            : isBase
+                            ? "stroke-slate-500 dark:stroke-slate-400"
+                            : "stroke-slate-300/80 dark:stroke-slate-800/80"
+                        }
                         strokeWidth={isDwl || isDeck || isBase ? 1.5 : 0.6}
                         strokeDasharray={isDwl ? "6,3" : isDeck ? "4,2" : undefined}
                       />
                       <text
                         x={margin.left - 20}
                         y={y + 3.5}
-                        fill={isDwl ? "#38bdf8" : isDeck ? "#facc15" : isBase ? "#cbd5e1" : "#475569"}
+                        className={
+                          isDwl
+                            ? "fill-sky-700 dark:fill-sky-300 font-bold"
+                            : isDeck
+                            ? "fill-amber-600 dark:fill-yellow-400 font-bold"
+                            : isBase
+                            ? "fill-slate-600 dark:fill-slate-300"
+                            : "fill-slate-400 dark:fill-slate-500"
+                        }
                         fontSize="9.5"
                         fontWeight={isDwl || isDeck ? "bold" : "normal"}
                         textAnchor="end"
@@ -821,7 +1127,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         <text
                           x={svgWidth - margin.right + 20}
                           y={y + 3.5}
-                          fill={isDwl ? "#38bdf8" : "#facc15"}
+                          className={isDwl ? "fill-sky-700 dark:fill-sky-300" : "fill-amber-600 dark:fill-yellow-400"}
                           fontSize="9"
                           fontWeight="bold"
                           textAnchor="start"
@@ -853,14 +1159,30 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y1={toSvgY(plotMinY + 0.1)}
                         x2={x}
                         y2={toSvgY(Math.max(H * 1.15, plotMaxY - 1.0))}
-                        stroke={isAp ? "#f97316" : isFp ? "#22c55e" : isMid ? "#38bdf8" : "#1e293b"}
+                        className={
+                          isAp
+                            ? "stroke-orange-500 dark:stroke-orange-400"
+                            : isFp
+                            ? "stroke-emerald-600 dark:stroke-emerald-400"
+                            : isMid
+                            ? "stroke-sky-600 dark:stroke-sky-400"
+                            : "stroke-slate-300/80 dark:stroke-slate-800/80"
+                        }
                         strokeWidth={isAp || isFp ? 1.5 : isMid ? 1.8 : 0.6}
                         strokeDasharray={isAp || isFp ? "6,2" : isMid ? "5,3" : "2,2"}
                       />
                       <text
                         x={x}
                         y={toSvgY(0) + 16}
-                        fill={isAp ? "#fb923c" : isFp ? "#4ade80" : isMid ? "#38bdf8" : "#64748b"}
+                        className={
+                          isAp
+                            ? "fill-orange-600 dark:fill-orange-400 font-bold"
+                            : isFp
+                            ? "fill-emerald-600 dark:fill-emerald-400 font-bold"
+                            : isMid
+                            ? "fill-sky-600 dark:fill-sky-400 font-bold"
+                            : "fill-slate-500 dark:fill-slate-400"
+                        }
                         fontSize={isAp || isFp || isMid ? "9.5" : "9"}
                         fontWeight={isAp || isFp || isMid ? "bold" : "normal"}
                         textAnchor="middle"
@@ -878,20 +1200,16 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             width={104}
                             height={15}
                             rx={3}
-                            fill="rgba(2, 132, 199, 0.25)"
-                            stroke="#38bdf8"
+                            className="fill-sky-500/15 dark:fill-sky-500/25 stroke-sky-600 dark:stroke-sky-400"
                             strokeWidth={0.8}
                           />
                           <text
                             x={x}
                             y={toSvgY(Math.max(H * 1.15, plotMaxY - 1.0)) - 5}
-                            fill="#7dd3fc"
-                            fontSize="8.5"
-                            fontWeight="bold"
+                            className="fill-sky-800 dark:fill-sky-200 font-bold font-mono text-[8.5px]"
                             textAnchor="middle"
-                            fontFamily="monospace"
                           >
-                            ⊗ Gading 10 (Midship)
+                            ⊗ Station 10 (Midship)
                           </text>
 
                           {/* Symbol ⊗ at DWL Intersection */}
@@ -899,12 +1217,11 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             cx={x}
                             cy={toSvgY(T)}
                             r={6}
-                            fill="rgba(14, 165, 233, 0.25)"
-                            stroke="#38bdf8"
+                            className="fill-sky-500/20 dark:fill-sky-500/25 stroke-sky-600 dark:stroke-sky-400"
                             strokeWidth={1.2}
                           />
-                          <line x1={x - 6} y1={toSvgY(T)} x2={x + 6} y2={toSvgY(T)} stroke="#38bdf8" strokeWidth={1} />
-                          <line x1={x} y1={toSvgY(T) - 6} x2={x} y2={toSvgY(T) + 6} stroke="#38bdf8" strokeWidth={1} />
+                          <line x1={x - 6} y1={toSvgY(T)} x2={x + 6} y2={toSvgY(T)} className="stroke-sky-600 dark:stroke-sky-400" strokeWidth={1} />
+                          <line x1={x} y1={toSvgY(T) - 6} x2={x} y2={toSvgY(T) + 6} className="stroke-sky-600 dark:stroke-sky-400" strokeWidth={1} />
                         </g>
                       )}
                     </g>
@@ -944,7 +1261,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
               y1={toSvgY(0)}
               x2={toSvgX(bowSpline[0].x)}
               y2={toSvgY(0)}
-              stroke="#0284c7"
+              className="stroke-sky-700 dark:stroke-sky-400"
               strokeWidth="2.5"
             />
 
@@ -955,7 +1272,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 .map((p) => `L ${toSvgX(p.x)},${toSvgY(p.y)}`)
                 .join(" ")}`}
               fill="none"
-              stroke="#38bdf8"
+              className="stroke-sky-600 dark:stroke-sky-400"
               strokeWidth="2.5"
             />
 
@@ -966,7 +1283,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 .map((p) => `L ${toSvgX(p.x)},${toSvgY(p.y)}`)
                 .join(" ")}`}
               fill="none"
-              stroke="#38bdf8"
+              className="stroke-sky-600 dark:stroke-sky-400"
               strokeWidth="2.5"
             />
 
@@ -977,7 +1294,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 .map((p) => `L ${toSvgX(p.x)},${toSvgY(p.y)}`)
                 .join(" ")}`}
               fill="none"
-              stroke="#facc15"
+              className="stroke-amber-500 dark:stroke-yellow-400"
               strokeWidth="2"
               strokeDasharray="5,2"
             />
@@ -989,7 +1306,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 <polyline
                   points={sternPoints.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(" ")}
                   fill="none"
-                  stroke="#64748b"
+                  className="stroke-slate-400 dark:stroke-slate-600"
                   strokeWidth="0.8"
                   strokeDasharray="2,2"
                 />
@@ -997,7 +1314,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 <polyline
                   points={bowPoints.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(" ")}
                   fill="none"
-                  stroke="#64748b"
+                  className="stroke-slate-400 dark:stroke-slate-600"
                   strokeWidth="0.8"
                   strokeDasharray="2,2"
                 />
@@ -1005,7 +1322,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 <polyline
                   points={sheerPoints.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(" ")}
                   fill="none"
-                  stroke="#64748b"
+                  className="stroke-slate-400 dark:stroke-slate-600"
                   strokeWidth="0.8"
                   strokeDasharray="2,2"
                 />
@@ -1019,12 +1336,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                   const isLocked = pt.locked || pt.id === "st-4" || pt.id === "bw-4";
 
                   const color = isLocked
-                    ? "#38bdf8"
+                    ? "#0284c7"
                     : pt.category === "stern"
-                    ? "#f97316"
+                    ? "#ea580c"
                     : pt.category === "bow"
-                    ? "#22c55e"
-                    : "#eab308";
+                    ? "#16a34a"
+                    : "#d97706";
 
                   // Smart text anchoring to guarantee zero clipping at left/right edges
                   const anchor = cx < margin.left + 35 ? "start" : cx > svgWidth - margin.right - 35 ? "end" : "middle";
@@ -1050,7 +1367,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         cx={cx}
                         cy={cy}
                         r={isLocked ? 11 : isSelected ? 10 : 7}
-                        fill={isLocked ? "rgba(2, 132, 199, 0.35)" : isDragging ? "rgba(56, 189, 248, 0.5)" : "rgba(15, 23, 42, 0.85)"}
+                        className={
+                          isLocked
+                            ? "fill-sky-500/20 dark:fill-sky-500/35"
+                            : isDragging
+                            ? "fill-sky-400/40 dark:fill-sky-400/50"
+                            : "fill-white dark:fill-slate-900"
+                        }
                         stroke={color}
                         strokeWidth={isLocked ? 2.5 : isSelected ? 2.5 : 1.8}
                         pointerEvents="none"
@@ -1058,18 +1381,24 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                       {/* Locked concentric crosshair / indicator */}
                       {isLocked ? (
                         <>
-                          <circle cx={cx} cy={cy} r={6} fill="none" stroke="#38bdf8" strokeWidth={1.2} strokeDasharray="2,2" pointerEvents="none" />
-                          <circle cx={cx} cy={cy} r={2} fill="#38bdf8" pointerEvents="none" />
+                          <circle cx={cx} cy={cy} r={6} fill="none" stroke={color} strokeWidth={1.2} strokeDasharray="2,2" pointerEvents="none" />
+                          <circle cx={cx} cy={cy} r={2} fill={color} pointerEvents="none" />
                         </>
                       ) : (
-                        <circle cx={cx} cy={cy} r={2.5} fill="#ffffff" pointerEvents="none" />
+                        <circle cx={cx} cy={cy} r={2.5} className="fill-slate-800 dark:fill-white" pointerEvents="none" />
                       )}
 
                       {/* Coordinates Label */}
                       <text
                         x={textX}
                         y={cy - (isLocked ? 13 : 10)}
-                        fill={isLocked ? "#38bdf8" : isSelected ? "#ffffff" : "#94a3b8"}
+                        className={
+                          isLocked
+                            ? "fill-sky-700 dark:fill-sky-300 font-bold"
+                            : isSelected
+                            ? "fill-slate-900 dark:fill-white font-bold"
+                            : "fill-slate-700 dark:fill-slate-300"
+                        }
                         fontSize={isLocked ? "9" : "8.5"}
                         fontWeight={isLocked || isSelected ? "bold" : "normal"}
                         textAnchor={anchor}
@@ -1077,7 +1406,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         pointerEvents="none"
                       >
                         {isLocked
-                          ? `🔒 ${pt.id === "st-4" ? "AP" : "FP"} (${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`
+                          ? `[LOCK] ${pt.id === "st-4" ? "AP" : "FP"} (${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`
                           : `${pt.name.split(" ")[0]} (${pt.x.toFixed(1)}, ${pt.y.toFixed(1)})`}
                       </text>
                     </g>
@@ -1091,32 +1420,30 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                       cx={toSvgX(hoverCoords.x)}
                       cy={toSvgY(hoverCoords.y)}
                       r={14}
-                      fill="rgba(16, 185, 129, 0.25)"
-                      stroke="#10b981"
+                      className="fill-cyan-500/20 dark:fill-cyan-500/25 stroke-cyan-600 dark:stroke-cyan-400"
                       strokeWidth="1.5"
                       strokeDasharray="3,3"
                     />
-                    <circle cx={toSvgX(hoverCoords.x)} cy={toSvgY(hoverCoords.y)} r={3.5} fill="#10b981" />
+                    <circle cx={toSvgX(hoverCoords.x)} cy={toSvgY(hoverCoords.y)} r={3.5} className="fill-cyan-600 dark:fill-cyan-400" />
                     <line
                       x1={toSvgX(hoverCoords.x)}
                       y1={toSvgY(0)}
                       x2={toSvgX(hoverCoords.x)}
                       y2={toSvgY(hoverCoords.y)}
-                      stroke="#10b981"
+                      className="stroke-emerald-600/70 dark:stroke-emerald-400/70"
                       strokeWidth="0.8"
                       strokeDasharray="2,2"
-                      strokeOpacity="0.6"
                     />
                     <text
                       x={toSvgX(hoverCoords.x)}
                       y={toSvgY(hoverCoords.y) - 16}
-                      fill="#6ee7b7"
+                      className="fill-emerald-700 dark:fill-emerald-300"
                       fontSize="9.5"
                       fontWeight="bold"
                       textAnchor="middle"
                       fontFamily="monospace"
                     >
-                      + Tambah Titik ({hoverCoords.x.toFixed(1)}m, {hoverCoords.y.toFixed(1)}m)
+                      + Add Point ({hoverCoords.x.toFixed(1)}m, {hoverCoords.y.toFixed(1)}m)
                     </text>
                   </g>
                 )}
@@ -1126,20 +1453,20 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             {/* Key Dimension Dimension Arrows & Labels */}
             {/* LBP Dimension */}
             <g key="dim-lbp">
-              <line x1={toSvgX(0)} y1={toSvgY(0) + 32} x2={toSvgX(LBP)} y2={toSvgY(0) + 32} stroke="#38bdf8" strokeWidth="1.2" />
-              <polygon points={`${toSvgX(0)},${toSvgY(0) + 32} ${toSvgX(0) + 6},${toSvgY(0) + 29} ${toSvgX(0) + 6},${toSvgY(0) + 35}`} fill="#38bdf8" />
-              <polygon points={`${toSvgX(LBP)},${toSvgY(0) + 32} ${toSvgX(LBP) - 6},${toSvgY(0) + 29} ${toSvgX(LBP) - 6},${toSvgY(0) + 35}`} fill="#38bdf8" />
-              <text x={toSvgX(LBP / 2)} y={toSvgY(0) + 44} fill="#38bdf8" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              <line x1={toSvgX(0)} y1={toSvgY(0) + 32} x2={toSvgX(LBP)} y2={toSvgY(0) + 32} className="stroke-sky-600 dark:stroke-sky-400" strokeWidth="1.2" />
+              <polygon points={`${toSvgX(0)},${toSvgY(0) + 32} ${toSvgX(0) + 6},${toSvgY(0) + 29} ${toSvgX(0) + 6},${toSvgY(0) + 35}`} className="fill-sky-600 dark:fill-sky-400" />
+              <polygon points={`${toSvgX(LBP)},${toSvgY(0) + 32} ${toSvgX(LBP) - 6},${toSvgY(0) + 29} ${toSvgX(LBP) - 6},${toSvgY(0) + 35}`} className="fill-sky-600 dark:fill-sky-400" />
+              <text x={toSvgX(LBP / 2)} y={toSvgY(0) + 44} className="fill-sky-700 dark:fill-sky-300" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                 LBP = {LBP.toFixed(2)} m (Acuan Konstan Desain)
               </text>
             </g>
 
             {/* LOA Dimension (Top) */}
             <g key="dim-loa">
-              <line x1={toSvgX(xMin)} y1={margin.top - 16} x2={toSvgX(xMax)} y2={margin.top - 16} stroke="#4ade80" strokeWidth="1.5" />
-              <polygon points={`${toSvgX(xMin)},${margin.top - 16} ${toSvgX(xMin) + 6},${margin.top - 19} ${toSvgX(xMin) + 6},${margin.top - 13}`} fill="#4ade80" />
-              <polygon points={`${toSvgX(xMax)},${margin.top - 16} ${toSvgX(xMax) - 6},${margin.top - 19} ${toSvgX(xMax) - 6},${margin.top - 13}`} fill="#4ade80" />
-              <text x={toSvgX((xMin + xMax) / 2)} y={margin.top - 22} fill="#4ade80" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              <line x1={toSvgX(xMin)} y1={margin.top - 16} x2={toSvgX(xMax)} y2={margin.top - 16} className="stroke-emerald-600 dark:stroke-emerald-400" strokeWidth="1.5" />
+              <polygon points={`${toSvgX(xMin)},${margin.top - 16} ${toSvgX(xMin) + 6},${margin.top - 19} ${toSvgX(xMin) + 6},${margin.top - 13}`} className="fill-emerald-600 dark:fill-emerald-400" />
+              <polygon points={`${toSvgX(xMax)},${margin.top - 16} ${toSvgX(xMax) - 6},${margin.top - 19} ${toSvgX(xMax) - 6},${margin.top - 13}`} className="fill-emerald-600 dark:fill-emerald-400" />
+              <text x={toSvgX((xMin + xMax) / 2)} y={margin.top - 22} className="fill-emerald-700 dark:fill-emerald-300" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                 LOA Pasti = {exactLoa.toFixed(2)} m ({loaRatio.toFixed(3)} x LBP)
               </text>
             </g>
@@ -1147,8 +1474,8 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             {/* Fore Overhang & Aft Overhang dimension markers */}
             {foreOverhang > 0 && (
               <g key="dim-fore-oh">
-                <line x1={toSvgX(LBP)} y1={margin.top - 2} x2={toSvgX(xMax)} y2={margin.top - 2} stroke="#a7f3d0" strokeWidth="1" strokeDasharray="2,2" />
-                <text x={toSvgX(LBP + foreOverhang / 2)} y={margin.top - 5} fill="#a7f3d0" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                <line x1={toSvgX(LBP)} y1={margin.top - 2} x2={toSvgX(xMax)} y2={margin.top - 2} className="stroke-emerald-500 dark:stroke-emerald-300" strokeWidth="1" strokeDasharray="2,2" />
+                <text x={toSvgX(LBP + foreOverhang / 2)} y={margin.top - 5} className="fill-emerald-700 dark:fill-emerald-300" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
                   OH Bow: +{foreOverhang.toFixed(2)}m
                 </text>
               </g>
@@ -1156,8 +1483,8 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
             {aftOverhang > 0 && (
               <g key="dim-aft-oh">
-                <line x1={toSvgX(xMin)} y1={margin.top - 2} x2={toSvgX(0)} y2={margin.top - 2} stroke="#fed7aa" strokeWidth="1" strokeDasharray="2,2" />
-                <text x={toSvgX(xMin / 2)} y={margin.top - 5} fill="#fed7aa" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                <line x1={toSvgX(xMin)} y1={margin.top - 2} x2={toSvgX(0)} y2={margin.top - 2} className="stroke-amber-500 dark:stroke-amber-300" strokeWidth="1" strokeDasharray="2,2" />
+                <text x={toSvgX(xMin / 2)} y={margin.top - 5} className="fill-amber-700 dark:fill-amber-300" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
                   OH Stern: +{aftOverhang.toFixed(2)}m
                 </text>
               </g>
@@ -1167,75 +1494,105 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
         {/* Live Hydrostatic & Dimension Calculation Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-0.5">
-            <div className="text-[10px] text-slate-400 font-medium">Panjang LBP</div>
-            <div className="text-base font-bold text-cyan-400 font-mono">{LBP.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-500">AP ke FP (Konstan)</div>
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Panjang LBP</div>
+            <div className="text-base font-bold text-cyan-600 dark:text-cyan-400 font-mono">{LBP.toFixed(2)} m</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500">AP ke FP (Konstan)</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-emerald-500/30 bg-emerald-500/5 space-y-0.5">
-            <div className="text-[10px] text-emerald-400 font-medium">LOA Pasti (Kurva)</div>
-            <div className="text-base font-bold text-emerald-300 font-mono">{exactLoa.toFixed(2)} m</div>
-            <div className="text-[10px] text-emerald-400/70 font-mono">Xmax - Xmin</div>
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">LOA Pasti (Kurva)</div>
+            <div className="text-base font-bold text-cyan-600 dark:text-cyan-400 font-mono">{exactLoa.toFixed(2)} m</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Xmax - Xmin</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-0.5">
-            <div className="text-[10px] text-slate-400 font-medium">Aproksimasi Awal</div>
-            <div className="text-base font-bold text-slate-300 font-mono">{loaApproximation.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-500 font-mono">1.025 x LBP</div>
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Aproksimasi Awal</div>
+            <div className="text-base font-bold text-slate-700 dark:text-slate-300 font-mono">{loaApproximation.toFixed(2)} m</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">1.025 x LBP</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-0.5">
-            <div className="text-[10px] text-slate-400 font-medium">Fore Overhang</div>
-            <div className="text-base font-bold text-white font-mono">+{foreOverhang.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-500">Di depan FP</div>
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Fore Overhang</div>
+            <div className="text-base font-bold text-slate-900 dark:text-white font-mono">+{foreOverhang.toFixed(2)} m</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500">Di depan FP</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-0.5">
-            <div className="text-[10px] text-slate-400 font-medium">Aft Overhang</div>
-            <div className="text-base font-bold text-white font-mono">+{aftOverhang.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-500">Di belakang AP</div>
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Aft Overhang</div>
+            <div className="text-base font-bold text-slate-900 dark:text-white font-mono">+{aftOverhang.toFixed(2)} m</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500">Di belakang AP</div>
           </div>
 
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-0.5">
-            <div className="text-[10px] text-slate-400 font-medium">Rasio LOA / LBP</div>
-            <div className="text-base font-bold text-amber-400 font-mono">{loaRatio.toFixed(3)}</div>
-            <div className="text-[10px] text-slate-500 font-mono">Std: 1.02 ~ 1.06</div>
+          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Rasio LOA / LBP</div>
+            <div className="text-base font-bold text-slate-900 dark:text-white font-mono">{loaRatio.toFixed(3)}</div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Std: 1.02 ~ 1.06</div>
           </div>
         </div>
       </div>
 
       {/* Control Points 2-Way Coordinate Table */}
-      <div className="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-          <div className="flex items-center space-x-2 text-cyan-400 font-bold text-xs tracking-wide">
+      <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+          <div className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 font-bold text-xs tracking-wide">
             <TableIcon size={16} />
-            <span>Tabel Koordinat Titik Kontrol (2-Way Interactive Sync)</span>
+            <span>Control Point Coordinate Tables (2-Way Interactive Sync)</span>
           </div>
-          <span className="text-xs text-slate-400">
-            Nilai dapat disunting langsung untuk presisi tingkat milimeter.
-          </span>
+          <div className="flex items-center space-x-3">
+            <span className="text-xs text-slate-500 dark:text-slate-400 hidden md:inline">
+              {language === "en"
+                ? "Values can be edited directly for millimeter precision."
+                : "Nilai dapat disunting langsung untuk presisi tingkat milimeter."}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowCoordinateTables(!showCoordinateTables)}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm border ${
+                showCoordinateTables
+                  ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                  : "bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-500/40"
+              }`}
+              title={
+                showCoordinateTables
+                  ? (language === "en" ? "Hide Coordinate Tables" : "Sembunyikan Tabel Koordinat")
+                  : (language === "en" ? "Show Coordinate Tables" : "Tampilkan Tabel Koordinat")
+              }
+            >
+              {showCoordinateTables ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+              <span>
+                {showCoordinateTables
+                  ? (language === "en" ? "Hide Tables" : "Sembunyikan Tabel")
+                  : (language === "en" ? "Show Tables" : "Tampilkan Tabel")}
+              </span>
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {showCoordinateTables ? (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Haluan (Bow) Table */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-emerald-400 flex items-center justify-between">
-              <span>🟢 Titik Kontrol Linggi Haluan (Bow Stem Profile)</span>
-              <span className="text-[10px] text-slate-500">{bowPoints.length} Titik</span>
+            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                <span>Bow Stem Control Points (Bow Stem Profile)</span>
+              </div>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">{bowPoints.length} Points</span>
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-sm">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-900/80 text-slate-400 text-[11px] font-semibold border-b border-slate-800">
+                <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="p-2.5">Nama Titik Node</th>
-                    <th className="p-2.5">X (Meter dari AP)</th>
-                    <th className="p-2.5">Y (Elevasi dari BL)</th>
-                    <th className="p-2.5">Stasi Ref.</th>
-                    <th className="p-2.5 text-center">Aksi</th>
+                    <th className="p-2.5">Node Name</th>
+                    <th className="p-2.5">X (Meters from AP)</th>
+                    <th className="p-2.5">Y (Elevation from BL)</th>
+                    <th className="p-2.5">Station Ref.</th>
+                    <th className="p-2.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                   {bowPoints.map((pt) => {
                     const stasiEst = (pt.x / (LBP / 20)).toFixed(1);
                     const isLocked = pt.locked || pt.id === "bw-4";
@@ -1246,23 +1603,23 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         onClick={() => setSelectedPointId(pt.id)}
                         className={`transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-emerald-950/40"
+                            ? "bg-cyan-50/70 dark:bg-cyan-950/40"
                             : isLocked
-                            ? "bg-cyan-950/20 hover:bg-cyan-950/30"
-                            : "hover:bg-slate-900/40"
+                            ? "bg-slate-50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-900/50"
+                            : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
                         }`}
                       >
-                        <td className="p-2.5 text-slate-200">
+                        <td className="p-2.5 text-slate-800 dark:text-slate-200">
                           <div className="font-medium flex items-center space-x-1.5">
-                            <span>{pt.name}</span>
+                            <span>{englishPointText(pt.name)}</span>
                             {isLocked && (
-                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[9px] border border-cyan-500/40 font-mono font-bold">
+                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] border border-slate-200 dark:border-slate-700 font-mono font-medium">
                                 <Lock size={9} />
                                 <span>STATIS (FP)</span>
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400">{pt.description}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{englishPointText(pt.description)}</div>
                         </td>
                         <td className="p-2.5">
                           <input
@@ -1271,10 +1628,10 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             value={pt.x}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "x", parseFloat(e.target.value) || 0)}
-                            className={`w-20 border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
                               isLocked
-                                ? "bg-slate-900/60 border-cyan-500/30 text-cyan-400/80 cursor-not-allowed"
-                                : "bg-slate-950 border-slate-800 text-emerald-400 focus:outline-none focus:border-emerald-500"
+                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
                             }`}
                             title={isLocked ? "Garis acuan konstan FP (LBP) terkunci statis" : ""}
                           />
@@ -1286,15 +1643,15 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             value={pt.y}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "y", parseFloat(e.target.value) || 0)}
-                            className={`w-20 border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
                               isLocked
-                                ? "bg-slate-900/60 border-cyan-500/30 text-cyan-400/80 cursor-not-allowed"
-                                : "bg-slate-950 border-slate-800 text-emerald-400 focus:outline-none focus:border-emerald-500"
+                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
                             }`}
                             title={isLocked ? "Garis acuan konstan sarat DWL terkunci statis" : ""}
                           />
                         </td>
-                        <td className="p-2.5 text-slate-400 text-xs font-mono">St. {stasiEst}</td>
+                        <td className="p-2.5 text-slate-500 dark:text-slate-400 text-xs font-mono">St. {stasiEst}</td>
                         <td className="p-2.5 text-center">
                           {!isLocked ? (
                             <button
@@ -1302,13 +1659,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                                 e.stopPropagation();
                                 handleDeletePoint(pt.id);
                               }}
-                              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
-                              title="Hapus titik ini"
+                              className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              title="Delete this point"
                             >
                               <Trash2 size={13} />
                             </button>
                           ) : (
-                            <span className="text-slate-600 text-[10px]">-</span>
+                            <span className="text-slate-400 dark:text-slate-600 text-[10px]">-</span>
                           )}
                         </td>
                       </tr>
@@ -1321,22 +1678,25 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
           {/* Buritan (Stern) Table */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-amber-400 flex items-center justify-between">
-              <span>🟠 Titik Kontrol Linggi Buritan (Stern & Transom Profile)</span>
-              <span className="text-[10px] text-slate-500">{sternPoints.length} Titik</span>
+            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span>Stern Stem Control Points (Stern & Transom Profile)</span>
+              </div>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">{sternPoints.length} Points</span>
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-sm">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-900/80 text-slate-400 text-[11px] font-semibold border-b border-slate-800">
+                <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="p-2.5">Nama Titik Node</th>
-                    <th className="p-2.5">X (Meter dari AP)</th>
-                    <th className="p-2.5">Y (Elevasi dari BL)</th>
-                    <th className="p-2.5">Stasi Ref.</th>
-                    <th className="p-2.5 text-center">Aksi</th>
+                    <th className="p-2.5">Node Name</th>
+                    <th className="p-2.5">X (Meters from AP)</th>
+                    <th className="p-2.5">Y (Elevation from BL)</th>
+                    <th className="p-2.5">Station Ref.</th>
+                    <th className="p-2.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                   {sternPoints.map((pt) => {
                     const stasiEst = (pt.x / (LBP / 20)).toFixed(1);
                     const isLocked = pt.locked || pt.id === "st-4";
@@ -1347,23 +1707,23 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         onClick={() => setSelectedPointId(pt.id)}
                         className={`transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-amber-950/40"
+                            ? "bg-cyan-50/70 dark:bg-cyan-950/40"
                             : isLocked
-                            ? "bg-cyan-950/20 hover:bg-cyan-950/30"
-                            : "hover:bg-slate-900/40"
+                            ? "bg-slate-50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-900/50"
+                            : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
                         }`}
                       >
-                        <td className="p-2.5 text-slate-200">
+                        <td className="p-2.5 text-slate-800 dark:text-slate-200">
                           <div className="font-medium flex items-center space-x-1.5">
-                            <span>{pt.name}</span>
+                            <span>{englishPointText(pt.name)}</span>
                             {isLocked && (
-                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[9px] border border-cyan-500/40 font-mono font-bold">
+                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] border border-slate-200 dark:border-slate-700 font-mono font-medium">
                                 <Lock size={9} />
                                 <span>STATIS (AP)</span>
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400">{pt.description}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{englishPointText(pt.description)}</div>
                         </td>
                         <td className="p-2.5">
                           <input
@@ -1372,10 +1732,10 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             value={pt.x}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "x", parseFloat(e.target.value) || 0)}
-                            className={`w-20 border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
                               isLocked
-                                ? "bg-slate-900/60 border-cyan-500/30 text-cyan-400/80 cursor-not-allowed"
-                                : "bg-slate-950 border-slate-800 text-amber-400 focus:outline-none focus:border-amber-500"
+                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
                             }`}
                             title={isLocked ? "Garis acuan konstan AP (x=0) terkunci statis" : ""}
                           />
@@ -1387,15 +1747,15 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             value={pt.y}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "y", parseFloat(e.target.value) || 0)}
-                            className={`w-20 border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
                               isLocked
-                                ? "bg-slate-900/60 border-cyan-500/30 text-cyan-400/80 cursor-not-allowed"
-                                : "bg-slate-950 border-slate-800 text-amber-400 focus:outline-none focus:border-amber-500"
+                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
+                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
                             }`}
                             title={isLocked ? "Garis acuan konstan sarat DWL terkunci statis" : ""}
                           />
                         </td>
-                        <td className="p-2.5 text-slate-400 text-xs font-mono">St. {stasiEst}</td>
+                        <td className="p-2.5 text-slate-500 dark:text-slate-400 text-xs font-mono">St. {stasiEst}</td>
                         <td className="p-2.5 text-center">
                           {!isLocked ? (
                             <button
@@ -1403,13 +1763,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                                 e.stopPropagation();
                                 handleDeletePoint(pt.id);
                               }}
-                              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
-                              title="Hapus titik ini"
+                              className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              title="Delete this point"
                             >
                               <Trash2 size={13} />
                             </button>
                           ) : (
-                            <span className="text-slate-600 text-[10px]">-</span>
+                            <span className="text-slate-400 dark:text-slate-600 text-[10px]">-</span>
                           )}
                         </td>
                       </tr>
@@ -1422,24 +1782,27 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
         </div>
 
         {/* Sheer Geladak Table (Collapsible / Secondary) */}
-        <div className="pt-2 border-t border-slate-800/80">
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80">
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-yellow-400 flex items-center justify-between">
-              <span>🟡 Titik Kontrol Lengkung Geladak (Deck Sheer Profile)</span>
-              <span className="text-[10px] text-slate-500">{sheerPoints.length} Titik</span>
+            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                <span>Deck Sheer Control Points (Deck Sheer Profile)</span>
+              </div>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">{sheerPoints.length} Points</span>
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-sm">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-900/80 text-slate-400 text-[11px] font-semibold border-b border-slate-800">
+                <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="p-2.5">Nama Titik Node</th>
-                    <th className="p-2.5">X (Meter dari AP)</th>
-                    <th className="p-2.5">Y (Elevasi dari BL)</th>
-                    <th className="p-2.5">Stasi Ref.</th>
-                    <th className="p-2.5 text-center">Aksi</th>
+                    <th className="p-2.5">Node Name</th>
+                    <th className="p-2.5">X (Meters from AP)</th>
+                    <th className="p-2.5">Y (Elevation from BL)</th>
+                    <th className="p-2.5">Station Ref.</th>
+                    <th className="p-2.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                   {sheerPoints.map((pt) => {
                     const stasiEst = (pt.x / (LBP / 20)).toFixed(1);
                     const isSelected = selectedPointId === pt.id;
@@ -1448,12 +1811,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         key={pt.id}
                         onClick={() => setSelectedPointId(pt.id)}
                         className={`transition-colors cursor-pointer ${
-                          isSelected ? "bg-yellow-950/40" : "hover:bg-slate-900/40"
+                          isSelected ? "bg-cyan-50/70 dark:bg-cyan-950/40" : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
                         }`}
                       >
-                        <td className="p-2.5 text-slate-200">
-                          <div className="font-medium">{pt.name}</div>
-                          <div className="text-[10px] text-slate-400">{pt.description}</div>
+                        <td className="p-2.5 text-slate-800 dark:text-slate-200">
+                          <div className="font-medium">{englishPointText(pt.name)}</div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{englishPointText(pt.description)}</div>
                         </td>
                         <td className="p-2.5">
                           <input
@@ -1461,7 +1824,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             step="0.05"
                             value={pt.x}
                             onChange={(e) => handleNumericUpdate(pt.id, "x", parseFloat(e.target.value) || 0)}
-                            className="w-20 border px-2 py-1 rounded-lg text-xs font-mono font-bold bg-slate-950 border-slate-800 text-yellow-400 focus:outline-none focus:border-yellow-500"
+                            className="w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
                           />
                         </td>
                         <td className="p-2.5">
@@ -1470,18 +1833,18 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             step="0.05"
                             value={pt.y}
                             onChange={(e) => handleNumericUpdate(pt.id, "y", parseFloat(e.target.value) || 0)}
-                            className="w-20 border px-2 py-1 rounded-lg text-xs font-mono font-bold bg-slate-950 border-slate-800 text-yellow-400 focus:outline-none focus:border-yellow-500"
+                            className="w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
                           />
                         </td>
-                        <td className="p-2.5 text-slate-400 text-xs font-mono">St. {stasiEst}</td>
+                        <td className="p-2.5 text-slate-500 dark:text-slate-400 text-xs font-mono">St. {stasiEst}</td>
                         <td className="p-2.5 text-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeletePoint(pt.id);
                             }}
-                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
-                            title="Hapus titik ini"
+                            className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            title="Delete this point"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -1494,6 +1857,30 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             </div>
           </div>
         </div>
+      </>
+        ) : (
+          <div
+            onClick={() => setShowCoordinateTables(true)}
+            className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-900/70 border border-dashed border-slate-300 dark:border-slate-800 hover:border-cyan-500/40 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs cursor-pointer transition-all group shadow-sm"
+            title={language === "en" ? "Click to expand coordinate tables" : "Klik untuk menampilkan tabel koordinat"}
+          >
+            <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
+              <TableIcon size={16} className="text-slate-400 dark:text-slate-500 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" />
+              <div>
+                <span className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                  {language === "en" ? "Control Points Coordinate Tables are Hidden" : "Tabel Koordinat Titik Kontrol Disembunyikan"}
+                </span>
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono ml-2">
+                  ({bowPoints.length} Bow • {sternPoints.length} Stern • {sheerPoints.length} Sheer)
+                </span>
+              </div>
+            </div>
+            <span className="text-xs text-slate-500 dark:text-slate-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 flex items-center gap-1 font-medium transition-colors">
+              <span>{language === "en" ? "Click to expand" : "Klik untuk menampilkan"}</span>
+              <ChevronDown size={14} />
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

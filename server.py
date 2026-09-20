@@ -709,7 +709,13 @@ def get_stage2_file_path(project_id: str) -> str:
 
 def get_stage3_file_path(project_id: str) -> str:
     safe_id = "".join(c for c in project_id if c.isalnum() or c in "-_")
-    return os.path.join(PROJECTS_DIR, f"{safe_id}_stage3.json")
+    primary = os.path.join(PROJECTS_DIR, f"{safe_id}_stage3.json")
+    if os.path.exists(primary):
+        return primary
+    legacy = os.path.join(BASE_DIR, "data", "stage3", f"{safe_id}.json")
+    if os.path.exists(legacy):
+        return legacy
+    return primary
 
 
 @app.get("/api/projects/{project_id}/stage3")
@@ -1007,20 +1013,18 @@ def stage2_ai_assistant(project_id: str, payload: Dict[str, Any] = Body(...)):
     try:
         history1 = Stage1RequirementService.load_project_history(file_path)
         active_rev1 = history1.revisions[-1]
-        val_res1 = Stage1RequirementService.validate_project_rich(active_rev1.data_snapshot)
-
         question = payload.get("question", "")
         mode = payload.get("mode", "SECTION_EXPLAINER")
         stage2_data = payload.get("stage2_data", {})
 
         context = AIAssistantService.build_context(active_rev1.data_snapshot, val_res1, stage2_data=stage2_data)
-
         answer = AIAssistantService.answer_question(question, context, mode)
         return {"answer": answer}
     except AISafetyException as e:
         return {"answer": str(e), "safety_blocked": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error Stage 2 AI Assistant: {e}")
+
 
 
 if __name__ == "__main__":

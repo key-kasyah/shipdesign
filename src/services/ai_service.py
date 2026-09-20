@@ -260,7 +260,7 @@ class AIAssistantService:
 
         return (
             f"**Analisis Ringkas Proyek ({proj.get('project_name', 'Kapal')}):**\n"
-            f"- **Tipe Kapal:** {vessel_type}\n"
+            f"- **Tipe Kapal:** {str(vessel_type).replace('_', ' ').title()}\n"
             f"- **Target DWT:** {target_dwt:,.0f} Ton\n"
             f"- **Kecepatan Dinas:** {speed_knots} Knot\n"
             f"- **Rute:** {route_str} ({route_nm} NM)\n\n"

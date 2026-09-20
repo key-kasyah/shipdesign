@@ -3,14 +3,21 @@
     "project_id": "PRJ-2026-123",
     "project_name": "UNHAS",
     "latest_revision": 0,
-    "file_path": "D:\\SHIP V1\\ship-design-platform\\data\\projects\\PRJ-2026-123.json",
+    "file_path": "C:\\Users\\btrfa\\.gemini\\antigravity-ide\\scratch\\shipdesign\\data\\projects\\PRJ-2026-123.json",
     "last_updated": "2026-08-20T21:53:47.227018+00:00"
   },
   "PRJ-2026-6039": {
     "project_id": "PRJ-2026-6039",
     "project_name": "PT Sudarsono",
     "latest_revision": 0,
-    "file_path": "D:\\SHIP V1\\ship-design-platform\\data\\projects\\PRJ-2026-6039.json",
-    "last_updated": "2026-08-27T04:49:00.213742+00:00"
+    "file_path": "C:\\Users\\btrfa\\.gemini\\antigravity-ide\\scratch\\shipdesign\\data\\projects\\PRJ-2026-6039.json",
+    "last_updated": "2026-08-31T19:22:39.583139+00:00"
+  },
+  "PRJ-2026-1105": {
+    "project_id": "PRJ-2026-1105",
+    "project_name": "new one",
+    "latest_revision": 0,
+    "file_path": "C:\\Users\\btrfa\\.gemini\\antigravity-ide\\scratch\\shipdesign\\data\\projects\\PRJ-2026-1105.json",
+    "last_updated": "2026-09-06T07:09:05.906005+00:00"
   }
 }

@@ -12,6 +12,31 @@ class VesselType(str, Enum):
     FERRY = "FERRY"
     CUSTOM = "CUSTOM"
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            clean = value.strip().upper().replace(" ", "_").replace("-", "_")
+            for member in cls:
+                if member.value == clean or member.name == clean:
+                    return member
+                if member.value.replace("_", "") == clean.replace("_", ""):
+                    return member
+        return None
+
+    @property
+    def display_name(self) -> str:
+        names = {
+            "CONTAINER_SHIP": "Container Ship",
+            "BULK_CARRIER": "Bulk Carrier",
+            "GENERAL_CARGO": "General Cargo",
+            "TANKER": "Tanker",
+            "PASSENGER_SHIP": "Passenger Ship",
+            "TUG_BOAT": "Tug Boat",
+            "FERRY": "Ferry",
+            "CUSTOM": "Custom",
+        }
+        return names.get(self.value, self.value.replace("_", " ").title())
+
 
 class WaterType(str, Enum):
     """Jenis perairan desain."""

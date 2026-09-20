@@ -26,11 +26,15 @@ import {
   ChevronRight,
   FolderOpen,
   Search,
-  Filter
+  Filter,
+  Check,
+  Sparkles,
+  Star,
+  X
 } from "lucide-react";
 import { api } from "../../../../services/api";
-import { SideProfileNurbsEditor } from "../../../../components/design/SideProfileNurbsEditor";
 import { useLanguage } from "../../../../context/LanguageContext";
+import { formatVesselType } from "../../../../types";
 
 const COMPARABLE_SHIPS_DATABASE = [
   // --- GENERAL CARGO ---
@@ -472,7 +476,7 @@ export default function Stage2PreliminaryDesign() {
 
   // Active sub-tab in Stage 2
   const [activeTab, setActiveTab] = useState<
-    "comparable" | "dimensions" | "weight" | "geometry" | "profile" | "ai"
+    "comparable" | "dimensions" | "weight" | "geometry" | "ai"
   >("comparable");
 
   // Core Data States
@@ -487,12 +491,30 @@ export default function Stage2PreliminaryDesign() {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [editorActor, setEditorActor] = useState("designer@ship.com");
 
+  // Non-intrusive Toast Notification System (replaces blocking browser alerts)
+  const [toast, setToast] = useState<{
+    show: boolean;
+    type: "success" | "error" | "info" | "warning";
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const showNotification = (
+    title: string,
+    message: string,
+    type: "success" | "error" | "info" | "warning" = "success"
+  ) => {
+    setToast({ show: true, type, title, message });
+    setTimeout(() => {
+      setToast((prev) => (prev ? { ...prev, show: false } : null));
+    }, 4500);
+  };
+
   // Check if Stage 1 is validated, if not redirect back to Stage 1
   useEffect(() => {
     if (projectId) {
       const isStage1Val = localStorage.getItem(`stage1_validated_${projectId}`) === "true";
       if (!isStage1Val) {
-        alert("Tahap 2 masih terkunci! Silakan klik 'Simpan & Validasi Draft' pada Tahap 1 terlebih dahulu.");
         router.push(`/projects/${projectId}`);
       }
     }
@@ -617,10 +639,18 @@ export default function Stage2PreliminaryDesign() {
       const val = await api.validateStage2Scenario(projectId, latest.revision_id);
       setValidationResult(val);
 
-      alert("Skala berhasil diterapkan! Modul Ukuran & Koefisien serta pra-rancangan lainnya kini TERBUKA.");
+      showNotification(
+        "Scaling Applied Successfully",
+        "Comparable ship DWT scale applied. Dimensions & Hydrostatics module is now unlocked.",
+        "success"
+      );
       setActiveTab("dimensions");
     } catch (e: any) {
-      alert(`Gagal menerapkan skala: ${e.message || e}`);
+      showNotification(
+        "Scaling Failed",
+        `Failed to apply scaling: ${e.message || e}`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -661,9 +691,17 @@ export default function Stage2PreliminaryDesign() {
 
       const val = await api.validateStage2Scenario(projectId, latest.revision_id);
       setValidationResult(val);
-      alert("Perubahan skenario berhasil disimpan & kalkulasi ulang otomatis selesai!");
+      showNotification(
+        "Scenario Saved",
+        "Design scenario changes saved and recalculations updated.",
+        "success"
+      );
     } catch (e: any) {
-      alert(`Gagal menyimpan skenario: ${e.message}`);
+      showNotification(
+        "Save Failed",
+        `Failed to save scenario: ${e.message}`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -673,7 +711,11 @@ export default function Stage2PreliminaryDesign() {
   const handleSubmitReview = async () => {
     if (!activeRevision) return;
     if (unsavedChanges) {
-      alert("Simpan perubahan parameter terlebih dahulu sebelum mengajukan review.");
+      showNotification(
+        "Unsaved Changes",
+        "Please save parameter changes before submitting for review.",
+        "warning"
+      );
       return;
     }
     try {
@@ -682,9 +724,17 @@ export default function Stage2PreliminaryDesign() {
       setHistory2(updatedHist);
       const latest = updatedHist.revisions[updatedHist.revisions.length - 1];
       setActiveRevision(latest);
-      alert("Skenario pra-rancangan berhasil diajukan untuk review baseline!");
+      showNotification(
+        "Submitted for Review",
+        "Preliminary design scenario successfully submitted for baseline review.",
+        "success"
+      );
     } catch (e: any) {
-      alert(`Gagal mengajukan review: ${e.message}`);
+      showNotification(
+        "Submission Failed",
+        `Failed to submit review: ${e.message}`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -708,9 +758,17 @@ export default function Stage2PreliminaryDesign() {
       // Reload validation result
       const val = await api.validateStage2Scenario(projectId, latest.revision_id);
       setValidationResult(val);
-      alert(`Status review berhasil diperbarui menjadi ${decision}!`);
+      showNotification(
+        "Review Decision Recorded",
+        `Status review updated to ${decision}.`,
+        decision === "APPROVED" ? "success" : "warning"
+      );
     } catch (e: any) {
-      alert(`Gagal memperbarui status review: ${e.message}`);
+      showNotification(
+        "Review Update Failed",
+        `Failed to update review status: ${e.message}`,
+        "error"
+      );
     } finally {
       setLoading(false);
     }
@@ -757,8 +815,56 @@ export default function Stage2PreliminaryDesign() {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [hasOptimized, setHasOptimized] = useState(false);
   const [optResultData, setOptResultData] = useState<any>(null);
+
+  // Computed baseline optimization state so the engine is never empty
+  const computedOptData = React.useMemo(() => {
+    const currLbp = Number(formData.lbp_m) || Number(compForm.lbp_m) || 98.0;
+    const currB = Number(formData.breadth_m) || Number(compForm.breadth_m) || 16.2;
+    const currT = Number(formData.draft_m) || Number(compForm.draft_m) || 6.0;
+    const currH = Number(formData.depth_m) || Number(compForm.depth_m) || 8.0;
+    const vs = Number(stage1Data?.service_speed_knots) || Number(formData.service_speed_knots) || Number(compForm.service_speed_knots) || 12.0;
+    const dwt = Number(stage1Data?.target_dwt_ton) || Number(formData.target_dwt_ton) || Number(compForm.dwt_ton) || 5000;
+    const cmInput = Number(formData.cm) || 0.98;
+    const cwInput = Number(formData.cw) || 0.78;
+
+    const sqrtLbp = Math.sqrt(currLbp);
+    const cbCalc = 1.115 - (0.276 * vs) / sqrtLbp;
+    const lastCb = Number(Math.max(0.50, Math.min(0.85, cbCalc)).toFixed(2));
+    const lastCm = cmInput;
+    const lastCw = cwInput;
+    const lastCpv = Number((lastCb / (lastCw > 0 ? lastCw : 1)).toFixed(2));
+    const lastCph = Number((lastCb / (lastCm > 0 ? lastCm : 1)).toFixed(2));
+    const lastFb = Number((currH - currT).toFixed(2));
+    const lastLwl = Number((currLbp * 1.025).toFixed(2));
+    const speedMs = vs * 0.514444;
+    const lastFn = Number((speedMs / Math.sqrt(9.81 * lastLwl)).toFixed(2));
+    const lastVolM3 = Number((currLbp * currB * currT * lastCb).toFixed(3));
+    const lastDisplTon = Number((lastVolM3 * 1.025).toFixed(2));
+
+    return {
+      lbp: currLbp.toFixed(2),
+      b: currB.toFixed(2),
+      t: currT.toFixed(2),
+      h: currH.toFixed(2),
+      cb: lastCb.toFixed(2),
+      cm: lastCm.toFixed(2),
+      cw: lastCw.toFixed(2),
+      cpv: lastCpv.toFixed(2),
+      cph: lastCph.toFixed(2),
+      fb: lastFb.toFixed(2),
+      fn: lastFn.toFixed(2),
+      displTon: lastDisplTon.toFixed(2),
+      volM3: lastVolM3.toFixed(3),
+      grt: dwt.toLocaleString("en-US"),
+      vs: vs,
+      lwl: lastLwl.toFixed(2),
+      cbCalcRaw: cbCalc.toFixed(4),
+      sqrtLbp: sqrtLbp.toFixed(4)
+    };
+  }, [formData, compForm, stage1Data]);
+
+  const activeOptData = optResultData || computedOptData;
   const [showNspReference, setShowNspReference] = useState(false);
-  const [isNspModalOpen, setIsNspModalOpen] = useState(false);
 
   // Interactive Drag-to-Adjust Cb on Digital NSP Diagram
   const [interactiveCb, setInteractiveCb] = useState<number>(0.76);
@@ -812,7 +918,11 @@ export default function Stage2PreliminaryDesign() {
   // Download AutoCAD SCR script for plotting CSA curve directly into AutoCAD
   const handleDownloadCsaScr = () => {
     if (!designData.geometry?.csa_ordinates) {
-      alert("Data geometri CSA belum tersedia.");
+      showNotification(
+        "Data Not Ready",
+        "CSA geometry ordinate data is not yet available for plotting.",
+        "warning"
+      );
       return;
     }
     const lbp = Number(designData.lbp_m) || 90;
@@ -860,7 +970,11 @@ export default function Stage2PreliminaryDesign() {
     }));
     setUnsavedChanges(true);
     setNeedsRecalculation(true);
-    alert(`⚡ Optimasi Keseimbangan Berat Selesai!\nTotal Berat disesuaikan dari ${currentTotal.toFixed(2)} Ton menjadi ${newTotal.toFixed(2)} Ton.\nMismatch Selisih kini ${newMismatch}% (≤ 0.2%).`);
+    showNotification(
+      "Weight Balance Optimized",
+      `Total weight adjusted from ${currentTotal.toFixed(2)} Ton to ${newTotal.toFixed(2)} Ton (mismatch: ${newMismatch}%).`,
+      "success"
+    );
   };
 
   const handleRunOptimization = (iterationsCount: number = 1) => {
@@ -944,22 +1058,22 @@ export default function Stage2PreliminaryDesign() {
         : Number(formData.weight_mismatch_percent || 0);
 
       const resultObj = {
-        lbp: currLbp.toFixed(2).replace(".", ","),
-        b: currB.toFixed(2).replace(".", ","),
-        t: currT.toFixed(2).replace(".", ","),
-        h: currH.toFixed(2).replace(".", ","),
-        cb: lastCb.toFixed(2).replace(".", ","),
-        cm: lastCm.toFixed(2).replace(".", ","),
-        cw: lastCw.toFixed(2).replace(".", ","),
-        cpv: lastCpv.toFixed(2).replace(".", ","),
-        cph: lastCph.toFixed(2).replace(".", ","),
-        fb: lastFb.toFixed(2).replace(".", ","),
-        fn: lastFn.toFixed(2).replace(".", ","),
-        displTon: lastDisplTon.toFixed(2).replace(".", ","),
-        volM3: lastVolM3.toFixed(3).replace(".", ","),
-        grt: dwt.toLocaleString("id-ID"),
+        lbp: currLbp.toFixed(2),
+        b: currB.toFixed(2),
+        t: currT.toFixed(2),
+        h: currH.toFixed(2),
+        cb: lastCb.toFixed(2),
+        cm: lastCm.toFixed(2),
+        cw: lastCw.toFixed(2),
+        cpv: lastCpv.toFixed(2),
+        cph: lastCph.toFixed(2),
+        fb: lastFb.toFixed(2),
+        fn: lastFn.toFixed(2),
+        displTon: lastDisplTon.toFixed(2),
+        volM3: lastVolM3.toFixed(3),
+        grt: dwt.toLocaleString("en-US"),
         vs: vs,
-        lwl: lastLwl.toFixed(2).replace(".", ","),
+        lwl: lastLwl.toFixed(2),
         cbCalcRaw: lastCbCalcRaw,
         sqrtLbp: Math.sqrt(currLbp).toFixed(4),
         weightMismatchPercent: actualWeightMismatch
@@ -988,9 +1102,17 @@ export default function Stage2PreliminaryDesign() {
       }));
 
       setUnsavedChanges(true);
-      alert(`⚡ Iterasi Optimasi Formulasi Selesai (Iterasi Ke-${newIterationCount})!\nHasil Perumusan: Cb = ${lastCb}, Lbp = ${currLbp}m, Displacement = ${lastDisplTon} Ton.\nSelisih Mismatch Berat & Apung: ${actualWeightMismatch}%.`);
+      showNotification(
+        `Optimization Iteration #${newIterationCount} Completed`,
+        `Formulation solved: Cb = ${lastCb}, Lbp = ${currLbp}m, Displacement = ${lastDisplTon} Ton (mismatch: ${actualWeightMismatch}%).`,
+        "success"
+      );
     } catch (e: any) {
-      alert(`Gagal optimasi: ${e.message || e}`);
+      showNotification(
+        "Optimization Failed",
+        `Failed to run optimization: ${e.message || e}`,
+        "error"
+      );
     } finally {
       setIsOptimizing(false);
     }
@@ -1103,138 +1225,111 @@ export default function Stage2PreliminaryDesign() {
   const baselineActive = history2?.baselines?.find((b: any) => b.active);
 
   return (
-    <div className="flex flex-col h-full bg-[#070B12] text-slate-100 overflow-hidden">
-      {/* Header Panel */}
-      <header className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl shrink-0">
-        <div className="flex items-center space-x-3.5">
-          <div className="p-2 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400">
-            <Scale size={20} />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2.5">
-              <h1 className="font-bold text-base tracking-tight text-white">
-                {language === "en" ? "Stage 2 — Preliminary Design" : "Tahap 2 — Pra-Rancangan Kapal"}
-              </h1>
-              <span className="text-[11px] font-mono font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 px-3 py-0.5 rounded-full">
-                {projectId}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              {language === "en" ? "Empirical hydrostatic, resistance, weight, and stability alignment." : "Penyelarasan parameter hidrostatik, hambatan, berat, dan stabilitas empiris."}
-            </p>
-          </div>
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070B12] text-slate-900 dark:text-slate-100 overflow-hidden">
+      {/* Full-Width Sub-Navigation Tabs Bar */}
+      <div className="w-full bg-white dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-4 py-2 shadow-xs shrink-0">
+        <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+          {[
+            { id: "comparable", label: language === "en" ? "Comparable Ships" : "Kapal Pembanding", icon: <Scale size={14} className="shrink-0" /> },
+            { id: "dimensions", label: language === "en" ? "Dimensions & Coeffs" : "Ukuran & Koefisien", icon: <Compass size={14} className="shrink-0" /> },
+            { id: "weight", label: language === "en" ? "Weight & Capacity" : "Berat & Kapasitas", icon: <Layers size={14} className="shrink-0" /> },
+            { id: "geometry", label: language === "en" ? "CSA & NSP Curves" : "Geometri CSA & NSP", icon: <Activity size={14} className="shrink-0" /> },
+            { id: "ai", label: language === "en" ? "AI Co-Pilot" : "AI Explainer", icon: <Cpu size={14} className="shrink-0" /> }
+          ].map((tab) => {
+            const isLocked = !hasAppliedScaling 
+              ? tab.id !== "comparable" 
+              : needsRecalculation 
+                ? (tab.id !== "comparable" && tab.id !== "dimensions")
+                : false;
+
+            const lockReason = !hasAppliedScaling
+              ? "Please click 'Calculate & Apply DWT Scaling' on the Comparable Ships module first to unlock next steps."
+              : "Parameters changed! Please click 'Calculate & Apply DWT Scaling' or 'Save Changes & Calculate' to recalculate before proceeding.";
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (isLocked) {
+                    showNotification("Module Locked", lockReason, "warning");
+                    return;
+                  }
+                  setActiveTab(tab.id as any);
+                }}
+                className={`w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs rounded-xl transition-all duration-150 cursor-pointer text-center min-w-0 ${
+                  activeTab === tab.id
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/25 font-bold border border-blue-600"
+                    : isLocked
+                    ? "bg-slate-100 text-slate-500 dark:bg-slate-900/60 dark:text-slate-400 border border-slate-300 dark:border-slate-800 cursor-not-allowed font-semibold"
+                    : "bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 hover:text-blue-600 border border-slate-300 dark:border-slate-700 font-bold shadow-2xs"
+                }`}
+              >
+                {tab.icon}
+                <span className={`truncate font-bold ${activeTab === tab.id ? "text-white" : ""}`}>{tab.label}</span>
+                {isLocked && <Lock size={12} className="text-amber-600 dark:text-amber-400 ml-1 shrink-0" />}
+              </button>
+            );
+          })}
         </div>
-      </header>
+      </div>
 
       {/* Workspace Body */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Side: Workspace Form / Tabs */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-slate-800/80">
-          {/* Sub Navigation Tabs */}
-          <nav className="h-14 bg-slate-950/80 border-b border-slate-800/80 flex px-4 space-x-1.5 overflow-x-auto items-center shrink-0 no-scrollbar backdrop-blur-md">
-            {[
-              { id: "comparable", label: language === "en" ? "Comparable Ships" : "Kapal Pembanding", icon: <Scale size={14} /> },
-              { id: "dimensions", label: language === "en" ? "Dimensions & Coefficients" : "Ukuran & Koefisien", icon: <Compass size={14} /> },
-              { id: "weight", label: language === "en" ? "Weight & Capacity" : "Berat & Kapasitas", icon: <Layers size={14} /> },
-              { id: "geometry", label: language === "en" ? "CSA Geometry & NSP Power" : "Geometri CSA & Daya NSP", icon: <Activity size={14} /> },
-              { id: "profile", label: language === "en" ? "Side Profile & NURBS" : "Tampak Samping & NURBS", icon: <Compass size={14} /> },
-              { id: "ai", label: language === "en" ? "AI Co-Pilot" : "AI Explainer", icon: <Cpu size={14} /> }
-            ].map((tab) => {
-              const isLocked = !hasAppliedScaling 
-                ? tab.id !== "comparable" 
-                : needsRecalculation 
-                  ? (tab.id !== "comparable" && tab.id !== "dimensions")
-                  : false;
-
-              const lockReason = !hasAppliedScaling
-                ? (language === "en" ? "Please click 'Calculate & Apply DWT Scaling' on the Comparable Ships module first to unlock next steps." : "Silakan klik 'Hitung & Terapkan Skala DWT' pada modul Kapal Pembanding terlebih dahulu untuk membuka tahap selanjutnya.")
-                : (language === "en" ? "Parameters changed! Please click 'Calculate & Apply DWT Scaling' or 'Save Changes & Calculate' to recalculate before proceeding." : "Terdapat perubahan parameter! Silakan klik 'Hitung & Terapkan Skala DWT' atau 'Simpan Perubahan & Hitung' untuk melakukan kalkulasi ulang sebelum melanjutkan ke tahap ini.");
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (isLocked) {
-                      alert(lockReason);
-                      return;
-                    }
-                    setActiveTab(tab.id as any);
-                  }}
-                  className={`flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold tracking-wide rounded-xl transition-all duration-200 cursor-pointer ${
-                    activeTab === tab.id
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25 border border-blue-400/30 font-bold"
-                      : isLocked
-                      ? "border border-slate-800/40 text-slate-600 bg-slate-900/30 opacity-60 cursor-not-allowed"
-                      : "border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/80"
-                  }`}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                  {isLocked && <Lock size={12} className="text-amber-500/80 ml-1" />}
-                </button>
-              );
-            })}
-          </nav>
-
+        {/* Workspace Form / Tabs */}
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Active Tab Panel Content */}
-          <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 no-scrollbar bg-[#070B12]">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar bg-slate-50 dark:bg-[#070B12]">
             {activeTab === "comparable" && (
-              <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="space-y-5 w-full">
                 {/* REFERENCE SHIP DATABASE CATALOG */}
-                <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4 backdrop-blur-xl shadow-2xl">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-3">
-                    <h3 className="text-sm font-bold text-white flex items-center space-x-2.5">
-                      <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
-                        <FolderOpen size={16} />
-                      </div>
-                      <span>{language === "en" ? "AI Comparable Ships Catalog & Recommendations" : "Katalog & Rekomendasi Kapal Pembanding AI"} ({COMPARABLE_SHIPS_DATABASE.length} {language === "en" ? "Ships" : "Kapal"})</span>
-                    </h3>
+                <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-4 sm:p-5 rounded-2xl space-y-3.5 backdrop-blur-xl shadow-xs dark:shadow-xl">
+                  {/* Compact Header Bar */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800/60">
+                    <div className="flex items-center space-x-2.5">
+                      <FolderOpen size={16} className="text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        {language === "en" ? "AI Comparable Ships" : "Katalog Kapal Pembanding AI"}
+                      </h3>
+                      <span className="text-xs text-slate-600 dark:text-slate-400 font-mono font-semibold">({displayedComparableShips.length} {language === "en" ? "ships available" : "kapal tersedia"})</span>
+                    </div>
                     <div className="flex items-center space-x-2 text-xs">
-                      <span className="text-slate-400 font-medium">{language === "en" ? "Project Target:" : "Target Proyek:"}</span>
-                      <span className="bg-blue-500/10 border border-blue-500/30 text-blue-300 font-bold px-3 py-1 rounded-full font-mono">
-                        {targetType} • {targetDwt} Ton
+                      <span className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">{language === "en" ? "Project Target:" : "Target Proyek:"}</span>
+                      <span className="bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/30 text-blue-900 dark:text-blue-300 font-bold px-2.5 py-0.5 rounded-full font-mono text-[11px]">
+                        {targetType} • {targetDwt.toLocaleString()} Ton
                       </span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    {language === "en"
-                      ? "The AI system analyzes registered fleet vessels and ranks comparable ships based on project type & DWT suitability. The highest-scoring ship is recommended automatically for high-precision scaling."
-                      : "Sistem AI menganalisis armada kapal terdaftar dan mengurutkan kapal pembanding berdasarkan kesesuaian tipe & DWT proyek. Kapal dengan skor tertinggi direkomendasikan secara otomatis untuk akurasi scaling presisi tinggi."}
-                  </p>
-
-                  {/* Search & Filter Controls */}
-                  <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2">
-                    <div className="relative flex-1">
-                      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  {/* Compact Search & Filter Row */}
+                  <div className="flex flex-col lg:flex-row items-center gap-2.5">
+                    <div className="relative flex-1 w-full">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                       <input
                         type="text"
                         placeholder={language === "en" ? "Search ship name or register reference..." : "Cari nama kapal atau referensi register..."}
                         value={shipSearch}
                         onChange={(e) => setShipSearch(e.target.value)}
-                        className="w-full bg-slate-950/80 border border-slate-800/80 rounded-xl py-2.5 pl-10 pr-4 text-xs text-slate-100 placeholder-slate-500 focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 outline-none transition-all font-sans"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/90 border border-slate-300 hover:border-slate-400 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all font-sans font-medium shadow-2xs"
                       />
                     </div>
 
-                    <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar shrink-0">
-                      <Filter size={14} className="text-slate-500 shrink-0" />
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar w-full lg:w-auto shrink-0">
                       {[
-                        { id: "ALL", label: language === "en" ? "All Types" : "Semua Tipe" },
+                        { id: "ALL", label: "All" },
+                        { id: "CONTAINER", label: "Container" },
                         { id: "GENERAL_CARGO", label: "General Cargo" },
                         { id: "TANKER", label: "Tanker" },
-                        { id: "CONTAINER", label: "Container" },
                         { id: "BULK_CARRIER", label: "Bulk Carrier" },
-                        { id: "PASSENGER", label: "Ferry / Pass" },
-                        { id: "TUG_BOAT", label: "Tugboat" },
-                        { id: "FISHING_VESSEL", label: language === "en" ? "Fishing/Patrol" : "Perikanan/Patroli" },
+                        { id: "PASSENGER", label: "Ferry" },
+                        { id: "TUG_BOAT", label: "Tug Boat" },
                       ].map((f) => (
                         <button
                           key={f.id}
                           onClick={() => setShipTypeFilter(f.id)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
                             shipTypeFilter === f.id
-                              ? "bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-400/40 text-white font-bold shadow-md shadow-blue-600/20"
-                              : "bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900"
+                              ? "bg-blue-600 border-blue-600 text-white shadow-xs"
+                              : "bg-white dark:bg-slate-950/70 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-900 shadow-2xs"
                           }`}
                         >
                           {f.label}
@@ -1243,693 +1338,532 @@ export default function Stage2PreliminaryDesign() {
                     </div>
                   </div>
 
-                  <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1 font-mono">
-                    <span>{language === "en" ? `Showing ${displayedComparableShips.length} of ${COMPARABLE_SHIPS_DATABASE.length} comparable ships` : `Menampilkan ${displayedComparableShips.length} dari ${COMPARABLE_SHIPS_DATABASE.length} kapal pembanding`}</span>
-                  </div>
-
                   {displayedComparableShips.length === 0 ? (
-                    <div className="p-8 text-center bg-slate-950/60 border border-slate-800/80 rounded-2xl space-y-2 backdrop-blur-md">
+                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl space-y-2 backdrop-blur-md">
                       <AlertCircle size={28} className="mx-auto text-slate-500" />
-                      <p className="text-xs text-slate-400">{language === "en" ? "No comparable ships match search criteria." : "Tidak ada kapal pembanding yang cocok dengan kriteria pencarian."}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold">{language === "en" ? "No comparable ships match search criteria." : "Tidak ada kapal pembanding yang cocok dengan kriteria pencarian."}</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {displayedComparableShips.map((ship, idx) => {
                         const isSelected = compForm.ship_name === ship.ship_name;
                         const isTopRank = idx === 0 && shipSearch === "" && shipTypeFilter === "ALL";
 
-                      return (
-                        <div
-                          key={idx}
-                          className={`p-4 border rounded-2xl transition-all space-y-3.5 flex flex-col justify-between overflow-hidden shadow-lg ${
-                            isSelected
-                              ? "bg-blue-600/15 border-blue-500/80 ring-1 ring-blue-500/40 shadow-xl shadow-blue-600/10"
-                              : isTopRank
-                              ? "bg-slate-900/90 border-amber-500/50 hover:border-amber-400"
-                              : "bg-slate-950/80 border-slate-800/80 hover:border-slate-700/80"
-                          }`}
-                        >
-                          <div className="space-y-3">
-                            {/* Recommendation / Match Badge Bar */}
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                {ship.isExactMatch ? (
-                                  <span className="inline-flex items-center space-x-1 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] px-2.5 py-1 rounded-md uppercase tracking-wider shadow font-mono">
-                                    <span>🌟</span>
-                                    <span>{language === "en" ? "Perfect Match 100%" : "Perfek Match 100%"}</span>
-                                  </span>
-                                ) : isTopRank ? (
-                                  <span className="inline-flex items-center space-x-1 bg-amber-500/15 border border-amber-500/30 text-amber-400 font-bold text-[10px] px-2.5 py-1 rounded-md uppercase tracking-wider shadow font-mono">
-                                    <span>⭐</span>
-                                    <span>{language === "en" ? "Recommendation" : "Rekomendasi"} ({ship.matchScore}%)</span>
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center bg-slate-900 text-slate-400 border border-slate-800 text-[10px] font-mono px-2.5 py-1 rounded-md font-semibold">
-                                    Match: {ship.matchScore}%
-                                  </span>
-                                )}
-                              </div>
-
-                              <span className="text-[10px] font-bold bg-slate-900/90 text-slate-300 border border-slate-800 px-2 py-0.5 rounded font-mono uppercase shrink-0">
-                                {ship.vessel_type}
-                              </span>
-                            </div>
-
-                            {/* Ship Header */}
-                            <div>
-                              <h4 className="text-sm font-bold text-white leading-snug">{ship.ship_name}</h4>
-                              <p className="text-xs text-slate-400 mt-0.5">{ship.source_reference}</p>
-                            </div>
-
-                            {/* 2-Column Mini Stat Box */}
-                            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-800/80 text-xs">
-                              <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">Target DWT</span>
-                                <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.dwt_ton.toLocaleString()} Ton</span>
-                              </div>
-                              <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">{language === "en" ? "LBP Length" : "Panjang LBP"}</span>
-                                <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.lbp_m} m</span>
-                              </div>
-                              <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">{language === "en" ? "Breadth (B)" : "Lebar (B)"}</span>
-                                <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.breadth_m} m</span>
-                              </div>
-                              <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/60 flex flex-col justify-center">
-                                <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wider">{language === "en" ? "Draft (T)" : "Sarat Draft (T)"}</span>
-                                <span className="font-mono font-bold text-white text-xs mt-0.5 whitespace-nowrap">{ship.draft_m} m</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCompForm({
-                                ship_name: ship.ship_name,
-                                vessel_type: ship.vessel_type,
-                                dwt_ton: ship.dwt_ton,
-                                loa_m: ship.loa_m,
-                                lbp_m: ship.lbp_m,
-                                breadth_m: ship.breadth_m,
-                                draft_m: ship.draft_m,
-                                depth_m: ship.depth_m,
-                                service_speed_knots: ship.service_speed_knots,
-                                cb: ship.cb,
-                                source_reference: ship.source_reference
-                              });
-                              setNeedsRecalculation(true);
-
-                              setTimeout(() => {
-                                document.getElementById("scaling-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                              }, 50);
-                            }}
-                            className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center mt-2 active:scale-[0.98] ${
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between group relative overflow-hidden ${
                               isSelected
-                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/30 border border-blue-400/30"
+                                ? "bg-gradient-to-b from-blue-50/90 via-white to-white dark:from-blue-950/40 dark:to-slate-900/90 border-2 border-blue-600 dark:border-blue-500 shadow-md shadow-blue-500/10 ring-2 ring-blue-600/15"
                                 : isTopRank
-                                ? "bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
-                                : "bg-slate-800 hover:bg-slate-700 text-slate-200"
+                                ? "bg-gradient-to-b from-amber-50/50 via-white to-white dark:from-amber-950/20 dark:to-slate-900/90 border border-amber-300 dark:border-amber-500/40 hover:border-amber-400 shadow-xs hover:shadow-md"
+                                : "bg-white dark:bg-slate-900/60 hover:bg-slate-50/60 dark:hover:bg-slate-900/95 border border-slate-200 hover:border-slate-300 dark:border-slate-800/90 dark:hover:border-slate-700/90 shadow-2xs hover:shadow-sm"
                             }`}
                           >
-                            {isSelected ? (language === "en" ? "✓ Selected as Primary Reference" : "✓ Terpilih Sebagai Acuan Utama") : isTopRank ? (language === "en" ? "Use This Recommendation" : "Gunakan Rekomendasi Ini") : (language === "en" ? "Select This Ship" : "Pilih Kapal Ini")}
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                            <div className="space-y-3.5">
+                              {/* Recommendation / Match Badge Bar */}
+                              <div className="flex items-center justify-between gap-2">
+                                <div>
+                                  {ship.isExactMatch ? (
+                                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-950 dark:text-emerald-400 font-extrabold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
+                                      <Sparkles size={12} className="text-emerald-700 dark:text-emerald-400" />
+                                      <span>{language === "en" ? "Perfect Match 100%" : "Perfek Match 100%"}</span>
+                                    </span>
+                                  ) : isTopRank ? (
+                                    <span className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 text-amber-950 dark:text-amber-300 font-extrabold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
+                                      <Star size={12} className="text-amber-600 fill-amber-600 dark:text-amber-400 dark:fill-amber-400" />
+                                      <span>{language === "en" ? "Recommended" : "Rekomendasi"} ({ship.matchScore}%)</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-slate-300 border border-slate-300 dark:border-slate-700/60 text-[11px] font-mono px-2.5 py-1 rounded-full font-bold">
+                                      Match: {ship.matchScore}%
+                                    </span>
+                                  )}
+                                </div>
 
-                <div id="scaling-form-section" className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-4 backdrop-blur-xl shadow-2xl">
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
-                      <Scale size={18} />
+                                <span className="text-[11px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30 px-2.5 py-0.5 rounded-full font-mono shrink-0">
+                                  {formatVesselType(ship.vessel_type)}
+                                </span>
+                              </div>
+
+                              {/* Ship Header */}
+                              <div>
+                                <h4 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-200 transition-colors leading-snug">
+                                  {ship.ship_name}
+                                </h4>
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1 flex items-center gap-1.5 truncate">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-slate-500 shrink-0" />
+                                  <span className="truncate">{ship.source_reference}</span>
+                                </p>
+                              </div>
+
+                              {/* 4-Stat Metric Grid */}
+                              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800/80">
+                                <div className={`p-3 rounded-xl border transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
+                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
+                                }`}>
+                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">Target DWT</span>
+                                  <div className="flex items-baseline space-x-1">
+                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.dwt_ton.toLocaleString()}</span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Ton</span>
+                                  </div>
+                                </div>
+                                <div className={`p-3 rounded-xl border transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
+                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
+                                }`}>
+                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">{language === "en" ? "LBP Length" : "Panjang LBP"}</span>
+                                  <div className="flex items-baseline space-x-1">
+                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.lbp_m}</span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">m</span>
+                                  </div>
+                                </div>
+                                <div className={`p-3 rounded-xl border transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
+                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
+                                }`}>
+                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">{language === "en" ? "Breadth (B)" : "Lebar (B)"}</span>
+                                  <div className="flex items-baseline space-x-1">
+                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.breadth_m}</span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">m</span>
+                                  </div>
+                                </div>
+                                <div className={`p-3 rounded-xl border transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
+                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
+                                }`}>
+                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">{language === "en" ? "Draft (T)" : "Sarat Draft (T)"}</span>
+                                  <div className="flex items-baseline space-x-1">
+                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.draft_m}</span>
+                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">m</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCompForm({
+                                  ship_name: ship.ship_name,
+                                  vessel_type: ship.vessel_type,
+                                  dwt_ton: ship.dwt_ton,
+                                  loa_m: ship.loa_m,
+                                  lbp_m: ship.lbp_m,
+                                  breadth_m: ship.breadth_m,
+                                  draft_m: ship.draft_m,
+                                  depth_m: ship.depth_m,
+                                  service_speed_knots: ship.service_speed_knots,
+                                  cb: ship.cb,
+                                  source_reference: ship.source_reference
+                                });
+                                setNeedsRecalculation(true);
+
+                                setTimeout(() => {
+                                  document.getElementById("scaling-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                                }, 50);
+                              }}
+                              className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 mt-4 active:scale-[0.98] ${
+                                isSelected
+                                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 border border-blue-600 font-extrabold"
+                                  : isTopRank
+                                  ? "bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold shadow-xs border border-amber-500/50"
+                                  : "bg-slate-100 hover:bg-blue-600 text-slate-800 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-blue-600 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-blue-600 shadow-xs font-bold"
+                              }`}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <Check size={15} className="text-white font-black shrink-0" />
+                                  <span className="text-white font-extrabold">{language === "en" ? "Selected as Primary Reference" : "Terpilih Sebagai Acuan Utama"}</span>
+                                </>
+                              ) : isTopRank ? (
+                                <>
+                                  <Sparkles size={15} className="text-slate-950 font-black shrink-0" />
+                                  <span className="text-slate-950 font-extrabold">{language === "en" ? "Use Recommended Ship" : "Gunakan Rekomendasi Ini"}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="font-bold">{language === "en" ? "Select This Ship" : "Pilih Kapal Ini"}</span>
+                                  <ArrowRight size={14} className="font-bold shrink-0" />
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <span>{language === "en" ? "Primary Reference Ship Specifications" : "Spesifikasi Kapal Pembanding Acuan"}</span>
-                  </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    {language === "en"
-                      ? "The system will use this primary reference ship data to estimate main hull dimensions proportionally using DWT power 1/3 scaling formula."
-                      : "Sistem akan menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional menggunakan formula scaling rasio DWT pangkat 1/3."}
-                  </p>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <div id="scaling-form-section" className="relative bg-white dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-slate-950/90 border border-slate-200 dark:border-slate-800/90 p-6 rounded-2xl space-y-5 backdrop-blur-xl shadow-xs dark:shadow-2xl overflow-hidden">
+                  <div className="absolute -top-24 -left-24 w-72 h-72 bg-blue-500/5 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+                  
+                  <div className="flex items-center space-x-3 pb-3 border-b border-slate-200 dark:border-slate-800/80">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <Scale size={16} />
+                    </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">{language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}</label>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                        {language === "en" ? "Primary Reference Ship Specifications" : "Spesifikasi Kapal Pembanding Acuan"}
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {language === "en"
+                          ? "The system uses this primary reference ship to estimate main hull dimensions proportionally using DWT power 1/3 scaling formula."
+                          : "Sistem akan menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional menggunakan formula scaling rasio DWT pangkat 1/3."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}</label>
                       <input
                         type="text"
                         value={compForm.ship_name}
                         onChange={(e) => setCompForm({ ...compForm, ship_name: e.target.value })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Target DWT (Ton) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Target DWT (Ton) *</label>
                       <input
                         type="number"
                         value={compForm.dwt_ton}
                         onChange={(e) => setCompForm({ ...compForm, dwt_ton: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">LBP (m) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">LBP (m) *</label>
                       <input
                         type="number"
                         value={compForm.lbp_m}
                         onChange={(e) => setCompForm({ ...compForm, lbp_m: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Breadth (Lebar) (m) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Breadth (B) (m) *</label>
                       <input
                         type="number"
                         value={compForm.breadth_m}
                         onChange={(e) => setCompForm({ ...compForm, breadth_m: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Draft (T) (m) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Draft (T) (m) *</label>
                       <input
                         type="number"
                         value={compForm.draft_m}
                         onChange={(e) => setCompForm({ ...compForm, draft_m: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Depth (Tinggi Lambung) (m) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Depth (H) (m) *</label>
                       <input
                         type="number"
                         value={compForm.depth_m}
                         onChange={(e) => setCompForm({ ...compForm, depth_m: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Block Coeff (Cb) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Block Coeff (Cb) *</label>
                       <input
                         type="number"
                         step="0.01"
                         value={compForm.cb}
                         onChange={(e) => setCompForm({ ...compForm, cb: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Kecepatan Dinas (Knots) *</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}</label>
                       <input
                         type="number"
                         value={compForm.service_speed_knots}
                         onChange={(e) => setCompForm({ ...compForm, service_speed_knots: Number(e.target.value) })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">{language === "en" ? "Source/Reference *" : "Sumber/Referensi *"}</label>
-                      <input
-                        type="text"
-                        value={compForm.source_reference}
-                        onChange={(e) => setCompForm({ ...compForm, source_reference: e.target.value })}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 flex justify-end">
+                  <div className="pt-3 flex justify-end">
                     <button
                       onClick={handleApplyScaling}
-                      className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+                      className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shadow-md shadow-blue-500/25 active:scale-[0.98] cursor-pointer"
                     >
                       <Scale size={16} />
                       <span>{language === "en" ? "Calculate & Apply DWT Scaling" : "Hitung & Terapkan Skala DWT"}</span>
                     </button>
                   </div>
                 </div>
-
-                {/* SILSILAH & KONEKTIVITAS SARAT AIR (DRAFT LINEAGE & MULTI-STAGE CONNECTIVITY) */}
-                {compForm.dwt_ton > 0 && targetDwt > 0 && (
-                  <div className="bg-slate-900/70 border border-blue-500/30 p-6 rounded-2xl space-y-4 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800/80 gap-2">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="p-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300">
-                          <Compass size={18} />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white flex items-center space-x-2">
-                            <span>Silsilah & Konektivitas Sarat Air (Draft Lineage Multi-Stage)</span>
-                            <span className="text-[10px] bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full font-mono">
-                              Tahap 1 ➔ Tahap 2 ➔ Tahap 3
-                            </span>
-                          </h4>
-                          <p className="text-[11px] text-slate-400">
-                            Transparansi perhitungan perubahan sarat air dari kapal pembanding menuju sarat rancangan hingga terhubung ke Basic Design.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-[11px] font-mono bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-slate-300">
-                        Rasio Skala: <strong className="text-cyan-400">{(targetDwt / compForm.dwt_ton).toFixed(3)}x DWT</strong>
-                      </div>
-                    </div>
-
-                    {/* Visual 3-Stage Connected Workflow Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1 font-mono">
-                      {/* Step 1: Kapal Pembanding */}
-                      <div className="p-4 bg-slate-950/90 rounded-xl border border-slate-800 relative space-y-2">
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-sans font-semibold uppercase">
-                          <span>1. Kapal Pembanding</span>
-                          <span className="text-amber-400 font-mono">Tahap 2 Awal</span>
-                        </div>
-                        <div className="text-xs text-white font-bold font-sans line-clamp-1">{compForm.ship_name || "MT Samudra Pasifik"}</div>
-                        <div className="text-2xl font-black text-amber-400">{compForm.draft_m?.toFixed(2) || "5.20"} m</div>
-                        <div className="text-[10px] text-slate-400 space-y-0.5 font-sans">
-                          <div>• DWT Acuan: <strong className="text-slate-200">{compForm.dwt_ton} Ton</strong></div>
-                          <div>• Sarat asal terdaftar di database kapal pembanding</div>
-                        </div>
-                      </div>
-
-                      {/* Step 2: Hasil Scaling DWT (1/3) */}
-                      <div className="p-4 bg-blue-950/40 rounded-xl border border-blue-500/40 relative space-y-2">
-                        <div className="flex items-center justify-between text-[10px] text-blue-300 font-sans font-semibold uppercase">
-                          <span>2. Hasil Skala Geometri</span>
-                          <span className="text-cyan-300 font-mono font-bold">DWT ^ (1/3)</span>
-                        </div>
-                        {(() => {
-                          const scaleFac = (targetDwt / Math.max(1, compForm.dwt_ton)) ** (1 / 3);
-                          const scaledDraft = (compForm.draft_m || 5.2) * scaleFac;
-                          return (
-                            <>
-                              <div className="text-xs text-cyan-200 font-bold font-sans">
-                                Target Proyek: {targetDwt} Ton ({(scaleFac * 100 - 100 >= 0 ? `+${(scaleFac * 100 - 100).toFixed(1)}%` : `${(scaleFac * 100 - 100).toFixed(1)}%`)})
-                              </div>
-                              <div className="text-2xl font-black text-cyan-300">{scaledDraft.toFixed(2)} m</div>
-                              <div className="text-[10px] text-slate-300 space-y-0.5 font-sans">
-                                <div>• Rumus: <code className="text-cyan-300">Sarat = {compForm.draft_m} * {scaleFac.toFixed(4)}</code></div>
-                                <div>• Dimensi bertambah proporsional menampung payload</div>
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-
-                      {/* Step 3: Terhubung ke Tahap 3 Basic Design */}
-                      <div className="p-4 bg-emerald-950/40 rounded-xl border border-emerald-500/40 relative space-y-2">
-                        <div className="flex items-center justify-between text-[10px] text-emerald-300 font-sans font-semibold uppercase">
-                          <span>3. Terhubung ke Basic Design</span>
-                          <span className="text-emerald-400 font-mono font-bold">Tahap 3 DWL</span>
-                        </div>
-                        <div className="text-xs text-emerald-200 font-bold font-sans">
-                          Sarat Desain Terpilih (T)
-                        </div>
-                        <div className="text-2xl font-black text-emerald-400">
-                          {(Number(designData.draft_m) || Number(compForm.draft_m) || 5.44).toFixed(2)} m
-                        </div>
-                        <div className="text-[10px] text-slate-300 space-y-0.5 font-sans">
-                          <div>• Menjadi acuan <strong className="text-emerald-300">WL DWL 100% T</strong></div>
-                          <div>• Menentukan garis air AWL, LCF & Radius Bilga</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quick Action Pills for Draft Customization */}
-                    <div className="bg-slate-950/90 p-3.5 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                      <div className="text-slate-400 text-[11px] leading-relaxed">
-                        <strong className="text-white">Pilihan Desain:</strong> Anda dapat menggunakan sarat hasil skala proporsional atau mengunci sarat kapal di nilai tertentu jika terdapat batasan kedalaman alur pelabuhan.
-                      </div>
-                      <div className="flex items-center space-x-2 shrink-0">
-                        {compForm.draft_m && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const scaleFac = (targetDwt / Math.max(1, compForm.dwt_ton)) ** (1 / 3);
-                              const scaledDraft = Number(((compForm.draft_m || 5.2) * scaleFac).toFixed(2));
-                              handleParamChange("draft_m", scaledDraft);
-                            }}
-                            className="px-3 py-1.5 bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 text-blue-200 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                          >
-                            Set Sarat Skala ({((compForm.draft_m || 5.2) * ((targetDwt / Math.max(1, compForm.dwt_ton)) ** (1 / 3))).toFixed(2)} m)
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (compForm.draft_m) {
-                              handleParamChange("draft_m", Number(compForm.draft_m));
-                            }
-                          }}
-                          className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/40 text-amber-300 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                        >
-                          Kunci Sarat Pembanding ({compForm.draft_m || 5.20} m)
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
             {activeTab === "dimensions" && (
-              <div className="space-y-6 max-w-7xl mx-auto">
-                {/* OPTIMIZATION ACTION CARD & SHIP BASIC DESIGN FORMULA */}
-                <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-2xl">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-4">
-                    <div>
-                      <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                        <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
-                          <Activity size={18} />
-                        </div>
-                        <span>{language === "en" ? 'Scenario Optimization per "Ship Basic Design" Book (p. 10)' : 'Optimasi Skenario Sesuai Buku "Ship Basic Design" (Hal. 10)'}</span>
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-1">
-                        {language === "en"
-                          ? "Iterative calculation of block coefficient Cb and hydrostatic parameters based on service speed Vs and Lbp length ratio."
-                          : "Perhitungan iteratif nilai koefisien kepenuhan Cb dan parameter hidrostatik berdasarkan rasio kecepatan Vs dan panjang Lbp."}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center space-x-3 shrink-0">
-                      <span className="bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs px-3 py-1 rounded-full font-bold font-mono">
-                        {language === "en" ? `Iteration #${optimizationCount}` : `Iterasi Ke-${optimizationCount}`}
-                      </span>
-                      <button
-                        onClick={() => handleRunOptimization(1)}
-                        disabled={isOptimizing}
-                        className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shadow-lg shadow-blue-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
-                      >
-                        <RefreshCw size={14} className={isOptimizing ? "animate-spin" : ""} />
-                        <span>{language === "en" ? "⚡ Run 1x Optimization" : "⚡ Jalankan 1x Optimasi"}</span>
-                      </button>
-                      <button
-                        onClick={() => handleRunOptimization(5)}
-                        disabled={isOptimizing}
-                        className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shadow-lg shadow-indigo-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
-                      >
-                        <span>{language === "en" ? "🚀 Run 5x Iterations" : "🚀 Jalankan 5x Iterasi"}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Results Section: Empty state if not yet optimized, else display formula and optimization table */}
-                  {!hasOptimized || !optResultData ? (
-                    <div className="bg-slate-950/80 p-8 rounded-2xl border border-slate-800/80 text-center space-y-3 shadow-inner backdrop-blur-md">
-                      <Activity size={32} className="mx-auto text-blue-400/70 animate-pulse" />
-                      <h4 className="text-sm font-bold text-white">{language === "en" ? "No Optimization Results Data Yet" : "Belum Ada Data Hasil Optimasi"}</h4>
-                      <p className="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
-                        {language === "en"
-                          ? "The table 'Design Ship Data After Optimization' has not been calculated yet. Click '⚡ Run 1x Optimization' above to calculate Cb and hydrostatic values from entered main dimensions."
-                          : "Tabel \"Data Kapal Rancangan Setelah Optimasi\" belum dihitung. Silakan klik tombol \"⚡ Jalankan 1x Optimasi\" di atas untuk menghitung nilai Cb dan hidrostatik dari angka-angka ukuran utama yang dimasukkan."}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Formula Reference Box (Image 2) */}
-                      <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-2 font-mono text-xs backdrop-blur-md shadow-inner">
-                        <div className="text-cyan-400 font-bold text-xs flex items-center justify-between">
-                          <span>Dalam buku "Ship Basic Design", hal.10 :</span>
-                          <span className="text-slate-500 text-[10px] uppercase font-semibold tracking-wider">Metode Alexander / Schneekluth</span>
-                        </div>
-                        <div className="bg-slate-900/90 p-3 rounded-xl border border-slate-800/80 text-slate-200 text-sm overflow-x-auto space-y-1">
-                          <div className="text-amber-300 font-bold">
-                            1.8. Cb = 1,115 - ((0,276 x V<sub>(knot)</sub>) / (Lbp<sub>(m)</sub><sup>0,5</sup>))
-                          </div>
-                          <div className="text-slate-400 text-xs">
-                            = 1,115 - ((0,276 x {optResultData.vs}) / ({optResultData.lbp}<sup>0,5</sup>)) = <span className="text-emerald-400 font-bold text-sm">{optResultData.cb}</span>
-                          </div>
-                        </div>
+              <div className="space-y-6 w-full">
+                {/* OPTIMIZATION ACTION CARD & SHIP BASIC DESIGN FORMULA ENGINE */}
+                <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-5 shadow-xs dark:shadow-2xl">
+                  {/* Card Header & Controls */}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4 gap-4">
+                    <div className="flex items-start space-x-3">
+                      <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
+                        <Activity size={18} />
                       </div>
-
-                      {/* Results Table (Image 1) */}
-                      <div className="bg-slate-950/90 rounded-2xl border border-slate-800/80 overflow-hidden shadow-2xl backdrop-blur-xl">
-                        <div className="bg-slate-900/80 px-4 py-3 border-b border-slate-800/80 flex items-center justify-between">
-                          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                            Data Kapal Rancangan Setelah Optimasi
-                          </h4>
-                          <span className="text-[10px] text-emerald-400 font-bold font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-md">
-                            ✓ Terverifikasi Presisi
+                      <div>
+                        <div className="flex items-center space-x-2.5 flex-wrap">
+                          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                            Hydrostatic Optimization & Formulation Engine
+                          </h3>
+                          <span className="text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 px-2 py-0.5 rounded-md">
+                            Ship Basic Design (p. 10)
                           </span>
                         </div>
-
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs font-mono text-left border-collapse">
-                            <tbody className="divide-y divide-slate-800/60">
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300 w-1/3">Lbp =</td>
-                                <td className="py-2.5 px-4 font-bold text-emerald-400 text-sm">{optResultData.lbp}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">B =</td>
-                                <td className="py-2.5 px-4 font-bold text-emerald-400 text-sm">{optResultData.b}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">T =</td>
-                                <td className="py-2.5 px-4 font-bold text-emerald-400 text-sm">{optResultData.t}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">H =</td>
-                                <td className="py-2.5 px-4 font-bold text-emerald-400 text-sm">{optResultData.h}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Cb =</td>
-                                <td className="py-2.5 px-4 font-bold text-amber-400 text-sm">{optResultData.cb}</td>
-                                <td className="py-2.5 px-4 text-slate-400">-(Koefisien Blok)</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Cm =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.cm}</td>
-                                <td className="py-2.5 px-4 text-slate-400">-(Koefisien Midship)</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Cw =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.cw}</td>
-                                <td className="py-2.5 px-4 text-slate-400">-(Koefisien Garis Air)</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Cpv =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.cpv}</td>
-                                <td className="py-2.5 px-4 text-slate-400">-(Koefisien Prisma Vertikal)</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Cph =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.cph}</td>
-                                <td className="py-2.5 px-4 text-slate-400">-(Koefisien Prisma Horizontal)</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Fb =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.fb}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m (Lambung Timbul)</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Fn =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.fn}</td>
-                                <td className="py-2.5 px-4 text-slate-400">-(Froude Number)</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Displ. =</td>
-                                <td className="py-2.5 px-4 font-bold text-cyan-400 text-sm">{optResultData.displTon}</td>
-                                <td className="py-2.5 px-4 text-slate-400">Ton</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Vol. =</td>
-                                <td className="py-2.5 px-4 font-bold text-cyan-400 text-sm">{optResultData.volM3}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m³</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">GRT =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.grt}</td>
-                                <td className="py-2.5 px-4 text-slate-400">Ton</td>
-                              </tr>
-                              <tr className="bg-slate-900/30 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Vs =</td>
-                                <td className="py-2.5 px-4 font-bold text-white text-sm">{optResultData.vs}</td>
-                                <td className="py-2.5 px-4 text-slate-400">knot</td>
-                              </tr>
-                              <tr className="bg-slate-950/80 hover:bg-slate-850/50 transition-colors">
-                                <td className="py-2.5 px-4 font-bold text-slate-300">Lwl =</td>
-                                <td className="py-2.5 px-4 font-bold text-emerald-400 text-sm">{optResultData.lwl}</td>
-                                <td className="py-2.5 px-4 text-slate-400">m</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-2xl">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
-                    <div>
-                      <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                        <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
-                          <Compass size={18} />
-                        </div>
-                        <span>Ukuran Utama Lambung & Koefisien (Editor Parameter Skenario)</span>
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Form editor parameter untuk melihat, memasukkan, atau mengubah dimensi utama lambung (LBP, B, T, H) dan koefisien bentuk (Cb, Cm, Cw) secara manual atau otomatis dari hasil scaling & optimasi.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center space-x-2 shrink-0">
-                      <span className="text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5">
-                        <span>🔗</span>
-                        <span>Sarat T = {Number(designData.draft_m || 5.44).toFixed(2)} m ➔ Tahap 3 DWL</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* INFO KETERHUBUNGAN SARAT AIR */}
-                  <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center space-x-3 text-slate-300">
-                      <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
-                        <Info size={16} />
-                      </div>
-                      <div className="space-y-0.5">
-                        <div className="font-semibold text-white">
-                          Konektivitas Sarat Desain (T) Antar Tahapan:
-                        </div>
-                        <p className="text-[11px] text-slate-400">
-                          Kapal Pembanding: <strong className="text-amber-400">{compForm.draft_m || 5.20} m</strong> ➔ Skala DWT: <strong className="text-cyan-400">{((compForm.draft_m || 5.20) * ((targetDwt / Math.max(1, compForm.dwt_ton || 3500)) ** (1/3))).toFixed(2)} m</strong> ➔ Aktif: <strong className="text-emerald-400">{Number(designData.draft_m || 5.44).toFixed(2)} m</strong> (DWL Tahap 3).
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                          Live calculation of block coefficient Cb, displacement, and hydrostatic parameters based on service speed Vs and Lbp length.
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2 self-end sm:self-auto shrink-0">
-                      {compForm.draft_m && Number(designData.draft_m) !== Number(compForm.draft_m) && (
-                        <button
-                          type="button"
-                          onClick={() => handleParamChange("draft_m", Number(compForm.draft_m))}
-                          className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/40 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
-                          title="Ubah sarat desain kembali sama persis dengan kapal pembanding"
-                        >
-                          Gunakan {compForm.draft_m} m
-                        </button>
-                      )}
-                      {compForm.draft_m && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const scaleFac = (targetDwt / Math.max(1, compForm.dwt_ton || 3500)) ** (1 / 3);
-                            const scaledDraft = Number(((compForm.draft_m || 5.2) * scaleFac).toFixed(2));
-                            handleParamChange("draft_m", scaledDraft);
-                          }}
-                          className="px-2.5 py-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/40 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer"
-                          title="Terapkan sarat hasil formula scaling DWT proporsional"
-                        >
-                          Gunakan Skala {((compForm.draft_m || 5.20) * ((targetDwt / Math.max(1, compForm.dwt_ton || 3500)) ** (1/3))).toFixed(2)} m
-                        </button>
-                      )}
+                    <div className="flex items-center space-x-2.5 shrink-0 self-start lg:self-center">
+                      <span className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 text-xs px-3 py-1.5 rounded-xl font-bold font-mono">
+                        Iteration #{optimizationCount}
+                      </span>
+                      <button
+                        onClick={() => handleRunOptimization(1)}
+                        disabled={isOptimizing}
+                        className="py-2 px-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-1.5 text-xs shadow-md shadow-blue-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                      >
+                        <RefreshCw size={13} className={isOptimizing ? "animate-spin" : ""} />
+                        <span>⚡ Run 1x Optimization</span>
+                      </button>
+                      <button
+                        onClick={() => handleRunOptimization(5)}
+                        disabled={isOptimizing}
+                        className="py-2 px-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-1.5 text-xs shadow-md shadow-indigo-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                      >
+                        <Sparkles size={13} />
+                        <span>🚀 Run 5x Iterations</span>
+                      </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* 4-Stat Metric KPI Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Block Coeff (Cb)</span>
+                      <div className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">{activeOptData.cb}</div>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">Block Coefficient</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Displacement (Δ)</span>
+                      <div className="text-xl font-black font-mono text-cyan-600 dark:text-cyan-300">{activeOptData.displTon} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">Ton</span></div>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">Vol: {activeOptData.volM3} m³</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Froude Number (Fn)</span>
+                      <div className="text-xl font-black font-mono text-amber-600 dark:text-amber-300">{activeOptData.fn}</div>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">Speed: {activeOptData.vs} kts</span>
+                    </div>
+                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Freeboard (Fb)</span>
+                      <div className="text-xl font-black font-mono text-slate-900 dark:text-white">{activeOptData.fb} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">m</span></div>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">H - T Reserve Buoyancy</span>
+                    </div>
+                  </div>
+
+                  {/* Complete Hydrostatic Specification Table */}
+                  <div className="w-full bg-white dark:bg-slate-950/90 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden shadow-2xs flex flex-col justify-between">
+                    <div className="bg-slate-50 dark:bg-slate-900/80 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>Optimized Vessel Hydrostatic Specifications</span>
+                      </h4>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded-md">
+                        ✓ Synchronized
+                      </span>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs font-mono text-left border-collapse">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium w-1/4">Lbp (Length Between Perp.)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400 w-1/4">{activeOptData.lbp} m</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium w-1/4">Breadth Molded (B)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400 w-1/4">{activeOptData.b} m</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Design Draft (T)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400">{activeOptData.t} m</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Depth Molded (H)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400">{activeOptData.h} m</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Waterline Length (Lwl)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.lwl} m</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Freeboard (Fb)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.fb} m</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Block Coeff (Cb)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-amber-600 dark:text-amber-300">{activeOptData.cb}</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Midship Coeff (Cm)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cm}</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Waterplane Coeff (Cw)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cw}</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Vert. Prismatic (Cpv)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cpv}</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Horiz. Prismatic (Cph)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cph}</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Froude Number (Fn)</td>
+                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.fn}</td>
+                          </tr>
+                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40 bg-slate-50/50 dark:bg-slate-900/30">
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Molded Displacement</td>
+                            <td className="py-2.5 px-3.5 font-bold text-cyan-600 dark:text-cyan-300">{activeOptData.displTon} Ton</td>
+                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Molded Volume</td>
+                            <td className="py-2.5 px-3.5 font-bold text-cyan-600 dark:text-cyan-300">{activeOptData.volM3} m³</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                {/* HULL PRINCIPAL DIMENSIONS & FORM COEFFICIENTS EDITOR */}
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 shadow-xs dark:shadow-2xl">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">LBP (Panjang) (m)</label>
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
+                          <Compass size={18} />
+                        </div>
+                        <span>Hull Principal Dimensions & Form Coefficients Editor</span>
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        Form parameter editor to view, input, or fine-tune principal hull dimensions (LBP, Breadth, Draft, Depth) and form coefficients (Cb, Cm, Cw).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0">
+                      <span className="text-[11px] font-mono font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5">
+                        <span>🔗</span>
+                        <span>Draft T = {Number(designData.draft_m || 5.44).toFixed(2)} m ➔ Stage 3 DWL</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">LBP (Length Between Perp.) (m)</label>
                       <input
                         type="number"
                         value={designData.lbp_m || ""}
                         onChange={(e) => handleParamChange("lbp_m", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Breadth (Lebar B) (m)</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Breadth Molded (Beam B) (m)</label>
                       <input
                         type="number"
                         value={designData.breadth_m || ""}
                         onChange={(e) => handleParamChange("breadth_m", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Draft (Sarat Air T) (m)</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Draft (Design Waterline T) (m)</label>
                       <input
                         type="number"
                         value={designData.draft_m || ""}
                         onChange={(e) => handleParamChange("draft_m", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Depth (Tinggi Lambung H) (m)</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Depth Molded (Height H) (m)</label>
                       <input
                         type="number"
                         value={designData.depth_m || ""}
                         onChange={(e) => handleParamChange("depth_m", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Cb (Block Coeff)</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Block Coefficient (Cb)</label>
                       <input
                         type="number"
                         step="0.01"
                         value={designData.cb || ""}
                         onChange={(e) => handleParamChange("cb", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Cm (Midship Coeff)</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Midship Coefficient (Cm)</label>
                       <input
                         type="number"
                         step="0.01"
                         value={designData.cm || ""}
                         onChange={(e) => handleParamChange("cm", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Cw (Waterplane Coeff)</label>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Waterplane Coefficient (Cw)</label>
                       <input
                         type="number"
                         step="0.01"
                         value={designData.cw || ""}
                         onChange={(e) => handleParamChange("cw", Number(e.target.value))}
-                        className="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:border-blue-500/80 text-white font-medium outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Froude Number (Fn)</label>
-                      <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-2.5 px-3.5 text-xs text-slate-300 font-mono font-bold select-none">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Froude Number (Fn)</label>
+                      <div className="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl py-2.5 px-3.5 text-xs text-slate-800 dark:text-slate-300 font-mono font-bold select-none shadow-2xs">
                         {designData.froude_number || "0.00"}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">Displacement (Ton)</label>
-                      <div className="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl py-2.5 px-3.5 text-xs text-cyan-400 font-mono font-bold select-none">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Displacement (Ton)</label>
+                      <div className="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl py-2.5 px-3.5 text-xs text-cyan-700 dark:text-cyan-400 font-mono font-bold select-none shadow-2xs">
                         {designData.displacement_ton || "0.00"}
                       </div>
                     </div>
                   </div>
 
                   {/* Dimension Ratios Status Bar */}
-                  <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800/80 space-y-4 backdrop-blur-md shadow-inner">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Hasil Pemeriksaan Rasio Empiris</h4>
+                  <div className="bg-slate-50 dark:bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-4 shadow-inner">
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Empirical Dimensional Ratio Compliance Checks</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {/* Card 1: LBP / Breadth */}
                       {(() => {
                         const ratio = designData.lbp_m && designData.breadth_m ? designData.lbp_m / designData.breadth_m : 0;
                         const isValid = ratio >= 5.0 && ratio <= 8.5;
                         return (
-                          <div className={`p-3.5 bg-slate-900/80 border ${isValid ? "border-emerald-500/30" : "border-amber-500/30"} rounded-xl text-center shadow-md relative`}>
-                            <div className="text-[11px] text-slate-400 mb-1 font-medium">LBP / Breadth</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">LBP / Breadth</div>
+                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                               {ratio ? ratio.toFixed(2) : "-"}
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-1 font-mono">Range: 5.0 - 8.5</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
-                              {isValid ? "✓ Sesuai Standar" : "⚠️ Perlu Penyesuaian"}
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Range: 5.0 - 8.5</div>
+                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                              {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
                         );
@@ -1940,14 +1874,14 @@ export default function Stage2PreliminaryDesign() {
                         const ratio = designData.breadth_m && designData.draft_m ? designData.breadth_m / designData.draft_m : 0;
                         const isValid = ratio >= 1.8 && ratio <= 3.2;
                         return (
-                          <div className={`p-3.5 bg-slate-900/80 border ${isValid ? "border-emerald-500/30" : "border-amber-500/30"} rounded-xl text-center shadow-md relative`}>
-                            <div className="text-[11px] text-slate-400 mb-1 font-medium">Breadth / Draft</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">Breadth / Draft</div>
+                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                               {ratio ? ratio.toFixed(2) : "-"}
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-1 font-mono">Range: 1.8 - 3.2</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
-                              {isValid ? "✓ Sesuai Standar" : "⚠️ Perlu Penyesuaian"}
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Range: 1.8 - 3.2</div>
+                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                              {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
                         );
@@ -1958,14 +1892,14 @@ export default function Stage2PreliminaryDesign() {
                         const ratio = designData.lbp_m && designData.depth_m ? designData.lbp_m / designData.depth_m : 0;
                         const isValid = ratio >= 9.0 && ratio <= 15.0;
                         return (
-                          <div className={`p-3.5 bg-slate-900/80 border ${isValid ? "border-emerald-500/30" : "border-amber-500/30"} rounded-xl text-center shadow-md relative`}>
-                            <div className="text-[11px] text-slate-400 mb-1 font-medium">LBP / Depth</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">LBP / Depth</div>
+                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                               {ratio ? ratio.toFixed(2) : "-"}
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-1 font-mono">Range: 9.0 - 15.0</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
-                              {isValid ? "✓ Sesuai Standar" : "⚠️ Perlu Penyesuaian"}
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Range: 9.0 - 15.0</div>
+                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                              {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
                         );
@@ -1977,14 +1911,14 @@ export default function Stage2PreliminaryDesign() {
                         const minFb = designData.depth_m ? 0.10 * designData.depth_m : 0.5;
                         const isValid = fb >= minFb;
                         return (
-                          <div className={`p-3.5 bg-slate-900/80 border ${isValid ? "border-emerald-500/30" : "border-amber-500/30"} rounded-xl text-center shadow-md relative`}>
-                            <div className="text-[11px] text-slate-400 mb-1 font-medium">Freeboard (H - T)</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
+                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
+                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">Freeboard (H - T)</div>
+                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
                               {fb ? fb.toFixed(2) : "-"} m
                             </div>
-                            <div className="text-[10px] text-slate-400 mt-1 font-mono">Min: &gt; 10% H</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
-                              {isValid ? "✓ Sesuai Standar" : "⚠️ Perlu Penyesuaian"}
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Min: &gt; 10% H</div>
+                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                              {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
                         );
@@ -1992,29 +1926,13 @@ export default function Stage2PreliminaryDesign() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-2 gap-4">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <input
-                        type="text"
-                        placeholder="Nama Editor (designer@ship.com)"
-                        value={editorActor}
-                        onChange={(e) => setEditorActor(e.target.value)}
-                        className="bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white max-w-xs focus:border-blue-500/80 outline-none"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Alasan Perubahan..."
-                        value={editReason}
-                        onChange={(e) => setEditReason(e.target.value)}
-                        className="bg-slate-950/80 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white max-w-sm focus:border-blue-500/80 outline-none"
-                      />
-                    </div>
+                  <div className="flex justify-end pt-2">
                     <button
                       onClick={handleSaveScenario}
                       className="py-2.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl transition-all font-semibold flex items-center justify-center space-x-2 text-xs shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer"
                     >
                       <Save size={16} />
-                      <span>Simpan Perubahan & Hitung</span>
+                      <span>Save Changes & Recalculate</span>
                     </button>
                   </div>
                 </div>
@@ -2024,50 +1942,50 @@ export default function Stage2PreliminaryDesign() {
             {activeTab === "weight" && (
               <div className="space-y-6 max-w-7xl mx-auto">
                 {/* Weight Items Table */}
-                <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-2xl">
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 shadow-xs dark:shadow-2xl">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
                       <Layers size={18} />
                     </div>
                     <span>Distribusi Berat Ringan (LWT) & Berat Mati (DWT)</span>
                   </h3>
 
-                  <div className="overflow-x-auto border border-slate-800/80 rounded-xl bg-slate-950/80">
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800/80 rounded-xl bg-white dark:bg-slate-950/80 shadow-2xs">
                     <table className="w-full text-left border-collapse text-xs font-sans">
                       <thead>
-                        <tr className="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800/80 uppercase text-[10px] tracking-wider">
-                          <th className="p-4">Kelompok Berat</th>
-                          <th className="p-4 text-center">Massa (Ton)</th>
-                          <th className="p-4 text-center">LCG dari AP (m)</th>
-                          <th className="p-4 text-center">VCG dari BL (m)</th>
+                        <tr className="bg-slate-50 dark:bg-slate-950/60 text-slate-700 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800/80 uppercase text-[10px] tracking-wider">
+                          <th className="p-3.5 sm:p-4">Kelompok Berat</th>
+                          <th className="p-3.5 sm:p-4 text-center">Massa (Ton)</th>
+                          <th className="p-3.5 sm:p-4 text-center">LCG dari AP (m)</th>
+                          <th className="p-3.5 sm:p-4 text-center">VCG dari BL (m)</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-800 dark:text-slate-200">
                         {designData.weight_items?.map((item: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-slate-800/40 transition-colors font-medium">
-                            <td className="p-4 font-semibold text-slate-100">{item.group_name}</td>
-                            <td className="p-4 text-center">
+                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors font-medium">
+                            <td className="p-3.5 sm:p-4 font-semibold text-slate-900 dark:text-slate-100">{item.group_name}</td>
+                            <td className="p-3.5 sm:p-4 text-center">
                               <input
                                 type="number"
                                 value={item.weight_ton}
                                 onChange={(e) => handleWeightChange(idx, "weight_ton", Number(e.target.value))}
-                                className="bg-slate-900/80 border border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-28 text-white font-mono text-xs focus:border-blue-500/80 outline-none"
+                                className="bg-slate-50 hover:bg-white dark:bg-slate-900/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-28 text-slate-900 dark:text-white font-mono text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all shadow-2xs"
                               />
                             </td>
-                            <td className="p-4 text-center">
+                            <td className="p-3.5 sm:p-4 text-center">
                               <input
                                 type="number"
                                 value={item.lcg_m}
                                 onChange={(e) => handleWeightChange(idx, "lcg_m", Number(e.target.value))}
-                                className="bg-slate-900/80 border border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-24 text-white font-mono text-xs focus:border-blue-500/80 outline-none"
+                                className="bg-slate-50 hover:bg-white dark:bg-slate-900/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-24 text-slate-900 dark:text-white font-mono text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all shadow-2xs"
                               />
                             </td>
-                            <td className="p-4 text-center">
+                            <td className="p-3.5 sm:p-4 text-center">
                               <input
                                 type="number"
                                 value={item.vcg_m}
                                 onChange={(e) => handleWeightChange(idx, "vcg_m", Number(e.target.value))}
-                                className="bg-slate-900/80 border border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-24 text-white font-mono text-xs focus:border-blue-500/80 outline-none"
+                                className="bg-slate-50 hover:bg-white dark:bg-slate-900/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-24 text-slate-900 dark:text-white font-mono text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all shadow-2xs"
                               />
                             </td>
                           </tr>
@@ -2077,12 +1995,12 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   {/* Weight Displacement mismatch panel */}
-                  <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800/80 flex items-center justify-between backdrop-blur-md shadow-inner">
+                  <div className="bg-slate-50 dark:bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner">
                     <div>
-                      <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-1">Status Keseimbangan Berat</h4>
-                      <p className="text-xs text-slate-400">
-                        Target Displacement: <span className="text-white font-bold font-mono">{designData.displacement_ton} Ton</span> | 
-                        Total Berat: <span className="text-white font-bold font-mono">
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Status Keseimbangan Berat</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Target Displacement: <span className="text-slate-900 dark:text-white font-bold font-mono">{designData.displacement_ton} Ton</span> | 
+                        Total Berat: <span className="text-slate-900 dark:text-white font-bold font-mono">
                           {designData.weight_items?.reduce((sum: number, w: any) => sum + w.weight_ton, 0).toFixed(2)} Ton
                         </span>
                       </p>
@@ -2090,13 +2008,13 @@ export default function Stage2PreliminaryDesign() {
 
                     <div className="flex items-center space-x-6">
                       <div className="text-right">
-                        <div className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider mb-0.5">Mismatch Selisih</div>
+                        <div className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-semibold tracking-wider mb-0.5">Mismatch Selisih</div>
                         <div className={`text-xl font-mono font-black ${
                           (designData.weight_mismatch_percent || 0) <= 1.5
-                            ? "text-emerald-400"
+                            ? "text-emerald-600 dark:text-emerald-400"
                             : (designData.weight_mismatch_percent || 0) <= 5.0
-                            ? "text-amber-400"
-                            : "text-rose-400"
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-rose-600 dark:text-rose-400"
                         }`}>
                           {designData.weight_mismatch_percent || "0.0"} %
                         </div>
@@ -2115,17 +2033,17 @@ export default function Stage2PreliminaryDesign() {
                   <div className="flex justify-end pt-2 space-x-3">
                     <button
                       onClick={handleAutoBalanceWeight}
-                      className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-lg shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
+                      className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
                     >
                       <RefreshCw size={14} />
-                      <span>⚡ Optimasi Keseimbangan Berat (Mismatch ≤ 0.2%)</span>
+                      <span>⚡ Auto-Balance Weight (Mismatch ≤ 0.2%)</span>
                     </button>
                     <button
                       onClick={handleSaveScenario}
-                      className="py-2.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer"
+                      className="py-2.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-md shadow-emerald-600/20 active:scale-[0.98] cursor-pointer"
                     >
                       <Save size={16} />
-                      <span>Simpan Keseimbangan Berat</span>
+                      <span>Save Weight Distribution</span>
                     </button>
                   </div>
                 </div>
@@ -2133,34 +2051,34 @@ export default function Stage2PreliminaryDesign() {
             )}
 
             {activeTab === "geometry" && (
-              <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="space-y-6 w-full">
                 {/* TOP SECTION: DIAGRAM LENGKUNG CSA (BERDASARKAN DIAGRAM NSP WAGENINGEN) */}
-                <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-2xl">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 gap-4">
+                <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-xs dark:shadow-2xl">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4 gap-4">
                     <div>
-                      <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                        <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
                           <Layers size={18} />
                         </div>
-                        <span>1. Diagram Lengkung CSA (Curve of Sectional Areas) & DWL</span>
+                        <span>1. Curve of Sectional Areas (CSA) & Design Waterline (DWL)</span>
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Diagram CSA menggambarkan luasan potongan melintang gading kapal dari station 0 (AP) hingga station 20 (FP) yang dihitung berdasarkan distribusi persentase Diagram NSP (Nederlandsche Scheepsbouw Proefstation).
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        The CSA curve illustrates the transverse sectional area of the hull from Station 0 (AP) to Station 20 (FP) computed according to the Wageningen NSP percentage distribution.
                       </p>
                     </div>
 
                     <button
                       onClick={() => setShowNspReference(!showNspReference)}
-                      className="py-2.5 px-4 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-blue-400 hover:text-blue-300 rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shrink-0 cursor-pointer shadow-inner"
+                      className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:text-blue-400 border border-slate-300 dark:border-slate-800 rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shrink-0 cursor-pointer shadow-xs"
                     >
                       <Eye size={15} />
-                      <span>{showNspReference ? "Sembunyikan Referensi NSP" : "🔍 Lihat Diagram Acuan NSP Wageningen"}</span>
+                      <span>{showNspReference ? "Hide NSP Reference" : "🔍 View Wageningen NSP Reference Diagram"}</span>
                     </button>
                   </div>
 
                   {/* NSP Wageningen Reference Diagram Interactive Box */}
                   {showNspReference && (
-                    <div className="bg-[#030712] rounded-2xl p-6 space-y-6 shadow-2xl">
+                    <div className="bg-slate-50 dark:bg-[#030712] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 sm:p-6 space-y-6 shadow-xs dark:shadow-2xl">
                       {/* Dynamic Digital NSP Wageningen Engine */}
                       {(() => {
                         const currentAm = (designData.breadth_m || 14) * (designData.draft_m || 5) * (designData.cm || 0.98);
@@ -2196,19 +2114,19 @@ export default function Stage2PreliminaryDesign() {
                         return (
                           <div className="space-y-6">
                             {/* Controls Header: Standard Reference Badge + Cb Input + Fullscreen Trigger */}
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4">
                               {/* Reference Standards Badge */}
                               <div className="flex items-center space-x-2">
-                                <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 flex items-center space-x-2">
+                                <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl border bg-emerald-100 border-emerald-300 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400 flex items-center space-x-2">
                                   <span>📖</span>
                                   <span>Data Baku Nomogram NSP Wageningen (SNAME / PNA)</span>
                                 </span>
                               </div>
 
-                              {/* Direct Numerical Cb Input & Fullscreen Trigger */}
+                              {/* Direct Numerical Cb Input & Reset */}
                               <div className="flex items-center space-x-3 shrink-0">
-                                <div className="flex items-center space-x-2 bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-800">
-                                  <label className="text-slate-400 text-xs font-mono font-bold">Nilai Cb:</label>
+                                <div className="flex items-center space-x-2 bg-white dark:bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800 shadow-2xs">
+                                  <label className="text-slate-700 dark:text-slate-300 text-xs font-mono font-bold">Nilai Cb:</label>
                                   <input
                                     type="number"
                                     min="0.55"
@@ -2221,36 +2139,28 @@ export default function Stage2PreliminaryDesign() {
                                         setInteractiveCb(Math.max(0.55, Math.min(0.80, val)));
                                       }
                                     }}
-                                    className="w-20 bg-slate-950 border border-amber-500/50 text-amber-300 font-mono font-bold text-xs px-2 py-1 rounded text-center shadow-inner focus:outline-none focus:border-amber-400"
+                                    className="w-20 bg-slate-50 dark:bg-slate-950 border border-amber-500 text-slate-900 dark:text-amber-300 font-mono font-black text-xs px-2 py-1 rounded text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
                                   />
                                   <button
                                     onClick={() => setInteractiveCb(designData.cb || 0.76)}
-                                    className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-mono font-bold rounded cursor-pointer transition-all"
+                                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-[10px] font-mono font-bold rounded cursor-pointer transition-all border border-slate-300 dark:border-slate-700"
                                   >
                                     Atur Ulang Cb
                                   </button>
                                 </div>
-
-                                <button
-                                  onClick={() => setIsNspModalOpen(true)}
-                                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-bold font-mono transition-all flex items-center space-x-1.5 cursor-pointer"
-                                >
-                                  <Eye size={14} />
-                                  <span className="hidden sm:inline">Presisi Tinggi Fullscreen</span>
-                                </button>
                               </div>
                             </div>
 
                             {/* 1 & 2. Digital NSP Nomogram Canvas */}
                             <div className="space-y-4">
-                              <div className="bg-[#02050e] border border-slate-800 rounded-2xl p-4 md:p-6 shadow-2xl relative overflow-hidden">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-800/80 font-mono text-xs">
+                              <div className="bg-white dark:bg-[#02050e] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-xs dark:shadow-2xl relative overflow-hidden">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-slate-800/80 font-mono text-xs">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-cyan-400 font-bold uppercase tracking-wider">
+                                    <span className="text-blue-600 dark:text-cyan-400 font-extrabold uppercase tracking-wider">
                                       📐 1 & 2. Diagram NSP Interaktif (Wageningen)
                                     </span>
                                   </div>
-                                  <div className="text-[11px] text-slate-400 font-mono">
+                                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">
                                     Standard NSP Wageningen (21 Station: St. 0 AP s.d St. 20 FP)
                                   </div>
                                 </div>
@@ -2258,20 +2168,27 @@ export default function Stage2PreliminaryDesign() {
                                 {/* High Precision Digitized Vector SVG Nomogram */}
                                 <div className="w-full overflow-x-auto no-scrollbar py-2">
                                   <svg className="w-full min-w-[760px] h-auto" viewBox="0 0 1000 550" preserveAspectRatio="xMidYMid meet">
+                                    <defs>
+                                      {/* Strict clip path strictly enclosing the plot area: x=100 to 940, y=50 to 470 */}
+                                      <clipPath id="nsp-plot-bounds">
+                                        <rect x="100" y="50" width="840" height="420" />
+                                      </clipPath>
+                                    </defs>
+
                                     {/* Blueprint Outer Frame */}
-                                    <rect x="100" y="50" width="840" height="420" fill="#030712" stroke="#475569" strokeWidth="1.6" />
+                                    <rect x="100" y="50" width="840" height="420" fill="#f8fafc" className="dark:fill-[#030712]" stroke="#94a3b8" strokeWidth="1.5" />
                                     
                                     {/* Centerline: Station 10 / 0% Line */}
-                                    <line x1="520" y1="50" x2="520" y2="470" stroke="#64748b" strokeWidth="2" />
-                                    <text x="520" y="42" fill="#94a3b8" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <line x1="520" y1="50" x2="520" y2="470" stroke="#2563eb" strokeWidth="1.8" strokeDasharray="6,3" />
+                                    <text x="520" y="42" fill="#1d4ed8" className="dark:fill-[#60a5fa]" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       Station 10 (0% Luas dari Garis Tengah)
                                     </text>
 
                                     {/* Top Subheaders for Stern & Bow */}
-                                    <text x="310" y="30" fill="#94a3b8" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <text x="310" y="30" fill="#1e293b" className="dark:fill-[#cbd5e1]" fontSize="11.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       &larr; Bagian Belakang (Buritan / Stern: Station 0 s.d 9)
                                     </text>
-                                    <text x="730" y="30" fill="#94a3b8" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <text x="730" y="30" fill="#1e293b" className="dark:fill-[#cbd5e1]" fontSize="11.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       Bagian Depan (Haluan / Bow: Station 11 s.d 20) &rarr;
                                     </text>
 
@@ -2280,9 +2197,9 @@ export default function Stage2PreliminaryDesign() {
                                       const x = 100 + idx * 42;
                                       return (
                                         <g key={`stern-grid-${idx}`}>
-                                          <line x1={x} y1="50" x2={x} y2="470" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2,3" />
+                                          <line x1={x} y1="50" x2={x} y2="470" stroke="#cbd5e1" className="dark:stroke-[#1e293b]" strokeWidth="0.8" strokeDasharray="2,3" />
                                           <line x1={x} y1="470" x2={x} y2="476" stroke="#64748b" strokeWidth="1" />
-                                          <text x={x} y="492" fill="#94a3b8" fontSize="9" textAnchor="middle" fontFamily="monospace">{val}</text>
+                                          <text x={x} y="492" fill="#334155" className="dark:fill-[#94a3b8]" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{val}</text>
                                         </g>
                                       );
                                     })}
@@ -2292,15 +2209,15 @@ export default function Stage2PreliminaryDesign() {
                                       const x = 520 + idx * 42;
                                       return (
                                         <g key={`bow-grid-${idx}`}>
-                                          <line x1={x} y1="50" x2={x} y2="470" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2,3" />
+                                          <line x1={x} y1="50" x2={x} y2="470" stroke="#cbd5e1" className="dark:stroke-[#1e293b]" strokeWidth="0.8" strokeDasharray="2,3" />
                                           <line x1={x} y1="470" x2={x} y2="476" stroke="#64748b" strokeWidth="1" />
-                                          <text x={x} y="492" fill="#94a3b8" fontSize="9" textAnchor="middle" fontFamily="monospace">{val}</text>
+                                          <text x={x} y="492" fill="#334155" className="dark:fill-[#94a3b8]" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{val}</text>
                                         </g>
                                       );
                                     })}
 
                                     {/* Sumbu X Main Label */}
-                                    <text x="520" y="515" fill="#cbd5e1" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <text x="520" y="518" fill="#0f172a" className="dark:fill-white" fontSize="12" fontWeight="extrabold" textAnchor="middle" fontFamily="monospace">
                                       Ordinat Luasan Gading / Station (% Am)
                                     </text>
 
@@ -2309,9 +2226,9 @@ export default function Stage2PreliminaryDesign() {
                                       const y = 470 - ((cbVal - 0.55) / 0.25) * 420;
                                       return (
                                         <g key={`y-grid-${i}`}>
-                                          <line x1="100" y1={y} x2="940" y2={y} stroke="#334155" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2,3" />
-                                          <line x1="92" y1={y} x2="100" stroke="#64748b" strokeWidth="1" />
-                                          <text x="86" y={y + 4} fill="#cbd5e1" fontSize="10.5" fontWeight="bold" textAnchor="end" fontFamily="monospace">
+                                          <line x1="100" y1={y} x2="940" y2={y} stroke="#cbd5e1" className="dark:stroke-[#1e293b]" strokeWidth="0.8" strokeDasharray="2,3" />
+                                          <line x1="92" y1={y} x2="100" stroke="#64748b" strokeWidth="1.2" />
+                                          <text x="86" y={y + 4} fill="#0f172a" className="dark:fill-[#f8fafc]" fontSize="11" fontWeight="extrabold" textAnchor="end" fontFamily="monospace">
                                             {cbVal.toFixed(2)}
                                           </text>
                                         </g>
@@ -2319,30 +2236,34 @@ export default function Stage2PreliminaryDesign() {
                                     })}
 
                                     {/* Sumbu Y Title (Rotated) */}
-                                    <text x="-260" y="28" fill="#cbd5e1" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace" transform="rotate(-90)">
+                                    <text x="-260" y="24" fill="#0f172a" className="dark:fill-white" fontSize="12" fontWeight="extrabold" textAnchor="middle" fontFamily="monospace" transform="rotate(-90)">
                                       Koefisien Blok (Cb)
                                     </text>
 
-                                    {/* Station Curves 1..9 and 11..19 */}
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((stNum) => {
-                                      const isStern = stNum < 10;
-                                      const pathPoints = [0.55, 0.60, 0.65, 0.70, 0.75, 0.80].map((cbVal) => {
-                                        const ordPct = getStationOrdinate(stNum, cbVal) / 100;
-                                        const yPixel = 470 - ((cbVal - 0.55) / 0.25) * 420;
-                                        const xPixel = isStern ? (100 + (1.0 - ordPct) * 420) : (520 + ordPct * 420);
-                                        return `${xPixel.toFixed(1)},${yPixel.toFixed(1)}`;
-                                      });
+                                    {/* Station Curves strictly clipped inside plot area */}
+                                    <g clipPath="url(#nsp-plot-bounds)">
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((stNum) => {
+                                        const isStern = stNum < 10;
+                                        const pathPoints = [0.55, 0.60, 0.65, 0.70, 0.75, 0.80].map((cbVal) => {
+                                          const ordPct = getStationOrdinate(stNum, cbVal) / 100;
+                                          const yPixel = 470 - ((cbVal - 0.55) / 0.25) * 420;
+                                          const rawX = isStern ? (100 + (1.0 - ordPct) * 420) : (520 + ordPct * 420);
+                                          const xPixel = Math.max(100, Math.min(940, rawX));
+                                          return `${xPixel.toFixed(1)},${yPixel.toFixed(1)}`;
+                                        });
 
-                                      return (
-                                        <path
-                                          key={`st-curve-${stNum}`}
-                                          d={`M ${pathPoints.join(" L ")}`}
-                                          fill="none"
-                                          stroke="#64748b"
-                                          strokeWidth="1.2"
-                                        />
-                                      );
-                                    })}
+                                        return (
+                                          <path
+                                            key={`st-curve-${stNum}`}
+                                            d={`M ${pathPoints.join(" L ")}`}
+                                            fill="none"
+                                            stroke="#334155"
+                                            className="dark:stroke-[#94a3b8]"
+                                            strokeWidth="1.5"
+                                          />
+                                        );
+                                      })}
+                                    </g>
 
                                     {/* Active Cb Red Laser Line & Yellow Intersections & Green Drop Lines */}
                                     {(() => {
@@ -2351,26 +2272,29 @@ export default function Stage2PreliminaryDesign() {
                                       return (
                                         <g key="active-laser-bc">
                                           {/* Horizontal Red Laser Line for active Cb */}
-                                          <line x1="90" y1={yBC} x2="950" y2={yBC} stroke="#ef4444" strokeWidth="2.2" />
-                                          <rect x="42" y={yBC - 9} width="48" height="18" rx="4" fill="#ef4444" />
-                                          <text x="66" y={yBC + 3.5} fill="#ffffff" fontSize="9.5" fontWeight="black" textAnchor="middle" fontFamily="monospace">
+                                          <line x1="90" y1={yBC} x2="950" y2={yBC} stroke="#dc2626" strokeWidth="2.5" />
+                                          <rect x="36" y={yBC - 10} width="54" height="20" rx="5" fill="#dc2626" />
+                                          <text x="63" y={yBC + 4} fill="#ffffff" fontSize="10" fontWeight="black" textAnchor="middle" fontFamily="monospace">
                                             Cb {activeCb.toFixed(2)}
                                           </text>
 
-                                          {/* Intersection Points & Vertical Green Projection Lines */}
-                                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((stNum) => {
-                                            const isStern = stNum < 10;
-                                            const ordPct = getStationOrdinate(stNum, activeCb) / 100;
-                                            const xPoint = isStern ? (100 + (1.0 - ordPct) * 420) : (520 + ordPct * 420);
-                                            return (
-                                              <g key={`laser-drop-${stNum}`}>
-                                                {/* Green Vertical Projection Line to Sumbu X */}
-                                                <line x1={xPoint} y1={yBC} x2={xPoint} y2="470" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,2" />
-                                                {/* Yellow Active Intersection Point */}
-                                                <circle cx={xPoint} cy={yBC} r="3.2" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-                                              </g>
-                                            );
-                                          })}
+                                          {/* Intersection Points & Vertical Green Projection Lines (clipped) */}
+                                          <g clipPath="url(#nsp-plot-bounds)">
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((stNum) => {
+                                              const isStern = stNum < 10;
+                                              const ordPct = getStationOrdinate(stNum, activeCb) / 100;
+                                              const rawX = isStern ? (100 + (1.0 - ordPct) * 420) : (520 + ordPct * 420);
+                                              const xPoint = Math.max(100, Math.min(940, rawX));
+                                              return (
+                                                <g key={`laser-drop-${stNum}`}>
+                                                  {/* Green Vertical Projection Line to Sumbu X */}
+                                                  <line x1={xPoint} y1={yBC} x2={xPoint} y2="470" stroke="#16a34a" strokeWidth="1.2" strokeDasharray="3,2" />
+                                                  {/* Yellow Active Intersection Point */}
+                                                  <circle cx={xPoint} cy={yBC} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.2" />
+                                                </g>
+                                              );
+                                            })}
+                                          </g>
                                         </g>
                                       );
                                     })()}
@@ -2379,202 +2303,202 @@ export default function Stage2PreliminaryDesign() {
                               </div>
 
                               {/* Reading Guide / Step-by-Step Procedure */}
-                              <div className="bg-slate-950/80 rounded-xl border border-slate-800/80 p-4 font-mono text-xs space-y-2">
-                                <div className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center space-x-2">
+                              <div className="bg-white dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800/80 p-5 font-mono text-xs space-y-3 shadow-2xs">
+                                <div className="text-amber-700 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider flex items-center space-x-2">
                                   <span>📖 Prosedur Pembacaan Nomogram NSP Wageningen:</span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-[11px] text-slate-400">
-                                  <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/60">
-                                    <span className="text-red-400 font-bold block mb-1">① Atur Nilai Cb</span>
-                                    Garis merah horizontal bergeser sesuai Koefisien Blok kapal (sumbu Y).
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-[11px]">
+                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
+                                    <span className="text-rose-600 dark:text-rose-400 font-bold block mb-1">① Atur Nilai Cb</span>
+                                    <span className="text-slate-700 dark:text-slate-300">Garis merah horizontal bergeser sesuai Koefisien Blok kapal (sumbu Y).</span>
                                   </div>
-                                  <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/60">
-                                    <span className="text-amber-400 font-bold block mb-1">② Titik Potong</span>
-                                    Garis merah memotong kurva tiap station (titik kuning intersep).
+                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
+                                    <span className="text-amber-600 dark:text-amber-400 font-bold block mb-1">② Titik Potong</span>
+                                    <span className="text-slate-700 dark:text-slate-300">Garis merah memotong kurva tiap station (titik kuning intersep).</span>
                                   </div>
-                                  <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/60">
-                                    <span className="text-emerald-400 font-bold block mb-1">③ Proyeksi Vertikal</span>
-                                    Garis hijau putus-putus diproyeksikan tegak lurus turun ke sumbu X.
+                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold block mb-1">③ Proyeksi Vertikal</span>
+                                    <span className="text-slate-700 dark:text-slate-300">Garis hijau putus-putus diproyeksikan tegak lurus turun ke sumbu X.</span>
                                   </div>
-                                  <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/60">
-                                    <span className="text-cyan-400 font-bold block mb-1">④ Baca Ordinat (% Am)</span>
-                                    Nilai persentase luasan gading (% Am) terbaca di skala sumbu X.
+                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
+                                    <span className="text-blue-600 dark:text-cyan-400 font-bold block mb-1">④ Baca Ordinat (% Am)</span>
+                                    <span className="text-slate-700 dark:text-slate-300">Nilai persentase luasan gading (% Am) terbaca di skala sumbu X.</span>
                                   </div>
-                                  <div className="p-2.5 bg-slate-900/60 rounded-lg border border-slate-800/60">
-                                    <span className="text-purple-400 font-bold block mb-1">⑤ Integrasi CSA</span>
-                                    Data 21 ordinat luasan (Luas = % Am x Am, Am = B x T x Cm) otomatis dihitung menjadi Kurva CSA & Simpson 1/3.
+                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
+                                    <span className="text-indigo-600 dark:text-purple-400 font-bold block mb-1">⑤ Integrasi CSA</span>
+                                    <span className="text-slate-700 dark:text-slate-300">Data 21 ordinat luasan (Luas = % Am x Am, Am = B x T x Cm) otomatis dihitung menjadi Kurva CSA & Simpson 1/3.</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
 
                             {/* KARTU TEORI & DIAGRAM ILUSTRASI LUAS MIDSHIP (Am) */}
-                            <div className="bg-slate-950/90 border border-slate-800/80 p-5 rounded-2xl space-y-4 font-mono">
+                            <div className="bg-white dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4 font-mono shadow-xs dark:shadow-xl">
                               <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
                                 {/* Left Side: Explanation Text & Formula */}
                                 <div className="space-y-3 flex-1 text-xs">
-                                  <div className="flex items-center space-x-2 text-cyan-400 font-bold text-sm">
-                                    <span className="text-base text-amber-400">❖</span>
+                                  <div className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 font-bold text-sm">
+                                    <span className="text-base text-amber-500 dark:text-amber-400">❖</span>
                                     <span>Luas Midship (Am)</span>
                                   </div>
-                                  <p className="text-slate-300 leading-relaxed text-xs">
-                                    Merupakan luasan bagian tengah kapal yang dipotong secara melintang yang memiliki lebar <strong className="text-cyan-300">B</strong> dan tinggi sarat <strong className="text-emerald-300">T</strong>. Dirumuskan dengan :
+                                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
+                                    Merupakan luasan bagian tengah kapal yang dipotong secara melintang yang memiliki lebar <strong className="text-cyan-600 dark:text-cyan-300">B</strong> dan tinggi sarat <strong className="text-emerald-600 dark:text-emerald-300">T</strong>. Dirumuskan dengan :
                                   </p>
                                   
                                   {/* Formula Box */}
-                                  <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1.5 shadow-inner">
-                                    <div className="text-amber-300 font-bold text-sm tracking-wide">
+                                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+                                    <div className="text-amber-700 dark:text-amber-300 font-bold text-sm tracking-wide">
                                       Am = B x T x Cm
                                     </div>
-                                    <div className="text-slate-400 text-xs">
-                                      = {Number(designData.breadth_m || 0).toFixed(2)}m × {Number(designData.draft_m || 0).toFixed(3)}m × {Number(designData.cm || 0.98).toFixed(2)} = <span className="text-emerald-400 font-bold text-sm">{currentAm.toFixed(2)} m²</span>
+                                    <div className="text-slate-600 dark:text-slate-400 text-xs font-medium">
+                                      = {Number(designData.breadth_m || 0).toFixed(2)}m × {Number(designData.draft_m || 0).toFixed(3)}m × {Number(designData.cm || 0.98).toFixed(2)} = <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">{currentAm.toFixed(2)} m²</span>
                                     </div>
                                   </div>
 
                                   <div className="grid grid-cols-3 gap-2 text-center text-[11px] pt-1">
-                                    <div className="p-2 bg-slate-900/70 rounded-lg border border-slate-800/80">
-                                      <span className="text-slate-400 block text-[10px]">Lebar (B)</span>
-                                      <span className="text-cyan-300 font-bold">{Number(designData.breadth_m || 0).toFixed(2)} m</span>
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/70 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                                      <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">Lebar (B)</span>
+                                      <span className="text-cyan-700 dark:text-cyan-300 font-bold">{Number(designData.breadth_m || 0).toFixed(2)} m</span>
                                     </div>
-                                    <div className="p-2 bg-slate-900/70 rounded-lg border border-slate-800/80">
-                                      <span className="text-slate-400 block text-[10px]">Sarat (T)</span>
-                                      <span className="text-emerald-300 font-bold">{Number(designData.draft_m || 0).toFixed(3)} m</span>
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/70 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                                      <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">Sarat (T)</span>
+                                      <span className="text-emerald-700 dark:text-emerald-300 font-bold">{Number(designData.draft_m || 0).toFixed(3)} m</span>
                                     </div>
-                                    <div className="p-2 bg-slate-900/70 rounded-lg border border-slate-800/80">
-                                      <span className="text-slate-400 block text-[10px]">Koefisien (Cm)</span>
-                                      <span className="text-amber-300 font-bold">{Number(designData.cm || 0.98).toFixed(2)}</span>
+                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/70 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                                      <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">Koefisien (Cm)</span>
+                                      <span className="text-amber-700 dark:text-amber-300 font-bold">{Number(designData.cm || 0.98).toFixed(2)}</span>
                                     </div>
                                   </div>
                                 </div>
 
                                 {/* Right Side: Technical Blueprint SVG Diagram */}
-                                <div className="w-full lg:w-80 h-56 bg-[#02050e] rounded-xl border border-slate-800/90 p-3 flex items-center justify-center relative overflow-hidden shadow-inner shrink-0">
+                                <div className="w-full lg:w-80 h-56 bg-slate-50 dark:bg-[#02050e] rounded-xl border border-slate-200 dark:border-slate-800/90 p-3 flex items-center justify-center relative overflow-hidden shadow-2xs shrink-0">
                                   <svg className="w-full h-full" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet">
                                     <defs>
                                       {/* Hatch Pattern for Shaded Area Am */}
                                       <pattern id="hatch-midship-am" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                                        <line x1="0" y1="0" x2="0" y2="8" stroke="#38bdf8" strokeWidth="1.2" strokeOpacity="0.45" />
+                                        <line x1="0" y1="0" x2="0" y2="8" stroke="#0284c7" strokeWidth="1.2" strokeOpacity="0.45" />
                                       </pattern>
                                     </defs>
 
                                     {/* Centerline Line and Symbol */}
-                                    <line x1="180" y1="15" x2="180" y2="195" stroke="#94a3b8" strokeWidth="1" strokeDasharray="6,3,2,3" />
+                                    <line x1="180" y1="15" x2="180" y2="195" stroke="#64748b" strokeWidth="1" strokeDasharray="6,3,2,3" />
                                     {/* CL symbol */}
-                                    <text x="180" y="208" fill="#94a3b8" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">℄</text>
+                                    <text x="180" y="208" fill="#64748b" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">℄</text>
 
                                     {/* Upper Deck Outline with Camber */}
-                                    <path d="M 60,55 Q 180,45 300,55" fill="none" stroke="#64748b" strokeWidth="1.5" />
+                                    <path d="M 60,55 Q 180,45 300,55" fill="none" stroke="#475569" strokeWidth="1.5" />
 
                                     {/* Topsides Hull Outline above Waterline */}
-                                    <line x1="60" y1="55" x2="60" y2="90" stroke="#64748b" strokeWidth="1.5" />
-                                    <line x1="300" y1="55" x2="300" y2="90" stroke="#64748b" strokeWidth="1.5" />
+                                    <line x1="60" y1="55" x2="60" y2="90" stroke="#475569" strokeWidth="1.5" />
+                                    <line x1="300" y1="55" x2="300" y2="90" stroke="#475569" strokeWidth="1.5" />
 
                                     {/* Waterline (W - L) */}
-                                    <line x1="35" y1="90" x2="325" y2="90" stroke="#38bdf8" strokeWidth="1.5" />
-                                    <text x="45" y="83" fill="#38bdf8" fontSize="13" fontWeight="bold" fontFamily="serif">W</text>
-                                    <text x="315" y="83" fill="#38bdf8" fontSize="13" fontWeight="bold" fontFamily="serif">L</text>
+                                    <line x1="35" y1="90" x2="325" y2="90" stroke="#0284c7" strokeWidth="1.5" />
+                                    <text x="45" y="83" fill="#0284c7" fontSize="13" fontWeight="bold" fontFamily="serif">W</text>
+                                    <text x="315" y="83" fill="#0284c7" fontSize="13" fontWeight="bold" fontFamily="serif">L</text>
 
                                     {/* Submerged Hull Shaded Area Am (Cross Section below WL) */}
                                     <path
                                       d="M 60,90 L 60,150 Q 60,170 85,170 L 275,170 Q 300,170 300,150 L 300,90 Z"
                                       fill="url(#hatch-midship-am)"
-                                      stroke="#38bdf8"
+                                      stroke="#0284c7"
                                       strokeWidth="2"
                                     />
 
                                     {/* Center Am Text Badge */}
                                     <g>
-                                      <rect x="155" y="118" width="50" height="22" rx="4" fill="#090d16" stroke="#38bdf8" strokeWidth="1" />
-                                      <text x="180" y="133" fill="#ffffff" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">Am</text>
+                                      <rect x="155" y="118" width="50" height="22" rx="4" fill="#ffffff" stroke="#0284c7" strokeWidth="1" />
+                                      <text x="180" y="133" fill="#0f172a" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">Am</text>
                                     </g>
 
                                     {/* Dimension T (Draft) on Right */}
                                     <line x1="300" y1="90" x2="335" y2="90" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
                                     <line x1="275" y1="170" x2="335" y2="170" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
-                                    <line x1="330" y1="92" x2="330" y2="168" stroke="#34d399" strokeWidth="1.2" />
+                                    <line x1="330" y1="92" x2="330" y2="168" stroke="#059669" strokeWidth="1.2" />
                                     {/* Dimension Arrows for T */}
-                                    <polygon points="330,90 327,97 333,97" fill="#34d399" />
-                                    <polygon points="330,170 327,163 333,163" fill="#34d399" />
-                                    <text x="345" y="134" fill="#34d399" fontSize="12" fontWeight="bold" textAnchor="start" fontFamily="monospace">T</text>
+                                    <polygon points="330,90 327,97 333,97" fill="#059669" />
+                                    <polygon points="330,170 327,163 333,163" fill="#059669" />
+                                    <text x="345" y="134" fill="#059669" fontSize="12" fontWeight="bold" textAnchor="start" fontFamily="monospace">T</text>
 
                                     {/* Dimension B (Breadth) on Bottom */}
                                     <line x1="60" y1="170" x2="60" y2="195" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
                                     <line x1="300" y1="170" x2="300" y2="195" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
-                                    <line x1="62" y1="190" x2="298" y2="190" stroke="#38bdf8" strokeWidth="1.2" />
+                                    <line x1="62" y1="190" x2="298" y2="190" stroke="#0284c7" strokeWidth="1.2" />
                                     {/* Dimension Arrows for B */}
-                                    <polygon points="60,190 67,187 67,193" fill="#38bdf8" />
-                                    <polygon points="300,190 293,187 293,193" fill="#38bdf8" />
-                                    <text x="180" y="185" fill="#38bdf8" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">B</text>
+                                    <polygon points="60,190 67,187 67,193" fill="#0284c7" />
+                                    <polygon points="300,190 293,187 293,193" fill="#0284c7" />
+                                    <text x="180" y="185" fill="#0284c7" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">B</text>
                                   </svg>
                                 </div>
                               </div>
                             </div>
 
                             {/* 3. HASIL PEMBACAAN NUMERIK ORDINAT STATION (0 S.D 20) */}
-                            <div className="bg-slate-950/90 border border-slate-800/80 p-5 rounded-2xl space-y-4 font-mono text-xs">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-cyan-400 font-bold uppercase tracking-wider">
+                            <div className="bg-white dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4 font-mono text-xs shadow-xs dark:shadow-xl">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-cyan-700 dark:text-cyan-400 font-bold uppercase tracking-wider">
                                 <div className="flex items-center space-x-2">
                                   <span>📊 3. HASIL PEMBACAAN NUMERIK ORDINAT STATION (0 S.D 20)</span>
                                 </div>
-                                <span className="text-slate-400 text-[11px] font-mono">
-                                  Luas Midship Am = <span className="text-white font-bold">{currentAm.toFixed(2)} m²</span> (Am = B x T x Cm = {Number(designData.breadth_m || 0).toFixed(2)}m x {Number(designData.draft_m || 0).toFixed(3)}m x {Number(designData.cm || 0.98).toFixed(2)})
+                                <span className="text-slate-600 dark:text-slate-400 text-[11px] font-mono">
+                                  Luas Midship Am = <span className="text-slate-900 dark:text-white font-bold">{currentAm.toFixed(2)} m²</span> (Am = B x T x Cm = {Number(designData.breadth_m || 0).toFixed(2)}m x {Number(designData.draft_m || 0).toFixed(3)}m x {Number(designData.cm || 0.98).toFixed(2)})
                                 </span>
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
                                 {computedStationData.map((st) => (
-                                  <div key={`st-card-${st.station}`} className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-center space-y-1">
-                                    <div className="text-[10px] text-slate-500 font-bold">St. {st.station}</div>
-                                    <div className="font-bold text-cyan-400 text-xs">{st.pctAm.toFixed(1)}% Am</div>
-                                    <div className="text-[10px] text-slate-400 font-mono">{st.areaM2.toFixed(1)} m²</div>
+                                  <div key={`st-card-${st.station}`} className="p-3 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-2xs">
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">St. {st.station}</div>
+                                    <div className="font-bold text-cyan-700 dark:text-cyan-400 text-xs">{st.pctAm.toFixed(1)}% Am</div>
+                                    <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{st.areaM2.toFixed(1)} m²</div>
                                   </div>
                                 ))}
                               </div>
                             </div>
 
                             {/* 4 & 5. KURVA CSA REAL-TIME & HASIL INTEGRASI SIMPSON 1/3 */}
-                            <div className="bg-slate-950/90 border border-slate-800/80 p-5 rounded-2xl space-y-5 font-mono">
+                            <div className="bg-white dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-5 font-mono shadow-xs dark:shadow-xl">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
-                                  <div className="flex items-center space-x-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                                  <div className="flex items-center space-x-2 text-cyan-700 dark:text-cyan-400 font-bold text-xs uppercase tracking-wider">
                                     <span>📈 4 & 5. KURVA CSA REAL-TIME & HASIL INTEGRASI SIMPSON 1/3</span>
                                   </div>
-                                  <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Kurva CSA dihitung dari 21 ordinat luasan station (Luas = % Am × Am) dengan Luas Midship <span className="text-white font-semibold">Am = B x T x Cm = {currentAm.toFixed(2)} m²</span>.
+                                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
+                                    Kurva CSA dihitung dari 21 ordinat luasan station (Luas = % Am × Am) dengan Luas Midship <span className="text-slate-900 dark:text-white font-semibold">Am = B x T x Cm = {currentAm.toFixed(2)} m²</span>.
                                   </p>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-amber-300 font-bold text-[11px] bg-slate-900 border border-amber-500/30 px-3 py-1 rounded-lg">
+                                  <span className="text-amber-800 dark:text-amber-300 font-bold text-[11px] bg-amber-50 dark:bg-slate-900 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-lg">
                                     Am = B x T x Cm = {currentAm.toFixed(2)} m²
                                   </span>
-                                  <span className="text-cyan-400 font-bold text-[11px] bg-slate-900 border border-cyan-500/30 px-3 py-1 rounded-lg">
-                                    Rule Integrasi: <span className="text-white">Simpson 1/3 (21 Station)</span>
+                                  <span className="text-cyan-800 dark:text-cyan-400 font-bold text-[11px] bg-cyan-50 dark:bg-slate-900 border border-cyan-300 dark:border-cyan-500/30 px-3 py-1 rounded-lg">
+                                    Rule Integrasi: <span className="text-slate-900 dark:text-white">Simpson 1/3 (21 Station)</span>
                                   </span>
                                 </div>
                               </div>
 
                               {/* Real-time CSA Curve Plot with Midship Am Indicator */}
-                              <div className="w-full h-72 bg-[#02050e] rounded-xl border border-slate-800 p-4 relative overflow-hidden flex items-center justify-center">
+                              <div className="w-full h-72 bg-slate-50 dark:bg-[#02050e] rounded-xl border border-slate-200 dark:border-slate-800 p-4 relative overflow-hidden flex items-center justify-center shadow-inner">
                                 <svg className="w-full h-full" viewBox="0 0 1000 280" preserveAspectRatio="none">
                                   {computedStationData.map((_, idx) => {
                                     const x = 50 + (idx / 20) * 900;
-                                    return <line key={`csa-grid-v-${idx}`} x1={x} y1="20" x2={x} y2="230" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="2,2" />;
+                                    return <line key={`csa-grid-v-${idx}`} x1={x} y1="20" x2={x} y2="230" stroke="#cbd5e1" strokeWidth="0.6" strokeDasharray="2,2" />;
                                   })}
-                                  <line x1="50" y1="230" x2="950" y2="230" stroke="#475569" strokeWidth="1.5" />
+                                  <line x1="50" y1="230" x2="950" y2="230" stroke="#64748b" strokeWidth="1.5" />
                                   <path
                                     d={`M 50,230 ${computedStationData.map((st, idx) => {
                                       const x = 50 + (idx / 20) * 900;
                                       const y = 230 - (st.pctAm / 100) * 190;
                                       return `L ${x},${y}`;
                                     }).join(" ")} L 950,230 Z`}
-                                    fill="rgba(56, 189, 248, 0.12)"
-                                    stroke="#38bdf8"
+                                    fill="rgba(2, 132, 199, 0.15)"
+                                    stroke="#0284c7"
                                     strokeWidth="2.5"
                                   />
                                   {/* Apex Midship Label at Station 10 */}
                                   <g key="csa-midship-tag">
-                                    <line x1="500" y1="22" x2="500" y2="38" stroke="#f59e0b" strokeWidth="1" strokeDasharray="2,2" />
-                                    <rect x="390" y="8" width="220" height="20" rx="5" fill="#090d16" stroke="#f59e0b" strokeWidth="0.8" />
-                                    <text x="500" y="22" fill="#fde047" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <line x1="500" y1="22" x2="500" y2="38" stroke="#d97706" strokeWidth="1" strokeDasharray="2,2" />
+                                    <rect x="390" y="8" width="220" height="20" rx="5" fill="#ffffff" stroke="#d97706" strokeWidth="1" />
+                                    <text x="500" y="22" fill="#b45309" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       St. 10 Midship: Am = {currentAm.toFixed(2)} m² (100%)
                                     </text>
                                   </g>
@@ -2584,8 +2508,8 @@ export default function Stage2PreliminaryDesign() {
                                     return (
                                       <g key={`csa-node-${idx}`}>
                                         <title>{`Station ${idx}: ${st.pctAm.toFixed(1)}% Am | Luas = ${st.areaM2.toFixed(2)} m² (Am = B x T x Cm = ${currentAm.toFixed(2)} m²)`}</title>
-                                        <circle cx={x} cy={y} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-                                        <text x={x} y="252" fill="#94a3b8" fontSize="10" textAnchor="middle" fontFamily="monospace">{idx}</text>
+                                        <circle cx={x} cy={y} r="3.5" fill="#d97706" stroke="#ffffff" strokeWidth="1" />
+                                        <text x={x} y="252" fill="#334155" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{idx}</text>
                                       </g>
                                     );
                                   })}
@@ -2594,28 +2518,28 @@ export default function Stage2PreliminaryDesign() {
 
                               {/* 4 Hydrostatic Result Cards */}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-                                <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1">
-                                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">VOLUME DISPLACEMENT (V)</div>
-                                  <div className="text-xl font-black text-cyan-400">{simpsonVolumeM3.toFixed(2)} m³</div>
-                                  <div className="text-[10px] text-slate-400 font-mono">Volume = (h / 3) * Jumlah(Faktor * Luas)</div>
+                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
+                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">VOLUME DISPLACEMENT (V)</div>
+                                  <div className="text-xl font-black text-cyan-700 dark:text-cyan-400">{simpsonVolumeM3.toFixed(2)} m³</div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Volume = (h / 3) * Jumlah(Faktor * Luas)</div>
                                   <div className="text-[9px] text-slate-500 font-mono">h = {stationInterval.toFixed(2)}m | Am = {currentAm.toFixed(2)} m²</div>
                                 </div>
-                                <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1">
-                                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">TONASE DISPLACEMENT (Δ)</div>
-                                  <div className="text-xl font-black text-emerald-400">{simpsonDisplacementTon.toFixed(2)} Ton</div>
-                                  <div className="text-[10px] text-slate-400 font-mono">Displacement = Volume * 1.025</div>
+                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
+                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">TONASE DISPLACEMENT (Δ)</div>
+                                  <div className="text-xl font-black text-emerald-700 dark:text-emerald-400">{simpsonDisplacementTon.toFixed(2)} Ton</div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Displacement = Volume * 1.025</div>
                                   <div className="text-[9px] text-slate-500 font-mono">Massa Jenis Air Laut = 1.025 ton/m³</div>
                                 </div>
-                                <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1">
-                                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">KOEFISIEN PRISMA (CP)</div>
-                                  <div className="text-xl font-black text-amber-400">{calculatedCp.toFixed(3)}</div>
-                                  <div className="text-[10px] text-slate-400 font-mono">Cp = Volume / (Lbp * Am)</div>
+                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
+                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">KOEFISIEN PRISMA (CP)</div>
+                                  <div className="text-xl font-black text-amber-700 dark:text-amber-400">{calculatedCp.toFixed(3)}</div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Cp = Volume / (Lbp * Am)</div>
                                   <div className="text-[9px] text-slate-500 font-mono">Am = B x T x Cm ({currentAm.toFixed(2)} m²)</div>
                                 </div>
-                                <div className="p-3.5 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1">
-                                  <div className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">TITIK BERAT LCB (DARI AP)</div>
-                                  <div className="text-xl font-black text-white">{calculatedLcbM.toFixed(2)} m</div>
-                                  <div className="text-[10px] text-slate-400 font-mono">LCB = Total_Momen / Total_Luas</div>
+                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
+                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">TITIK BERAT LCB (DARI AP)</div>
+                                  <div className="text-xl font-black text-slate-900 dark:text-white">{calculatedLcbM.toFixed(2)} m</div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">LCB = Total_Momen / Total_Luas</div>
                                   <div className="text-[9px] text-slate-500 font-mono">({lcbPctLbp >= 0 ? `+${lcbPctLbp.toFixed(2)}%` : `${lcbPctLbp.toFixed(2)}%`} dari Midship)</div>
                                 </div>
                               </div>
@@ -2623,247 +2547,37 @@ export default function Stage2PreliminaryDesign() {
                           </div>
                         );
                       })()}
-                      {isNspModalOpen && (
-                        <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4 md:p-8 animate-fadeIn">
-                          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-7xl w-full max-h-[95vh] flex flex-col overflow-hidden shadow-2xl relative">
-                            {/* Modal Header */}
-                            <div className="p-4 border-b border-slate-800 bg-slate-950/90 flex items-center justify-between shrink-0">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-bold text-cyan-400 font-mono uppercase tracking-wider">
-                                  📐 Diagram Digital NSP Wageningen (Nederlandsche Scheepsbouw Proefstation)
-                                </span>
-                                <span className="text-[10px] bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-bold px-2.5 py-0.5 rounded">
-                                  Cb Proyek = {designData.cb || 0.76}
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => setIsNspModalOpen(false)}
-                                className="p-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-all text-xs font-bold cursor-pointer"
-                              >
-                                ✕ Tutup Visualizer
-                              </button>
-                            </div>
-
-                            {/* Modal Content - High-Res Interactive Digital Vector SVG Diagram */}
-                            <div className="flex-1 overflow-auto p-4 bg-[#02050e] flex flex-col items-center justify-start space-y-4 no-scrollbar">
-                              <div className="w-full max-w-5xl">
-                                <svg className="w-full h-auto" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
-                                  {/* Blueprint Outer Frame */}
-                                  <rect x="100" y="60" width="840" height="460" fill="#030712" stroke="#475569" strokeWidth="1.8" />
-                                  
-                                  {/* Centerline: Station 10 / 0% Line */}
-                                  <line x1="520" y1="60" x2="520" y2="520" stroke="#64748b" strokeWidth="2" />
-                                  <text x="520" y="52" fill="#94a3b8" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                                    Station 10 (0% Luas dari Garis Tengah)
-                                  </text>
-
-                                  {/* Top Subheaders for Stern & Bow */}
-                                  <text x="310" y="38" fill="#94a3b8" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                                    &larr; Bagian Belakang (Buritan / Stern: Station 0 s.d 9)
-                                  </text>
-                                  <text x="730" y="38" fill="#94a3b8" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                                    Bagian Depan (Haluan / Bow: Station 11 s.d 20) &rarr;
-                                  </text>
-
-                                  {/* X-Grid & Ticks: Stern (Left, 100% to 0%) */}
-                                  {[100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0].map((val, idx) => {
-                                    const x = 100 + idx * 42;
-                                    return (
-                                      <g key={`modal-stern-grid-${idx}`}>
-                                        <line x1={x} y1="60" x2={x} y2="520" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2,3" />
-                                        <line x1={x} y1="520" x2={x} y2="526" stroke="#64748b" strokeWidth="1" />
-                                        <text x={x} y="542" fill="#94a3b8" fontSize="9.5" textAnchor="middle" fontFamily="monospace">{val}</text>
-                                      </g>
-                                    );
-                                  })}
-
-                                  {/* X-Grid & Ticks: Bow (Right, 0% to 100%) */}
-                                  {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((val, idx) => {
-                                    const x = 520 + idx * 42;
-                                    return (
-                                      <g key={`modal-bow-grid-${idx}`}>
-                                        <line x1={x} y1="60" x2={x} y2="520" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2,3" />
-                                        <line x1={x} y1="520" x2={x} y2="526" stroke="#64748b" strokeWidth="1" />
-                                        <text x={x} y="542" fill="#94a3b8" fontSize="9.5" textAnchor="middle" fontFamily="monospace">{val}</text>
-                                      </g>
-                                    );
-                                  })}
-
-                                  {/* Sumbu X Main Label */}
-                                  <text x="520" y="565" fill="#cbd5e1" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
-                                    Ordinat Luasan Gading / Station (% Am)
-                                  </text>
-
-                                  {/* Y-Grid & Ticks: Cb Values (0.55 to 0.80) */}
-                                  {[0.55, 0.60, 0.65, 0.70, 0.75, 0.80].map((cbVal, i) => {
-                                    const y = 520 - ((cbVal - 0.55) / 0.25) * 460;
-                                    return (
-                                      <g key={`modal-y-grid-${i}`}>
-                                        <line x1="100" y1={y} x2="940" y2={y} stroke="#334155" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="2,3" />
-                                        <line x1="92" y1={y} x2="100" stroke="#64748b" strokeWidth="1" />
-                                        <text x="86" y={y + 4} fill="#cbd5e1" fontSize="11" fontWeight="bold" textAnchor="end" fontFamily="monospace">
-                                          {cbVal.toFixed(2)}
-                                        </text>
-                                      </g>
-                                    );
-                                  })}
-
-                                  {/* Sumbu Y Title (Rotated) */}
-                                  <text x="-290" y="24" fill="#cbd5e1" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace" transform="rotate(-90)">
-                                    Koefisien Blok (Cb)
-                                  </text>
-
-                                  {/* Station Curves 1..9 and 11..19 */}
-                                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((stNum) => {
-                                    const isStern = stNum < 10;
-                                    const pathPoints = [0.55, 0.60, 0.65, 0.70, 0.75, 0.80].map((cbVal) => {
-                                      const ordPct = getStationOrdinate(stNum, cbVal) / 100;
-                                      const yPixel = 520 - ((cbVal - 0.55) / 0.25) * 460;
-                                      const xPixel = isStern ? (100 + (1.0 - ordPct) * 420) : (520 + ordPct * 420);
-                                      return `${xPixel.toFixed(1)},${yPixel.toFixed(1)}`;
-                                    });
-
-                                    return (
-                                      <path
-                                        key={`modal-st-path-${stNum}`}
-                                        d={`M ${pathPoints.join(" L ")}`}
-                                        fill="none"
-                                        stroke="#64748b"
-                                        strokeWidth="1.4"
-                                      />
-                                    );
-                                  })}
-
-                                  {/* Active Cb Red Laser Line & Yellow Intersections & Green Drop Lines */}
-                                  {(() => {
-                                    const activeCb = Math.max(0.55, Math.min(0.80, Number(designData.cb) || 0.76));
-                                    const yBC = 520 - ((activeCb - 0.55) / 0.25) * 460;
-
-                                    return (
-                                      <g key="modal-bc-laser">
-                                        <line x1="90" y1={yBC} x2="950" y2={yBC} stroke="#ef4444" strokeWidth="2.5" />
-                                        <rect x="36" y={yBC - 10} width="56" height="20" rx="4" fill="#ef4444" />
-                                        <text x="64" y={yBC + 4} fill="#ffffff" fontSize="10.5" fontWeight="black" textAnchor="middle" fontFamily="monospace">
-                                          Cb {activeCb.toFixed(3)}
-                                        </text>
-
-                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19].map((stNum) => {
-                                          const isStern = stNum < 10;
-                                          const ordPct = getStationOrdinate(stNum, activeCb) / 100;
-                                          const xPoint = isStern ? (100 + (1.0 - ordPct) * 420) : (520 + ordPct * 420);
-
-                                          return (
-                                            <g key={`modal-drop-${stNum}`}>
-                                              <line x1={xPoint} y1={yBC} x2={xPoint} y2="520" stroke="#22c55e" strokeWidth="1.2" strokeDasharray="3,2" />
-                                              <circle cx={xPoint} cy={yBC} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1" />
-                                            </g>
-                                          );
-                                        })}
-                                      </g>
-                                    );
-                                  })()}
-
-                                  {/* Optional Auxiliary Reference Lines */}
-                                  {(() => {
-                                    const activeCm = Number(designData.cm) || 0.98;
-                                    const yGC = 520 - Math.min(1.0, Math.max(0.0, (activeCm - 0.95) / 0.04)) * 460;
-
-                                    return (
-                                      <g key="modal-gc-laser">
-                                        <line x1="95" y1={yGC} x2="940" y2={yGC} stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="6,3" strokeOpacity="0.7" />
-                                        <text x="75" y={yGC + 4} fill="#3b82f6" fontSize="11" fontWeight="bold" fontFamily="monospace">GC</text>
-                                      </g>
-                                    );
-                                  })()}
-
-                                  {(() => {
-                                    const activeFn = Number(designData.froude_number) || 0.20;
-                                    const yCN = 520 - Math.min(1.0, activeFn / 0.35) * 420;
-
-                                    return (
-                                      <g key="modal-cn-laser">
-                                        <line x1="95" y1={yCN} x2="940" y2={yCN} stroke="#22c55e" strokeWidth="1.5" strokeDasharray="4,4" strokeOpacity="0.7" />
-                                        <text x="75" y={yCN + 4} fill="#22c55e" fontSize="11" fontWeight="bold" fontFamily="monospace">CN</text>
-                                      </g>
-                                    );
-                                  })()}
-                                </svg>
-                              </div>
-
-                              {/* Reading Guide inside modal */}
-                              <div className="w-full max-w-5xl bg-slate-950/90 rounded-xl border border-slate-800 p-4 font-mono text-xs space-y-2">
-                                <div className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center space-x-2">
-                                  <span>📖 Prosedur Pembacaan Nomogram NSP Wageningen:</span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-[11px] text-slate-400">
-                                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-800">
-                                    <span className="text-red-400 font-bold block mb-1">① Atur Nilai Cb</span>
-                                    Garis merah horizontal bergeser pada sumbu Y (Koefisien Blok kapal).
-                                  </div>
-                                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-800">
-                                    <span className="text-amber-400 font-bold block mb-1">② Titik Potong</span>
-                                    Garis merah memotong kurva tiap station (titik kuning intersep).
-                                  </div>
-                                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-800">
-                                    <span className="text-emerald-400 font-bold block mb-1">③ Proyeksi Vertikal</span>
-                                    Garis hijau putus-putus diproyeksikan tegak lurus turun ke sumbu X.
-                                  </div>
-                                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-800">
-                                    <span className="text-cyan-400 font-bold block mb-1">④ Baca Ordinat (% Am)</span>
-                                    Nilai persentase luasan gading (% Am) terbaca di skala sumbu X.
-                                  </div>
-                                  <div className="p-2 bg-slate-900/80 rounded-lg border border-slate-800">
-                                    <span className="text-purple-400 font-bold block mb-1">⑤ Integrasi CSA</span>
-                                    Data 21 ordinat luasan (Luas = % Am x Am, Am = B x T x Cm) otomatis dihitung menjadi Kurva CSA & Simpson 1/3.
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Modal Footer */}
-                            <div className="p-3 border-t border-slate-800 bg-slate-950/90 flex items-center justify-between text-xs text-slate-400 font-mono shrink-0">
-                              <span>Diagram Digital NSP Wageningen (SNAME / PNA) — Cb Proyek = {designData.cb || 0.76}</span>
-                              <button
-                                onClick={() => setIsNspModalOpen(false)}
-                                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold text-xs cursor-pointer transition-all"
-                              >
-                                Tutup Visualizer
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
 
                 </div>
 
                 {/* BOTTOM SECTION: ESTIMASI HAMBATAN & DAYA MESIN (NSP POWERING) */}
-                <div className="bg-slate-900/60 border border-slate-800/80 p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-2xl">
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 shadow-xs dark:shadow-2xl">
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
                       <Activity size={18} />
                     </div>
                     <span>2. Perhitungan Estimasi Daya Mesin (NSP Powering & Resistance)</span>
                   </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                     Estimasi daya NSP (Navy Sparrows Point) menghitung daya EHP / BHP bersih berdasarkan korelasi koefisien kepenuhan Cb ({designData.cb}), Froude number ({designData.froude_number}), dan target kecepatan dinas Vs ({designData.service_speed_knots || 12} Knot).
                   </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-950/80 p-6 rounded-2xl border border-slate-800/80 shadow-inner">
-                    <div className="p-4 bg-slate-900/80 border border-slate-800/80 rounded-xl text-center space-y-1 shadow">
-                      <div className="text-[11px] font-medium text-slate-400">Daya Hambatan Bersih (EHP)</div>
-                      <div className="text-2xl font-black font-mono text-cyan-400">{designData.ehp_kw?.toFixed(2) || "0.0"} kW</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-inner">
+                    <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-xl text-center space-y-1 shadow-2xs">
+                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Daya Hambatan Bersih (EHP)</div>
+                      <div className="text-2xl font-black font-mono text-cyan-700 dark:text-cyan-400">{designData.ehp_kw?.toFixed(2) || "0.0"} kW</div>
                       <div className="text-[10px] font-mono text-slate-500">{(designData.ehp_kw / 0.7457).toFixed(1)} HP</div>
                     </div>
-                    <div className="p-4 bg-slate-900/80 border border-slate-800/80 rounded-xl text-center space-y-1 shadow">
-                      <div className="text-[11px] font-medium text-slate-400">Efisiensi Propulsi (&eta;p)</div>
-                      <div className="text-2xl font-black font-mono text-white">{designData.propulsive_efficiency || "0.55"}</div>
+                    <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-xl text-center space-y-1 shadow-2xs">
+                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Efisiensi Propulsi (&eta;p)</div>
+                      <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">{designData.propulsive_efficiency || "0.55"}</div>
                       <div className="text-[10px] text-slate-500">Estimasi Efisiensi Lambung & Propeller</div>
                     </div>
-                    <div className="p-4 bg-slate-900/80 border border-slate-800/80 rounded-xl text-center space-y-1 shadow">
-                      <div className="text-[11px] font-medium text-slate-400">Daya Poros Mesin (BHP)</div>
-                      <div className="text-2xl font-black font-mono text-emerald-400">{designData.bhp_kw?.toFixed(2) || "0.0"} kW</div>
+                    <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-xl text-center space-y-1 shadow-2xs">
+                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Daya Poros Mesin (BHP)</div>
+                      <div className="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400">{designData.bhp_kw?.toFixed(2) || "0.0"} kW</div>
                       <div className="text-[10px] font-mono text-slate-500">Termasuk Sea Margin {designData.sea_margin_percent}%</div>
                     </div>
                   </div>
@@ -2871,36 +2585,18 @@ export default function Stage2PreliminaryDesign() {
               </div>
             )}
 
-            {activeTab === "profile" && (
-              <div className="space-y-6 max-w-7xl mx-auto">
-                <SideProfileNurbsEditor
-                  lbp_m={Number(designData.lbp_m) || 90.0}
-                  depth_m={Number(designData.depth_m) || 8.0}
-                  draft_m={Number(designData.draft_m) || 5.5}
-                  breadth_m={Number(designData.breadth_m) || 16.0}
-                  cb={Number(designData.cb) || 0.76}
-                  vesselType={designData.vessel_type || "GENERAL_CARGO"}
-                  onUpdateLoa={(exactLoa) => {
-                    if (formData.loa_m !== exactLoa) {
-                      setFormData((prev: any) => ({ ...prev, loa_m: exactLoa }));
-                    }
-                  }}
-                />
-              </div>
-            )}
-
             {activeTab === "ai" && (
               <div className="space-y-0 max-w-7xl mx-auto">
-                <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl flex flex-col space-y-4 backdrop-blur-xl shadow-2xl" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-400">
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl flex flex-col space-y-4 shadow-xs dark:shadow-2xl" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
                       <Cpu size={18} />
                     </div>
                     <span>AI Design Companion (Stage 2 Explainer)</span>
                   </h3>
                   {/* Section Explanation Presets */}
-                  <div className="space-y-2 border-b border-slate-800/80 pb-3">
-                    <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
+                  <div className="space-y-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
                       Pilih Section Modul Pra-Rancangan untuk Penjelasan AI:
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -2914,7 +2610,7 @@ export default function Stage2PreliminaryDesign() {
                           key={pidx}
                           onClick={() => handleAskAI(preset.query)}
                           disabled={aiLoading}
-                          className="py-1.5 px-3 bg-slate-950/80 hover:bg-blue-600/20 border border-slate-800 hover:border-blue-500/40 text-slate-300 hover:text-cyan-300 rounded-xl text-xs font-medium transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer text-left"
+                          className="py-1.5 px-3 bg-slate-50 hover:bg-blue-50 dark:bg-slate-950/80 dark:hover:bg-blue-600/20 border border-slate-200 hover:border-blue-300 dark:border-slate-800 dark:hover:border-blue-500/40 text-slate-700 hover:text-blue-700 dark:text-slate-300 dark:hover:text-cyan-300 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer text-left shadow-2xs"
                         >
                           {preset.label}
                         </button>
@@ -2923,14 +2619,14 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   {/* Chat logs */}
-                  <div className="flex-1 border border-slate-800/80 rounded-2xl bg-slate-950/80 p-4 overflow-y-auto space-y-3 no-scrollbar backdrop-blur-md shadow-inner" style={{ minHeight: 0 }}>
+                  <div className="flex-1 border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-slate-50 dark:bg-slate-950/80 p-4 overflow-y-auto space-y-3 no-scrollbar shadow-inner" style={{ minHeight: 0 }}>
                     {aiChat.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 space-y-3 p-6">
                         <Cpu size={32} className="text-blue-500/60 animate-pulse" />
                         <div>
-                          <p className="text-xs font-bold text-white">AI Stage 2 Design Explainer</p>
-                          <p className="text-[11px] text-slate-400 mt-1 max-w-md leading-relaxed">
-                            Klik salah satu tombol <span className="text-cyan-400 font-semibold font-mono">Pilih Section Modul</span> di atas untuk mendapatkan rincian teknis hidrostatik (Alexander Cb, LWT, NSP Powering, GM Stabilitas). Setelah itu Anda dapat mengajukan pertanyaan lanjutan!
+                          <p className="text-xs font-bold text-slate-900 dark:text-white">AI Stage 2 Design Explainer</p>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 max-w-md leading-relaxed">
+                            Klik salah satu tombol <span className="text-cyan-700 dark:text-cyan-400 font-semibold font-mono">Pilih Section Modul</span> di atas untuk mendapatkan rincian teknis hidrostatik (Alexander Cb, LWT, NSP Powering, GM Stabilitas). Setelah itu Anda dapat mengajukan pertanyaan lanjutan!
                           </p>
                         </div>
                       </div>
@@ -2945,31 +2641,30 @@ export default function Stage2PreliminaryDesign() {
                               msg.sender === "user"
                                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none border border-blue-400/30"
                                 : msg.blocked
-                                ? "bg-rose-950/40 border border-rose-800/50 text-rose-300 rounded-tl-none"
-                                : "bg-slate-900/90 border border-slate-800 text-slate-200 rounded-tl-none whitespace-pre-wrap"
+                                ? "bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-300 rounded-tl-none"
+                                : "bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none whitespace-pre-wrap shadow-2xs"
                             }`}
                           >
                             <p className="font-semibold mb-1.5 opacity-70 text-[10px] uppercase font-mono tracking-wider">
                               {msg.sender === "user" ? "Perancang" : "AI Asisten"}
                             </p>
-                            <div className="space-y-2 text-slate-200">
+                            <div className="space-y-2 text-slate-800 dark:text-slate-200">
                               {msg.text.split("\n").filter(l => l.trim() !== "").map((line, lidx) => {
-                                // Formatting sederhana untuk bold **text** dan list
                                 const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                                 
                                 if (line.startsWith("# ")) {
-                                  return <h1 key={lidx} className="text-sm font-bold text-cyan-300 mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("# ", "") }} />;
+                                  return <h1 key={lidx} className="text-sm font-bold text-cyan-700 dark:text-cyan-300 mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("# ", "") }} />;
                                 }
                                 if (line.startsWith("## ")) {
-                                  return <h2 key={lidx} className="text-xs font-bold text-cyan-300 mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("## ", "") }} />;
+                                  return <h2 key={lidx} className="text-xs font-bold text-cyan-700 dark:text-cyan-300 mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("## ", "") }} />;
                                 }
                                 if (line.startsWith("### ")) {
-                                  return <h3 key={lidx} className="text-xs font-semibold text-slate-100 mt-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("### ", "") }} />;
+                                  return <h3 key={lidx} className="text-xs font-semibold text-slate-900 dark:text-slate-100 mt-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("### ", "") }} />;
                                 }
                                 if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
                                   return (
                                     <div key={lidx} className="flex items-start space-x-2 pl-2 my-0.5">
-                                      <span className="text-cyan-400 font-bold">•</span>
+                                      <span className="text-cyan-600 dark:text-cyan-400 font-bold">•</span>
                                       <span dangerouslySetInnerHTML={{ __html: formattedLine.replace(/^[-*]\s+/, "") }} />
                                     </div>
                                   );
@@ -2985,9 +2680,9 @@ export default function Stage2PreliminaryDesign() {
                     )}
                     {aiLoading && (
                       <div className="flex justify-start">
-                        <div className="bg-slate-900/90 border border-slate-800/80 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-400 flex items-center space-x-2">
-                          <RefreshCw className="animate-spin text-blue-400" size={14} />
-                          <span>AI sedang menganalisis data proyek...</span>
+                        <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-600 dark:text-slate-400 flex items-center space-x-2 shadow-2xs">
+                          <RefreshCw className="animate-spin text-blue-600 dark:text-blue-400" size={14} />
+                          <span>AI is analyzing project data...</span>
                         </div>
                       </div>
                     )}
@@ -2999,19 +2694,19 @@ export default function Stage2PreliminaryDesign() {
                       type="text"
                       value={aiQuestion}
                       onChange={(e) => setAiQuestion(e.target.value)}
-                      placeholder="Masukkan pertanyaan mengenai pra-rancangan kapal..."
+                      placeholder="Ask a question regarding preliminary ship design..."
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleAskAI();
                       }}
-                      className="flex-1 bg-slate-950/80 border border-slate-800/80 rounded-xl py-2.5 px-4 text-xs text-slate-100 placeholder-slate-500 outline-none focus:border-blue-500/80 focus:ring-1 focus:ring-blue-500/30 transition-all font-sans"
+                      className="flex-1 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl py-2.5 px-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-sans shadow-2xs"
                     />
                     <button
                       onClick={() => handleAskAI()}
                       disabled={aiLoading || !aiQuestion.trim()}
-                      className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold text-xs flex items-center space-x-1.5 shadow-lg shadow-blue-600/20 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold text-xs flex items-center space-x-1.5 shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer disabled:opacity-50"
                     >
                       <Send size={14} />
-                      <span>Kirim</span>
+                      <span>Send</span>
                     </button>
                   </div>
                 </div>
@@ -3020,6 +2715,50 @@ export default function Stage2PreliminaryDesign() {
           </div>
         </div>
       </div>
+
+      {/* Sleek Floating Toast Notification (replaces blocking browser alerts) */}
+      {toast && toast.show && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300 pointer-events-auto">
+          <div
+            className={`px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center space-x-3.5 max-w-md ${
+              toast.type === "success"
+                ? "bg-slate-900/95 border-emerald-500/50 text-white ring-1 ring-emerald-500/30"
+                : toast.type === "error"
+                ? "bg-slate-900/95 border-rose-500/50 text-white ring-1 ring-rose-500/30"
+                : toast.type === "warning"
+                ? "bg-slate-900/95 border-amber-500/50 text-white ring-1 ring-amber-500/30"
+                : "bg-slate-900/95 border-blue-500/50 text-white ring-1 ring-blue-500/30"
+            }`}
+          >
+            <div
+              className={`p-2 rounded-xl shrink-0 ${
+                toast.type === "success"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : toast.type === "error"
+                  ? "bg-rose-500/20 text-rose-400"
+                  : toast.type === "warning"
+                  ? "bg-amber-500/20 text-amber-400"
+                  : "bg-blue-500/20 text-blue-400"
+              }`}
+            >
+              {toast.type === "success" && <CheckCircle size={20} />}
+              {toast.type === "error" && <AlertCircle size={20} />}
+              {toast.type === "warning" && <AlertTriangle size={20} />}
+              {toast.type === "info" && <Info size={20} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-xs font-bold text-white tracking-wide">{toast.title}</h4>
+              <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">{toast.message}</p>
+            </div>
+            <button
+              onClick={() => setToast((prev) => (prev ? { ...prev, show: false } : null))}
+              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

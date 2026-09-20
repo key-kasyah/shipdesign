@@ -51,10 +51,59 @@ export interface WaterPlaneCalculationProps {
   onUpdateWaterlinesData?: (data: Record<string, Record<number, number>>) => void;
   waterlineLevels?: WaterlineConfig[];
   onUpdateWaterlineLevels?: (levels: WaterlineConfig[]) => void;
+  activeWlId?: string;
+  onSelectWlId?: (id: string) => void;
   onSave?: () => void;
   isSaving?: boolean;
   lastSaved?: string | null;
+  visualOnly?: boolean;
+  tablesOnly?: boolean;
+  stationDensity?: "all" | "standard";
+  onUpdateStationDensity?: (density: "all" | "standard") => void;
+  compact?: boolean;
+  onOpenDualFullscreen?: () => void;
+  viewMode?: WaterPlaneViewMode;
+  onViewModeChange?: (mode: WaterPlaneViewMode) => void;
+  showPageTabs?: boolean;
 }
+
+export type WaterPlaneViewMode = "fullSheet" | "cleanCustom";
+
+export const WaterPlanePageTabs: React.FC<{
+  viewMode: WaterPlaneViewMode;
+  onChange: (mode: WaterPlaneViewMode) => void;
+}> = ({ viewMode, onChange }) => {
+  const { language } = useLanguage();
+
+  return (
+    <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
+      <div className="flex items-center space-x-1.5">
+        <button
+          onClick={() => onChange("fullSheet")}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            viewMode === "fullSheet"
+              ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-300 shadow-md border border-slate-200 dark:border-slate-700"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <TableIcon size={15} />
+          <span>{language === "en" ? "Page 1: Full Simpson Sheet & Visual Plot" : "Halaman 1: Tabel Integrasi Simpson & Plot Visual"}</span>
+        </button>
+        <button
+          onClick={() => onChange("cleanCustom")}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            viewMode === "cleanCustom"
+              ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-300 shadow-md border border-slate-200 dark:border-slate-700"
+              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          <Layers size={15} />
+          <span>{language === "en" ? "Page 2: Custom Stations & Single Waterline Studio" : "Halaman 2: Studio Garis Air & Evaluasi Gading Kustom"}</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export interface StationConfig {
   station: number;
@@ -73,7 +122,7 @@ export interface WaterlineZoneSetting {
 export const getWaterlineDefaultZoneSetting = (draftFraction: number): WaterlineZoneSetting => {
   return {
     hasSternOverhang: draftFraction >= 0.50, // Waterlines >= 50% T (e.g. WL 7 s.d. WL 12 in 13 WL) have stern overhang
-    hasBulbousBow: draftFraction <= 0.35     // Lower waterlines (<= 35% T) have bulbous bow
+    hasBulbousBow: false                    // Smooth fair ending at FP by default
   };
 };
 
@@ -82,9 +131,9 @@ export const DEFAULT_ZONE_SETTINGS: Record<string, WaterlineZoneSetting> = {
   WL5: { hasSternOverhang: true,  hasBulbousBow: false },
   WL4: { hasSternOverhang: false, hasBulbousBow: false },
   WL3: { hasSternOverhang: false, hasBulbousBow: false },
-  WL2: { hasSternOverhang: false, hasBulbousBow: true },
-  WL1: { hasSternOverhang: false, hasBulbousBow: true },
-  WL0: { hasSternOverhang: false, hasBulbousBow: true },
+  WL2: { hasSternOverhang: false, hasBulbousBow: false },
+  WL1: { hasSternOverhang: false, hasBulbousBow: false },
+  WL0: { hasSternOverhang: false, hasBulbousBow: false },
 };
 
 /**
@@ -225,6 +274,54 @@ export const AREA_ZONES: AreaZone[] = [
   }
 ];
 
+export const DEFAULT_HULL_PROFILE: Record<number, number> = {
+  // After Peak (Transom / Rudder transition to AP)
+  [-2.0]: 0.000, // St. B (0.00 m)
+  [-1.0]: 0.140, // St. A (Buritan Runcing)
+  [0.0]:  0.280, // St. 0 (AP: Ramping Runcing)
+
+  // Peak 1 (10 Titik: Transisi Buritan Halus ke PMB, Step 0.5)
+  [0.5]:  0.440, // St. 1
+  [1.0]:  0.580, // St. 2
+  [1.5]:  0.700, // St. 3
+  [2.0]:  0.810, // St. 4
+  [2.5]:  0.890, // St. 5
+  [3.0]:  0.945, // St. 6
+  [3.5]:  0.980, // St. 7
+  [4.0]:  0.995, // St. 8
+  [4.5]:  1.000, // St. 9
+  [5.0]:  1.000, // St. 10 (Tangensial penuh ke PMB)
+
+  // Parallel Middle Body (PMB) - 10 Titik Maksimum Tetap 1.000 (0.5 * BWL, Jarak Standar l = LBP/20, Step Seragam 1.0)
+  [6.0]:  1.000, // St. 11
+  [7.0]:  1.000, // St. 12
+  [8.0]:  1.000, // St. 13
+  [9.0]:  1.000, // St. 14
+  [10.0]: 1.000, // Midship 15 (MID: Maksimum 0.5B)
+  [11.0]: 1.000, // St. 16
+  [12.0]: 1.000, // St. 17
+  [13.0]: 1.000, // St. 18
+  [14.0]: 1.000, // St. 19
+  [15.0]: 1.000, // St. 20
+
+  // Peak 2 - 10 Titik: Transisi Halus Kontinu dari PMB ke Haluan Ramping FP (Step Seragam 0.5)
+  [15.5]: 0.950, // St. 21 (Awal Entrance Body)
+  [16.0]: 0.880, // St. 22
+  [16.5]: 0.780, // St. 23
+  [17.0]: 0.650, // St. 24
+  [17.5]: 0.500, // St. 25
+  [18.0]: 0.350, // St. 26
+  [18.5]: 0.210, // St. 27
+  [19.0]: 0.100, // St. 28
+  [19.5]: 0.035, // St. 29
+  [19.8]: 0.008, // St. 30 (Haluan Ramping ke FP)
+
+  // Fore Peak (3 Titik di Garis Dasar / Y=0)
+  [20.0]: 0.000, // St. 31 (FP: 0.00 m)
+  [20.5]: 0.000, // St. 32 (FP-A: 0.00 m)
+  [21.0]: 0.000  // St. 33 (FP-B: 0.00 m)
+};
+
 export interface WaterlineConfig {
   id: string;
   name: string;
@@ -252,13 +349,13 @@ export const WATERLINE_PALETTE = [
 ];
 
 export const DEFAULT_WATERLINE_LEVELS: WaterlineConfig[] = [
-  { id: "WL6", name: "Waterline 6 (DWL)", shortName: "WL 6 (DWL)", draftFraction: 1.0, awlFactor: 1.000, maxBreadthFactor: 1.000, color: "#38bdf8", badge: "Sarat Desain (100% T)" },
-  { id: "WL5", name: "Waterline 5", shortName: "WL 5", draftFraction: 5 / 6, awlFactor: 0.962, maxBreadthFactor: 1.000, color: "#06b6d4", badge: "Sarat 83.3% T" },
-  { id: "WL4", name: "Waterline 4", shortName: "WL 4", draftFraction: 4 / 6, awlFactor: 0.921, maxBreadthFactor: 1.000, color: "#0284c7", badge: "Sarat 66.7% T" },
-  { id: "WL3", name: "Waterline 3", shortName: "WL 3", draftFraction: 3 / 6, awlFactor: 0.878, maxBreadthFactor: 1.000, color: "#6366f1", badge: "Sarat 50.0% T" },
-  { id: "WL2", name: "Waterline 2", shortName: "WL 2", draftFraction: 2 / 6, awlFactor: 0.832, maxBreadthFactor: 1.000, color: "#8b5cf6", badge: "Sarat 33.3% T" },
-  { id: "WL1", name: "Waterline 1", shortName: "WL 1", draftFraction: 1 / 6, awlFactor: 0.770, maxBreadthFactor: 0.989, color: "#a855f7", badge: "Sarat 16.7% T" },
-  { id: "WL0", name: "Waterline 0 (Lunas)", shortName: "WL 0", draftFraction: 0.0, awlFactor: 0.571, maxBreadthFactor: 0.815, color: "#ec4899", badge: "Garis Lunas (0.00 m)" },
+  { id: "WL6", name: "Waterline 6 (DWL)", shortName: "WL 6 (DWL)", draftFraction: 1.0, awlFactor: 1.000, maxBreadthFactor: 1.000, color: "#38bdf8", badge: "Design Draft (100% T)" },
+  { id: "WL5", name: "Waterline 5", shortName: "WL 5", draftFraction: 5 / 6, awlFactor: 0.962, maxBreadthFactor: 1.000, color: "#06b6d4", badge: "Draft 83.3% T" },
+  { id: "WL4", name: "Waterline 4", shortName: "WL 4", draftFraction: 4 / 6, awlFactor: 0.921, maxBreadthFactor: 1.000, color: "#0284c7", badge: "Draft 66.7% T" },
+  { id: "WL3", name: "Waterline 3", shortName: "WL 3", draftFraction: 3 / 6, awlFactor: 0.878, maxBreadthFactor: 1.000, color: "#6366f1", badge: "Draft 50.0% T" },
+  { id: "WL2", name: "Waterline 2", shortName: "WL 2", draftFraction: 2 / 6, awlFactor: 0.832, maxBreadthFactor: 1.000, color: "#8b5cf6", badge: "Draft 33.3% T" },
+  { id: "WL1", name: "Waterline 1", shortName: "WL 1", draftFraction: 1 / 6, awlFactor: 0.770, maxBreadthFactor: 0.989, color: "#a855f7", badge: "Draft 16.7% T" },
+  { id: "WL0", name: "Waterline 0 (Baseline)", shortName: "WL 0", draftFraction: 0.0, awlFactor: 0.571, maxBreadthFactor: 0.815, color: "#ec4899", badge: "Baseline (0.00 m)" },
 ];
 
 export const WATERLINE_LEVELS = DEFAULT_WATERLINE_LEVELS;
@@ -312,7 +409,7 @@ export const generateWaterlinePresets = (
     
     const colorIdx = Math.floor(((maxIdx - i) / Math.max(1, maxIdx)) * (WATERLINE_PALETTE.length - 1));
     const color = WATERLINE_PALETTE[colorIdx] || "#38bdf8";
-    const badge = isDWL ? "Sarat Desain (100% T)" : isBase ? "Garis Lunas (0.00 m)" : `Sarat ${(fraction * 100).toFixed(1)}% T`;
+    const badge = isDWL ? "Design Draft (100% T)" : isBase ? "Baseline (0.00 m)" : `Draft ${(fraction * 100).toFixed(1)}% T`;
 
     configs.push({
       id,
@@ -492,9 +589,20 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   onUpdateWaterlinesData,
   waterlineLevels: initialWaterlineLevels,
   onUpdateWaterlineLevels,
+  activeWlId: initialActiveWlId,
+  onSelectWlId,
   onSave,
   isSaving = false,
-  lastSaved
+  lastSaved,
+  visualOnly = false,
+  tablesOnly = false,
+  stationDensity: propStationDensity,
+  onUpdateStationDensity,
+  compact = false,
+  onOpenDualFullscreen,
+  viewMode: controlledViewMode,
+  onViewModeChange,
+  showPageTabs = true
 }) => {
   const { language } = useLanguage();
   const LBP = Math.max(10, lbp_m);
@@ -505,6 +613,29 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const Cb = cb || 0.75;
   const Cm = cm || 0.99;
   const targetCw = cw || Number((Cb + 0.09).toFixed(2));
+
+  // Dynamic Station Density Filter ("all" [36 stations] vs "standard" [23 main stations])
+  const [localStationDensity, setLocalStationDensity] = useState<"all" | "standard">("all");
+  const stationDensity = propStationDensity || localStationDensity;
+  const handleDensityChange = (d: "all" | "standard") => {
+    setLocalStationDensity(d);
+    if (onUpdateStationDensity) onUpdateStationDensity(d);
+  };
+
+  const standardStationsConfig = useMemo(() => {
+    return DEFAULT_STATIONS_CONFIG.filter((cfg) => {
+      const s = cfg.station;
+      return (
+        s === -2 || s === -1 || s === 0 || s === 0.5 || s === 1 || s === 2 ||
+        s === 3 || s === 4 || s === 5 || s === 6 || s === 7 || s === 8 ||
+        s === 9 || s === 10 || s === 11 || s === 12 || s === 13 || s === 14 ||
+        s === 15 || s === 16 || s === 17 || s === 18 || s === 19 || s === 19.5 ||
+        s === 20 || s === 20.5 || s === 21
+      );
+    });
+  }, []);
+
+  const activeStationsConfig = stationDensity === "all" ? DEFAULT_STATIONS_CONFIG : standardStationsConfig;
 
   // Gading Spacing
   const l = Number((LBP / 20).toFixed(4));
@@ -523,53 +654,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const AWL_rancangan = useMemo(() => LWL * BWL * effectiveTargetCw, [LWL, BWL, effectiveTargetCw]);
 
   // Hydrodynamic Hull Form Profile (Slender Knife Bow & Sharp Streamlined Stern)
-  const HULL_PROFILE: Record<number, number> = {
-    // After Peak (Transom / Rudder transition to AP)
-    [-2.0]: 0.000, // St. B (0.00 m)
-    [-1.0]: 0.140, // St. A (Buritan Runcing)
-    [0.0]:  0.280, // St. 0 (AP: Ramping Runcing)
-
-    // Peak 1 (10 Titik: Transisi Buritan Halus ke PMB, Step 0.5)
-    [0.5]:  0.440, // St. 1
-    [1.0]:  0.580, // St. 2
-    [1.5]:  0.700, // St. 3
-    [2.0]:  0.810, // St. 4
-    [2.5]:  0.890, // St. 5
-    [3.0]:  0.945, // St. 6
-    [3.5]:  0.980, // St. 7
-    [4.0]:  0.995, // St. 8
-    [4.5]:  1.000, // St. 9
-    [5.0]:  1.000, // St. 10 (Tangensial penuh ke PMB)
-
-    // Parallel Middle Body (PMB) - 10 Titik Maksimum Tetap 1.000 (0.5 * BWL, Jarak Standar l = LBP/20, Step Seragam 1.0)
-    [6.0]:  1.000, // St. 11
-    [7.0]:  1.000, // St. 12
-    [8.0]:  1.000, // St. 13
-    [9.0]:  1.000, // St. 14
-    [10.0]: 1.000, // Midship 15 (MID: Maksimum 0.5B)
-    [11.0]: 1.000, // St. 16
-    [12.0]: 1.000, // St. 17
-    [13.0]: 1.000, // St. 18
-    [14.0]: 1.000, // St. 19
-    [15.0]: 1.000, // St. 20
-
-    // Peak 2 - 10 Titik: Transisi Halus Kontinu dari PMB ke Haluan Ramping FP (Step Seragam 0.5)
-    [15.5]: 0.950, // St. 21 (Awal Entrance Body)
-    [16.0]: 0.880, // St. 22
-    [16.5]: 0.780, // St. 23
-    [17.0]: 0.650, // St. 24
-    [17.5]: 0.500, // St. 25
-    [18.0]: 0.350, // St. 26
-    [18.5]: 0.210, // St. 27
-    [19.0]: 0.100, // St. 28
-    [19.5]: 0.035, // St. 29
-    [19.8]: 0.008, // St. 30 (Haluan Ramping ke FP)
-
-    // Fore Peak (3 Titik di Garis Dasar / Y=0)
-    [20.0]: 0.000, // St. 31 (FP: 0.00 m)
-    [20.5]: 0.000, // St. 32 (FP-A: 0.00 m)
-    [21.0]: 0.000  // St. 33 (FP-B: 0.00 m)
-  };
+  const HULL_PROFILE = DEFAULT_HULL_PROFILE;
 
   // Fair Hydrodynamic Variational Smoother (Guarantees Natural Curvature + Error <= 0.01%)
   const generateOptimizedHalfBreadths = (
@@ -603,13 +688,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           r = 0.0;
         } else if (cfg.station === 0.0 && !hasStern) {
           r = 0.0;
-        } else if (cfg.station > 20.0 && !hasBulb) {
-          r = 0.0;
-        } else if (cfg.station === 20.0 && !hasBulb) {
+        } else if (cfg.station >= 20.0 && !hasBulb) {
           r = 0.0;
         } else if (hasBulb && cfg.station >= 20.0) {
-          if (cfg.station === 20.0) r = 0.35;
-          else if (cfg.station === 20.5) r = 0.22;
+          const base198 = baseRatios[19.8] ?? 0.008;
+          if (cfg.station === 20.0) r = Math.pow(Math.max(base198 * 1.5, 0.04), alpha);
+          else if (cfg.station === 20.5) r = Math.pow(Math.max(base198 * 0.7, 0.015), alpha);
           else r = 0.0;
         } else {
           const base = baseRatios[cfg.station] ?? 0.5;
@@ -761,9 +845,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
   // --- MULTI-WATERLINE STATE (WL 6 s.d. WL 0) ---
   const [activeWlId, setActiveWlId] = useState<string>(() => {
-    return waterlineLevels[0]?.id || "WL6";
+    return initialActiveWlId || waterlineLevels[0]?.id || "WL6";
   });
+
+  useEffect(() => {
+    if (initialActiveWlId && initialActiveWlId !== activeWlId) {
+      setActiveWlId(initialActiveWlId);
+    }
+  }, [initialActiveWlId]);
   const [showAllWlOverlay, setShowAllWlOverlay] = useState<boolean>(true);
+  const waterlineFocusMode = false;
 
   // Per-waterline zone settings for AP stern overhang & FP bulbous bow
   const [wlZoneSettings, setWlZoneSettings] = useState<Record<string, WaterlineZoneSetting>>(() => {
@@ -792,9 +883,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         const merged: Record<number, number> = { ...generated };
         DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
           const val = waterlinesData[wl.id][cfg.station];
-          if (cfg.station >= 6.0 && cfg.station <= 15.0) {
-            merged[cfg.station] = maxBreadth;
-          } else if (val !== undefined && val <= maxBreadth) {
+          if (val !== undefined && !isNaN(val)) {
             merged[cfg.station] = val;
           }
         });
@@ -827,12 +916,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         const merged: Record<number, number> = { ...generated };
 
         DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
-          if (cfg.station >= 6.0 && cfg.station <= 15.0) {
-            merged[cfg.station] = maxBreadth;
-          } else if (incoming[cfg.station] !== undefined && incoming[cfg.station] <= maxBreadth) {
-            merged[cfg.station] = incoming[cfg.station];
-          } else if (prev[cfg.station] !== undefined && prev[cfg.station] <= maxBreadth) {
-            merged[cfg.station] = prev[cfg.station];
+          const val = incoming[cfg.station] ?? prev[cfg.station];
+          if (val !== undefined && !isNaN(val)) {
+            merged[cfg.station] = val;
           }
         });
         updatedAll[wl.id] = merged;
@@ -878,7 +964,44 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const activeMaxHalfB = useMemo(() => (BWL / 2) * activeWlConfig.maxBreadthFactor, [BWL, activeWlConfig]);
 
   // --- VIEW MODE (PAGE 1: FULL SHEET, PAGE 2: SINGLE WATERLINE & CUSTOM STATIONS) ---
-  const [viewMode, setViewMode] = useState<"fullSheet" | "cleanCustom">("fullSheet");
+  const [localViewMode, setLocalViewMode] = useState<WaterPlaneViewMode>("fullSheet");
+  const viewMode = controlledViewMode ?? localViewMode;
+  const handleViewModeChange = (mode: WaterPlaneViewMode) => {
+    setLocalViewMode(mode);
+    onViewModeChange?.(mode);
+  };
+  const waterlineRibbonRef = useRef<HTMLDivElement>(null);
+  const waterlineRibbonDragRef = useRef<{ startX: number; startScrollLeft: number } | null>(null);
+
+  const handleWaterlineRibbonPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const ribbon = waterlineRibbonRef.current;
+    if (!ribbon || ribbon.scrollWidth <= ribbon.clientWidth) return;
+    waterlineRibbonDragRef.current = { startX: e.clientX, startScrollLeft: ribbon.scrollLeft };
+    ribbon.setPointerCapture(e.pointerId);
+  };
+
+  const handleWaterlineRibbonPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const ribbon = waterlineRibbonRef.current;
+    const drag = waterlineRibbonDragRef.current;
+    if (!ribbon || !drag) return;
+    ribbon.scrollLeft = drag.startScrollLeft - (e.clientX - drag.startX);
+  };
+
+  const handleWaterlineRibbonPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    waterlineRibbonDragRef.current = null;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  // --- COMPREHENSIVE SECTION & TABLE VISIBILITY TOGGLE STATES (COLLAPSIBLE FOR DECLUTTERED UI) ---
+  const [showParticulars, setShowParticulars] = useState<boolean>(true);
+  const [showVisualPlot, setShowVisualPlot] = useState<boolean>(true);
+  const [showSimpsonTable, setShowSimpsonTable] = useState<boolean>(true);
+  const [showHydrostaticResults, setShowHydrostaticResults] = useState<boolean>(true);
+  const [showFormulasBox, setShowFormulasBox] = useState<boolean>(true);
+  const [showMasterSummaryTable, setShowMasterSummaryTable] = useState<boolean>(true);
+  const [showCustomTable, setShowCustomTable] = useState<boolean>(true);
 
   // --- CUSTOM STATIONS STATE (PAGE 2) ---
   const [customStationCount, setCustomStationCount] = useState<number>(21);
@@ -922,6 +1045,32 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     return 26.0 + st * 8.0;
   };
 
+  // Focus WL replaces the 36-point display with 10 equal intervals spanning
+  // the complete waterline: source stations 0, 2, 4 ... 20 become labels 0..10.
+  const focusStationSources = activeZoneSetting.hasSternOverhang
+    ? [-2.0, 0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 20.0]
+    : [0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0];
+  const focusWaterlineStations = focusStationSources.map((sourceStation, index) => {
+    const sourceConfig = DEFAULT_STATIONS_CONFIG.find((cfg) => cfg.station === sourceStation);
+    return {
+      station: sourceStation,
+      label: String(index),
+      sourceConfig
+    };
+  });
+  const getFocusStationX = (st: number): number => {
+    const index = focusStationSources.indexOf(st);
+    return 4.0 + ((index < 0 ? 0 : index) / 10.0) * 200.0;
+  };
+  const getFocusCurveX = (st: number): number => {
+    const focusStart = activeZoneSetting.hasSternOverhang ? -2.0 : 0.0;
+    const focusEnd = activeZoneSetting.hasBulbousBow ? 21.0 : 20.0;
+    return 4.0 + ((st - focusStart) / (focusEnd - focusStart)) * 200.0;
+  };
+  const getRenderedStationX = (st: number): number => {
+    return waterlineFocusMode ? getFocusStationX(st) : getStationX(st);
+  };
+
   // Half-breadth to SVG Y coordinate mapper
   const getSvgY = (halfB: number): number => {
     // 0m is at Y=48.0 (baseline), 8m is at Y=10.0
@@ -929,8 +1078,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   };
 
   const handlePointerDown = (e: React.PointerEvent<SVGCircleElement>, station: number) => {
-    // Fore Peak points (stations 20, 20.5, 21) and PMB points (stations 6.0 to 15.0) are fixed / not draggable
-    if (station >= 20.0 || (station >= 6.0 && station <= 15.0)) return;
+    // Terminal Fore Peak points (stations 20.5, 21.0 if not bulb) are fixed at 0
+    if (station >= 20.0 && !activeZoneSetting.hasBulbousBow) return;
 
     e.preventDefault();
     e.stopPropagation();
@@ -961,17 +1110,32 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     const deltaMeters = deltaPixels / pxPerMeter;
 
     let newHalfB = dragStartRef.current.startHalfB + deltaMeters;
-    newHalfB = Math.max(0, Math.min(maxHalfB, newHalfB));
+    newHalfB = Number(Math.max(0, Math.min(maxHalfB, newHalfB)).toFixed(3));
 
     setAllWaterlinesData((prevAll) => {
       const current = prevAll[activeWlId] || {};
-      return {
-        ...prevAll,
-        [activeWlId]: {
-          ...current,
-          [draggingStation]: Number(newHalfB.toFixed(3))
-        }
+      const updatedWl = {
+        ...current,
+        [draggingStation]: newHalfB
       };
+
+      // If dragging Midship St. 10 or PMB station, harmonize PMB stations (6..15)
+      if (draggingStation === 10.0 || (draggingStation >= 6.0 && draggingStation <= 15.0)) {
+        for (let s = 6.0; s <= 15.0; s += 1.0) {
+          updatedWl[s] = newHalfB;
+        }
+      }
+
+      const updatedAll = {
+        ...prevAll,
+        [activeWlId]: updatedWl
+      };
+
+      lastPropDataJson.current = JSON.stringify(updatedAll);
+      if (onUpdateWaterlinesData) {
+        onUpdateWaterlinesData(updatedAll);
+      }
+      return updatedAll;
     });
   };
 
@@ -985,7 +1149,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       setDraggingStation(null);
       dragStartRef.current = null;
 
-      // Commit update to parent on release
+      // Final commit on release
       setAllWaterlinesData((latestAll) => {
         lastPropDataJson.current = JSON.stringify(latestAll);
         if (onUpdateWaterlinesData) {
@@ -1107,7 +1271,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     }
 
     const color = WATERLINE_PALETTE[(waterlineLevels.length + 3) % WATERLINE_PALETTE.length] || "#06b6d4";
-    const badge = `Sarat ${(fraction * 100).toFixed(1)}% T (${customZ.toFixed(2)}m)`;
+    const badge = `Draft ${(fraction * 100).toFixed(1)}% T (${customZ.toFixed(2)}m)`;
 
     const newWl: WaterlineConfig = {
       id,
@@ -1143,7 +1307,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
   const handleDeleteWaterline = (idToDelete: string) => {
     if (waterlineLevels.length <= 3) {
-      alert("Minimal diperlukan 3 Garis Air (DWL, Sarat Antara, dan Lunas) untuk menjamin kontinuitas perhitungan Lines Plan.");
+      alert("At least 3 waterlines (DWL, intermediate draft, and baseline) are required for Lines Plan continuity.");
       return;
     }
     const nextLevels = waterlineLevels.filter((w) => w.id !== idToDelete);
@@ -1635,28 +1799,32 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               >
                 {tick}
               </text>
-              <line 
-                x1="2" 
-                y1={yPos} 
-                x2="204" 
-                y2={yPos} 
-                stroke="#1e293b" 
-                strokeWidth="0.18" 
-                strokeDasharray="1,1" 
-              />
+              {!waterlineFocusMode && (
+                <line 
+                  x1="2" 
+                  y1={yPos} 
+                  x2="204" 
+                  y2={yPos} 
+                  stroke="#1e293b" 
+                  strokeWidth="0.18" 
+                  strokeDasharray="1,1" 
+                />
+              )}
             </g>
           );
         })}
 
-        <line x1="4" y1="48" x2="206" y2="48" stroke="#475569" strokeWidth="0.4" strokeDasharray="1.5,1.5" />
+        {!waterlineFocusMode && (
+          <line x1="4" y1="48" x2="206" y2="48" stroke="#475569" strokeWidth="0.4" strokeDasharray="1.5,1.5" />
+        )}
         <text x="2" y="51.5" fill="#64748b" fontSize="2.4" fontFamily="monospace" textAnchor="end">
           CL
         </text>
 
         {/* Station Number Labels along Baseline */}
-        {DEFAULT_STATIONS_CONFIG.map((cfg) => {
-          const xPos = getStationX(cfg.station);
-          const isMidship = cfg.station === 10.0;
+        {(waterlineFocusMode ? focusWaterlineStations : activeStationsConfig).map((cfg, index) => {
+              const xPos = waterlineFocusMode ? getFocusStationX(cfg.station) : getRenderedStationX(cfg.station);
+          const isMidship = !waterlineFocusMode && cfg.station === 10.0;
           const isAp = cfg.station === 0.0;
           const isFp = cfg.station === 20.0;
           const isStationB = cfg.station === -2.0;
@@ -1678,7 +1846,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <text 
                 x={xPos} 
                 y={isAp || isFp || isMidship ? "51.5" : Number.isInteger(cfg.station) ? "51.5" : "53.2"} 
-                fill={isAp || isFp || isMidship ? "#e2e8f0" : isStationB || isStationA ? "#fde68a" : cfg.station > 20.0 ? "#c084fc" : Number.isInteger(cfg.station) ? "#cbd5e1" : "#64748b"} 
+                fill={waterlineFocusMode ? "#0f172a" : isAp || isFp || isMidship ? "#e2e8f0" : isStationB || isStationA ? "#fde68a" : cfg.station > 20.0 ? "#c084fc" : Number.isInteger(cfg.station) ? "#cbd5e1" : "#64748b"} 
                 fontSize={isAp || isFp || isMidship ? "2.3" : isStationB || isStationA ? "2.1" : Number.isInteger(cfg.station) ? "2.0" : "1.5"} 
                 fontWeight={isAp || isFp || isMidship || isStationB || isStationA || Number.isInteger(cfg.station) ? "bold" : "normal"}
                 fontFamily="monospace" 
@@ -1704,7 +1872,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         })}
 
         {/* 5. MULTI-WATERLINE GHOST / OVERLAY CURVES */}
-        {showAllWlOverlay &&
+        {showAllWlOverlay && !waterlineFocusMode &&
           waterlineLevels.map((wl) => {
             if (wl.id === activeWlId) return null;
             const wlData = allWaterlinesData[wl.id] || {};
@@ -1746,12 +1914,53 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           })}
 
         {/* 6. ACTIVE WATERLINE CURVE */}
+        {waterlineFocusMode && (
+          <g className="waterline-focus-guides" pointerEvents="none">
+            {/* Exactly eleven clear station lines, from gading 0 to gading 10. */}
+            {focusWaterlineStations.map((cfg, index) => {
+              const focusStart = activeZoneSetting.hasSternOverhang ? -2.0 : 0.0;
+              const focusEnd = activeZoneSetting.hasBulbousBow ? 21.0 : 20.0;
+              const focusStation = focusStart + (index / 10.0) * (focusEnd - focusStart);
+              const x = 4.0 + (index / 10.0) * 200.0;
+              const isEndStation = index === focusWaterlineStations.length - 1;
+              const ordinate = evaluatePchip1D(
+                calculatedRows.map((row) => ({ x: row.station, y: row.halfBreadth })),
+                focusStation
+              );
+              return (
+                <line
+                  key={`focus-station-guide-${cfg.station}`}
+                  x1={x}
+                  y1={getSvgY(ordinate)}
+                  x2={x}
+                  y2="48"
+                  stroke={isEndStation ? "#f59e0b" : "#0891b2"}
+                  strokeWidth={isEndStation ? "0.7" : "0.48"}
+                  strokeDasharray="none"
+                  opacity="0.95"
+                />
+              );
+            })}
+            <text
+              x="204"
+              y="6"
+              fill="#d97706"
+              fontSize="2.3"
+              fontFamily="monospace"
+              fontWeight="bold"
+              textAnchor="end"
+            >
+              GADING 10
+            </text>
+          </g>
+        )}
+
         {(() => {
           const startStation = activeZoneSetting.hasSternOverhang ? -2.0 : 0.0;
           const endStation = activeZoneSetting.hasBulbousBow ? 21.0 : 20.0;
           const activeHullRows = calculatedRows.filter((r) => r.station >= startStation && r.station <= endStation);
           const curvePts = activeHullRows.map((r) => ({
-            x: getStationX(r.station),
+            x: waterlineFocusMode ? getFocusCurveX(r.station) : getRenderedStationX(r.station),
             y: getSvgY(r.halfBreadth)
           }));
           const smoothPath = getSmoothPathD(curvePts);
@@ -1797,21 +2006,23 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         })()}
 
         {/* 6. CONTROL MARKER POINTS ALONG THE WATERLINE (CLEAN - NO VERTICAL STRIPES) */}
-        {!isPreviewMode &&
-          calculatedRows.map((r, idx) => {
-            const x = getStationX(r.station);
+        {!isPreviewMode && !waterlineFocusMode &&
+          calculatedRows
+            .filter((r) => (waterlineFocusMode ? focusWaterlineStations : activeStationsConfig).some((c) => c.station === r.station))
+            .map((r, idx) => {
+            const x = getRenderedStationX(r.station);
             const y = getSvgY(r.halfBreadth);
-            const isMidship = r.station === 10.0;
+            const isMidship = !waterlineFocusMode && r.station === 10.0;
             const isAp = r.station === 0.0;
             const isFpZone = r.station >= 20.0; // St. 31 (FP), St. 32 (FP-A), St. 33 (FP-B)
             const isPmb = r.station >= 6.0 && r.station <= 15.0;
-            const isFixed = isFpZone || isPmb;
+            const isFixed = isFpZone; // PMB & Station 10 (MID) are draggable and synced with Section 10
             const isDragging = draggingStation === r.station;
 
             const fillColor = isDragging
               ? "#facc15"
               : isMidship
-              ? "#06b6d4"
+              ? "#38bdf8"
               : isAp
               ? "#f59e0b"
               : isFpZone
@@ -1820,38 +2031,53 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
             return (
               <g key={`ordinate-${idx}`}>
+                {/* Static CAD Indicator Ring for Midship Station 10 */}
+                {isMidship && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={isDragging ? "2.6" : "2.0"}
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth="0.45"
+                    opacity="0.8"
+                    strokeDasharray="1.2,1.2"
+                  />
+                )}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isDragging ? "1.15" : isFpZone ? "0.85" : isMidship ? "0.9" : "0.75"}
+                  r={isDragging ? "1.4" : isMidship ? "1.25" : isFpZone ? "0.85" : "0.8"}
                   fill={fillColor}
-                  stroke={isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff"}
-                  strokeWidth={isDragging ? "0.25" : "0.18"}
+                  stroke={isMidship ? "#ecfeff" : isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff"}
+                  strokeWidth={isDragging || isMidship ? "0.3" : "0.18"}
                   className={
                     isFixed
                       ? "cursor-default"
                       : isDragging
                       ? "cursor-ns-resize"
-                      : "cursor-ns-resize hover:opacity-100"
+                      : "cursor-ns-resize"
                   }
                   style={{ touchAction: "none" }}
                   onPointerDown={(e) => handlePointerDown(e, r.station)}
                 >
                   <title>{`St. ${r.label}: 0.5B = ${r.halfBreadth.toFixed(3)} m ${
-                    isFpZone
+                    isMidship
+                      ? '(Station 10 / MID - Real-time linked to the midship section)'
+                      : isFpZone
                       ? `(${r.label} - Fore Peak 0.00 m)`
                       : isPmb
-                      ? '(PMB - Titik Maksimum 0.5B)'
-                      : '(Bisa Digerakkan)'
+                      ? '(PMB - Parallel Middle Body: Klik & Geser Atas-Bawah)'
+                      : '(Bisa Digerakkan Geser Atas-Bawah)'
                   }`}</title>
                 </circle>
                 {isFullPlanView && (
                   <circle
                     cx={x}
                     cy={48 + (48 - y)}
-                    r={isFpZone ? "0.85" : isMidship ? "0.9" : "0.75"}
+                    r={isFpZone ? "0.85" : isMidship ? "1.25" : "0.8"}
                     fill={fillColor}
-                    stroke={isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff"}
+                    stroke={isMidship ? "#ecfeff" : isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff"}
                     strokeWidth="0.18"
                     opacity="0.85"
                   />
@@ -1861,7 +2087,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           })}
 
         {/* 7. LCF MARKER */}
-        {(() => {
+        {!waterlineFocusMode && (() => {
           const lcfX = getStationX(10.0) + (LCF / (l || 1)) * 8.0;
           return (
             <g>
@@ -1878,6 +2104,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         })()}
 
         {/* 8. 5-SEGMENT AREA ZONES BAR */}
+        <g display={waterlineFocusMode ? "none" : "inline"}>
         <g 
           onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
           className="cursor-pointer transition-all"
@@ -1969,12 +2196,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         <text x="166" y={dimTextY1} fill="#94a3b8" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
           {language === "en" ? `Fore lf = ${lf.toFixed(4)} m` : `Haluan lf = ${lf.toFixed(4)} m`}
         </text>
+        </g>
       </>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className={compact ? "w-full flex flex-col space-y-2 flex-1 min-h-0 h-full" : "space-y-6"}>
       {isFullscreenPlot && (
         <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-3xl flex flex-col p-2 sm:p-3 overflow-hidden select-none animate-in fade-in duration-200">
           {/* COMPACT TOP COCKPIT HEADER */}
@@ -1998,12 +2226,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               {/* Middle: Live HUD Telemetry Strip */}
               <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-1 font-mono text-xs shadow-inner">
                 <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-[10px] text-slate-400 uppercase">Koreksi:</span>
+                  <span className="text-[10px] text-slate-400 uppercase">Correction:</span>
                   <span className={`font-bold ${isCorrectionValid ? "text-emerald-400" : "text-rose-400"}`}>
                     {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
                   </span>
                   <span className={`text-[9px] px-1 py-0.2 rounded font-bold ${isCorrectionValid ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>
-                    {isCorrectionValid ? "MEMENUHI" : "DEVIASI"}
+                    {isCorrectionValid ? "VALID" : "DEVIATION"}
                   </span>
                 </div>
                 <span className="text-slate-700 hidden md:inline">|</span>
@@ -2033,7 +2261,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       ? "bg-amber-500/20 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/40 shadow-sm"
                       : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
                   }`}
-                  title="Aktifkan / Nonaktifkan Buritan Overhang di St. B & A"
+                  title="Enable / disable stern overhang at St. B & A"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-amber-400" : "bg-slate-600"}`} />
                   <span>Buritan: {activeZoneSetting.hasSternOverhang ? "ON" : "OFF"}</span>
@@ -2046,7 +2274,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       ? "bg-purple-500/20 border-purple-500/60 text-purple-300 ring-1 ring-purple-500/40 shadow-sm"
                       : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
                   }`}
-                  title="Aktifkan / Nonaktifkan Tonjolan Haluan di St. FP-A & FP-B (Bulbous Bow)"
+                  title="Enable / disable the bulbous bow at St. FP-A & FP-B"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-purple-400" : "bg-slate-600"}`} />
                   <span>Bulbous FP: {activeZoneSetting.hasBulbousBow ? "ON" : "OFF"}</span>
@@ -2070,6 +2298,21 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 >
                   <RotateCcw size={15} />
                 </button>
+                {/* Station Density Switcher */}
+                <button
+                  type="button"
+                  onClick={() => handleDensityChange(stationDensity === "all" ? "standard" : "all")}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border flex items-center space-x-1 cursor-pointer ${
+                    stationDensity === "all"
+                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                      : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                  }`}
+                  title={waterlineFocusMode ? "Mode Focus WL menampilkan tepat 11 gading: 0 sampai 10" : "Beralih antara semua gading lengkap (36 titik) dan gading standar (23 titik)"}
+                >
+                  <SlidersHorizontal size={11} className="text-cyan-400" />
+                  <span>{waterlineFocusMode ? "Frames: 0–10 (11)" : stationDensity === "all" ? "Frames: All (36)" : "Frames: Standard (23)"}</span>
+                </button>
+
                 <button
                   onClick={() => setIsFullPlanView(!isFullPlanView)}
                   className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
@@ -2077,7 +2320,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       ? "bg-cyan-500 text-white shadow-sm"
                       : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
                   }`}
-                  title="Tampilkan Simetri Penuh Kiri & Kanan (Port & Starboard)"
+                  title="Show full port and starboard symmetry"
                 >
                   <Maximize2 size={13} />
                   <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri Penuh") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
@@ -2089,7 +2332,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       ? "bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 shadow-sm"
                       : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200"
                   }`}
-                  title="Tampilkan / Sembunyikan Garis Air Lainnya (Multi-Waterline Overlay)"
+                  title="Show / hide other waterlines (multi-waterline overlay)"
                 >
                   <Layers size={13} />
                   <span>{showAllWlOverlay ? "Multi-WL: ON" : "Multi-WL: OFF"}</span>
@@ -2101,7 +2344,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
                       : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
                   }`}
-                  title={isPreviewMode ? "Tampilkan Titik & Garis Bantu (Edit Mode)" : "Sembunyikan Titik & Garis Bantu (Preview Mode)"}
+                    title={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}
                 >
                   {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
@@ -2131,7 +2374,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <button
                 onClick={() => setIsWlManagerOpen(true)}
                 className="px-2 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/40 text-cyan-300 hover:text-white rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shrink-0 mr-1 shadow-sm"
-                title="Kelola & Kustomisasi Garis Air (Presets / Tambah / Hapus WL)"
+                title="Manage and customize waterlines (presets / add / remove)"
               >
                 <SlidersHorizontal size={12} />
                 <span>Kelola WL ({waterlineLevels.length})</span>
@@ -2192,14 +2435,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <span className="w-2 h-2 rounded-full bg-cyan-400" />
               <span>Geser titik pada kurva untuk mengubah bentuk garis air. Tekan <strong>Esc</strong> atau tombol silang untuk kembali.</span>
             </span>
-            <span className="text-slate-500">36 Stasiun Gading</span>
+            <span className="text-slate-500">36 Frame Stations</span>
           </div>
         </div>
       )}
 
       {/* HEADER: LINES PLAN TITLE BLOCK & SHIP MAIN PARTICULARS */}
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 gap-4">
+      {!visualOnly && (
+        <>
+          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 gap-3">
           <div>
             <div className="flex items-center space-x-2.5">
               <div className="p-2 rounded-xl bg-cyan-600/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
@@ -2208,7 +2453,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <div>
                 <div className="flex items-center space-x-2">
                   <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-                    {language === "en" ? "Water Plane Calculation Sheet" : "Tabel Perhitungan Garis Air (Water Plane Calculation Sheet)"}
+                    Waterplane Hydrostatics
                   </h2>
                   <span
                     className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
@@ -2222,43 +2467,51 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {language === "en"
-                    ? "Calculation of Waterplane Area (AWL), Longitudinal Center of Flotation (LCF), Transverse (IT) & Longitudinal (IL) Moment of Inertia, and Cw coefficient."
+                    ? "AWL, LCF, moments of inertia, and waterplane coefficient."
                     : "Perhitungan Luas Garis Air (AWL), Titik Apung Memanjang (LCF), Momen Inersia Melintang (IT) & Memanjang (IL), serta Koefisien Cw."}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 self-end lg:self-auto">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 self-end lg:self-auto max-w-full">
+            <button
+              type="button"
+              onClick={() => setShowParticulars(!showParticulars)}
+              className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold flex items-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
+              title={showParticulars ? "Hide main particulars" : "Show main particulars"}
+            >
+              {showParticulars ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+            </button>
             <button
               onClick={handleAutoFineTune}
-              className="py-2 px-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-emerald-600/20"
-              title="Otomatis selaraskan ordinat agar koreksi <= +/- 0.05%"
+              className="py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-emerald-600/20"
+              title="Automatically adjust ordinates until correction is within ±0.05%"
             >
               <Wand2 size={14} />
-              <span>Auto-Fit (&le; &plusmn;0.05%)</span>
+              <span>Auto-Fit</span>
             </button>
             <button
               onClick={handleReset}
-              className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
-              title="Reset ordinat ke kurva standar"
+              className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
+              title="Reset ordinates to the standard design curve"
             >
               <RotateCcw size={14} />
               <span>Reset</span>
             </button>
             <button
               onClick={handleExportCSV}
-              className="py-2 px-3.5 bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
-              title="Unduh data tabel dalam format CSV"
+              className="py-2 px-2.5 bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+              title="Download calculation data as CSV"
             >
               <Download size={14} />
-              <span>Export CSV</span>
+              <span>CSV</span>
             </button>
             {onSave && (
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className={`py-2 px-4 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-lg ${
+                className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-lg ${
                   isSaving
                     ? "bg-amber-600/30 text-amber-300 border border-amber-500/50 animate-pulse"
                     : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white border border-emerald-400/40 shadow-emerald-950/40 hover:scale-[1.02]"
@@ -2266,346 +2519,618 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 title={language === "en" ? "Save all waterline calculations permanently (Ctrl+S)" : "Simpan semua kalkulasi garis air permanen (Ctrl+S)"}
               >
                 <Save size={14} className={isSaving ? "animate-spin" : ""} />
-                <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save Permanently" : "Simpan Permanen")}</span>
+                <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save" : "Simpan")}</span>
               </button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 font-mono text-xs">
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">LBP</span>
-            <div className="font-bold text-cyan-600 dark:text-cyan-300">{LBP.toFixed(2)} m</div>
+        {showParticulars && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 bg-slate-50 dark:bg-slate-950/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 font-mono text-xs">
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">LBP</span>
+              <div className="font-bold text-cyan-600 dark:text-cyan-300">{LBP.toFixed(2)} m</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">LWL</span>
+              <div className="font-bold text-cyan-600 dark:text-cyan-300">{LWL.toFixed(2)} m</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">BWL (Breadth)</span>
+              <div className="font-bold text-cyan-600 dark:text-cyan-300">{BWL.toFixed(2)} m</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">Draft (T)</span>
+              <div className="font-bold text-cyan-600 dark:text-cyan-300">{T.toFixed(2)} m</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">Block Coefficient (Cb)</span>
+              <div className="font-bold text-cyan-600 dark:text-cyan-300">{cb.toFixed(3)}</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">Target Cw</span>
+              <div className="font-bold text-amber-600 dark:text-amber-300">{targetCw.toFixed(3)}</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">Frame Spacing (l)</span>
+              <div className="font-bold text-slate-700 dark:text-slate-300">{l.toFixed(3)} m</div>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] text-slate-500 uppercase">AWL Desain</span>
+              <div className="font-bold text-emerald-600 dark:text-emerald-400">{AWL_rancangan.toFixed(2)} m&sup2;</div>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">LWL</span>
-            <div className="font-bold text-cyan-600 dark:text-cyan-300">{LWL.toFixed(2)} m</div>
-          </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">BWL (Lebar)</span>
-            <div className="font-bold text-cyan-600 dark:text-cyan-300">{BWL.toFixed(2)} m</div>
-          </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Sarat Air (T)</span>
-            <div className="font-bold text-cyan-600 dark:text-cyan-300">{T.toFixed(2)} m</div>
-          </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Koef. Balok (Cb)</span>
-            <div className="font-bold text-cyan-600 dark:text-cyan-300">{cb.toFixed(3)}</div>
-          </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Target Cw</span>
-            <div className="font-bold text-amber-600 dark:text-amber-300">{targetCw.toFixed(3)}</div>
-          </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">Jarak Gading (l)</span>
-            <div className="font-bold text-slate-700 dark:text-slate-300">{l.toFixed(3)} m</div>
-          </div>
-          <div className="space-y-0.5">
-            <span className="text-[10px] text-slate-500 uppercase">AWL Desain</span>
-            <div className="font-bold text-emerald-600 dark:text-emerald-400">{AWL_rancangan.toFixed(2)} m&sup2;</div>
-          </div>
-        </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
-        <div className="flex items-center space-x-1.5">
-          <button
-            onClick={() => setViewMode("fullSheet")}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === "fullSheet"
-                ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-300 shadow-md border border-slate-200 dark:border-slate-700"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <TableIcon size={15} />
-            <span>{language === "en" ? "Page 1: Full Simpson Sheet & Visual Plot" : "Halaman 1: Tabel Integrasi Simpson & Plot Visual"}</span>
-          </button>
-          <button
-            onClick={() => setViewMode("cleanCustom")}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              viewMode === "cleanCustom"
-                ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-300 shadow-md border border-slate-200 dark:border-slate-700"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            <Layers size={15} />
-            <span>{language === "en" ? "Page 2: Custom Stations & Single Waterline Studio" : "Halaman 2: Studio Garis Air & Evaluasi Gading Kustom"}</span>
-          </button>
-        </div>
-      </div>
+      {showPageTabs && <WaterPlanePageTabs viewMode={viewMode} onChange={handleViewModeChange} />}
+        </>
+      )}
 
       {viewMode === "fullSheet" && (
         <>
           {/* WATERLINE LEVEL SELECTOR NAVIGATOR TABS */}
-          <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-xl space-y-3 select-none">
-            {/* Top Bar: Title & Active Parameters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-              <div className="flex items-center space-x-3 shrink-0">
-                <div className="p-2 rounded-xl bg-cyan-600/15 border border-cyan-500/30 text-cyan-400">
-                  <Sliders size={17} />
-                </div>
-                <div className="flex items-center space-x-2.5">
-                  <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider whitespace-nowrap">
-                    {language === "en" ? "Waterline Navigator" : "Pilih Garis Air (Waterline)"}
-                  </h4>
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-bold border border-cyan-500/30 whitespace-nowrap">
-                    Aktif: {activeWlConfig.shortName}
-                  </span>
-                </div>
-              </div>
+          {!tablesOnly && (
+            <>
+              {compact ? (
+                <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 backdrop-blur-xl shadow-sm select-none shrink-0 space-y-2.5">
+                  {/* TIER 1: Primary Controls & Presets & Actions */}
+                  <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    {/* Left Group: Waterline Presets + Inline Stepper */}
+                    <div className="flex items-center space-x-2.5 overflow-x-auto">
+                      {/* Waterline Preset & Stepper Group */}
+                      <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-inner shrink-0">
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 px-1.5 font-semibold flex items-center space-x-1">
+                          <Layers size={12} className="text-cyan-500 dark:text-cyan-400" />
+                          <span className="hidden sm:inline">Preset:</span>
+                        </span>
+                        {[4, 7, 11, 13, 21].map((cnt) => (
+                          <button
+                            key={`compact-preset-${cnt}`}
+                            type="button"
+                            onClick={() => handleApplyPreset(cnt)}
+                            className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border cursor-pointer ${
+                              waterlineLevels.length === cnt
+                                ? "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-400 dark:border-cyan-500/40 shadow-xs font-black"
+                                : "bg-transparent text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/60"
+                            }`}
+                            title={`Apply ${cnt} waterlines`}
+                          >
+                            {cnt}
+                          </button>
+                        ))}
 
-              {/* Unified Telemetry Parameter Strip */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-950/80 border border-slate-800/90 rounded-xl px-3.5 py-1.5 font-mono text-xs shadow-inner">
-                <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-slate-400">Sarat</span>
-                  <strong className="text-cyan-400 font-bold">Z = {activeDraftZ.toFixed(2)} m</strong>
-                </div>
-                <span className="text-slate-700 hidden sm:inline">|</span>
-                <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-slate-400">Target AWL:</span>
-                  <strong className="text-cyan-400 font-bold">{activeTargetAWL.toFixed(2)} m&sup2;</strong>
-                </div>
-                <span className="text-slate-700 hidden sm:inline">|</span>
-                <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-slate-400">Target Cw:</span>
-                  <strong className="text-amber-400 font-bold">{activeTargetCw.toFixed(3)}</strong>
-                </div>
-              </div>
-            </div>
+                        {/* Compact Stepper */}
+                        <div className="flex items-center pl-1 border-l border-slate-300 dark:border-slate-800 space-x-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = Math.max(3, desiredWlCount - 1);
+                              setDesiredWlCount(next);
+                              handleApplyPreset(next);
+                            }}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            title="Kurangi 1 WL"
+                          >
+                            -
+                          </button>
+                          <span className="w-5 text-center text-[11px] font-mono font-bold text-cyan-700 dark:text-cyan-300">
+                            {waterlineLevels.length}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = Math.min(25, desiredWlCount + 1);
+                              setDesiredWlCount(next);
+                              handleApplyPreset(next);
+                            }}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            title="Tambah 1 WL"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
 
-            {/* Waterlines Grid / Segmented Control Bar */}
-            <div className="space-y-2.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <span className="text-[11px] font-mono text-slate-400 font-semibold uppercase tracking-wider">
-                  Pilih Garis Air Aktif ({waterlineLevels.length} Level Garis Air):
-                </span>
+                    {/* Right Group: Accuracy Status + Auto-Fit + Reset + Studio WL */}
+                    <div className="flex items-center space-x-2 shrink-0">
+                      {/* Live HUD Status Pill */}
+                      <div
+                        className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold transition-all shadow-xs ${
+                          isCorrectionValid
+                            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                            : "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-500/30 text-rose-700 dark:text-rose-300"
+                        }`}
+                        title={`Target AWL: ${activeTargetAWL.toFixed(2)} m² | AWL Hitung: ${AWL.toFixed(2)} m²`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${isCorrectionValid ? "bg-emerald-500" : "bg-rose-500 animate-pulse"}`} />
+                        <span>Correction: {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden sm:inline ${
+                          isCorrectionValid
+                            ? "bg-emerald-100 dark:bg-slate-900/60 text-emerald-800 dark:text-emerald-300"
+                            : "bg-rose-100 dark:bg-slate-900/60 text-rose-800 dark:text-rose-300"
+                        }`}>
+                          {isCorrectionValid ? "VALID" : "DEVIATION"}
+                        </span>
+                      </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Inline Quick WL Count Input & Auto-Generate */}
-                  <div className="flex items-center space-x-1.5 bg-slate-950/80 border border-slate-700/80 rounded-xl px-2 py-1 shadow-sm">
-                    <span className="text-[11px] font-mono text-slate-300 font-medium">Berapa WL:</span>
-                    <button
-                      type="button"
-                      onClick={() => setDesiredWlCount((prev) => Math.max(3, prev - 1))}
-                      className="w-5 h-5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs cursor-pointer transition-all"
-                      title="Kurangi 1 WL"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={3}
-                      max={25}
-                      value={desiredWlCount}
-                      onChange={(e) => {
-                        const v = parseInt(e.target.value, 10);
-                        if (!isNaN(v)) setDesiredWlCount(Math.max(3, Math.min(25, v)));
-                      }}
-                      className="w-9 bg-slate-900 border border-slate-700 rounded text-center text-xs font-mono font-bold text-cyan-300 py-0.5 focus:outline-none focus:border-cyan-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setDesiredWlCount((prev) => Math.min(25, prev + 1))}
-                      className="w-5 h-5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs cursor-pointer transition-all"
-                      title="Tambah 1 WL"
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleApplyPreset(desiredWlCount)}
-                      className="px-2 py-0.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer shadow-sm flex items-center space-x-1"
-                      title={`Otomatis buat ${desiredWlCount} garis air berjarak seragam dari lunas hingga DWL`}
-                    >
-                      <Sparkles size={11} />
-                      <span>Buat Otomatis</span>
-                    </button>
+                      {/* Auto-Fit Button */}
+                      <button
+                        type="button"
+                        onClick={handleAutoFineTune}
+                        className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-mono text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5 cursor-pointer ring-1 ring-emerald-400/30 active:scale-95"
+                        title="Otomatis ratakan & selaraskan kurva garis air agar koreksi ≤ ±0.05%"
+                      >
+                        <Wand2 size={13} />
+                        <span>Auto-Fit</span>
+                      </button>
+
+                      {/* Reset Button */}
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-xl transition-all cursor-pointer border border-slate-300 dark:border-slate-800 shadow-xs"
+                        title="Reset ordinat garis air ke kurva desain standar"
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+
+                      {/* Studio Kustomisasi Modal Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => setIsWlManagerOpen(true)}
+                        className="px-2.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/60 dark:hover:bg-cyan-900/60 border border-cyan-300 dark:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-white rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-xs"
+                        title="Open the full waterline count and level customization studio"
+                      >
+                        <SlidersHorizontal size={13} />
+                        <span className="hidden sm:inline">Studio WL</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => setIsWlManagerOpen(true)}
-                    className="px-3 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/40 text-cyan-300 hover:text-white rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-sm"
-                    title="Buka Studio Kustomisasi Jumlah & Level Garis Air"
-                  >
-                    <SlidersHorizontal size={13} />
-                    <span>Studio Kustomisasi</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                {waterlineLevels.map((wl) => {
-                  const isActive = wl.id === activeWlId;
-                  const wlSummary = masterSummary.find((s) => s.id === wl.id);
-                  const isWlValid = wlSummary?.isValid ?? false;
-                  const wlDraftZ = wl.draftFraction * T;
-
-                  return (
-                    <button
-                      key={wl.id}
-                      onClick={() => setActiveWlId(wl.id)}
-                      className={`flex items-center space-x-2 py-1.5 px-2.5 rounded-xl font-mono transition-all cursor-pointer border relative group shrink-0 ${
-                        isActive
-                          ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-600/30 border-cyan-400 ring-2 ring-cyan-400/40 scale-[1.02]"
-                          : "bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 hover:text-white border-slate-700/70"
+                  {/* TIER 2: Waterline Navigation Ribbon */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
+                    <div
+                      ref={waterlineRibbonRef}
+                      className={`flex items-center space-x-2 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                        waterlineRibbonDragRef.current ? "cursor-grabbing" : "cursor-grab"
                       }`}
-                      title={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)} m (${wl.badge})`}
+                      onPointerDown={handleWaterlineRibbonPointerDown}
+                      onPointerMove={handleWaterlineRibbonPointerMove}
+                      onPointerUp={handleWaterlineRibbonPointerUp}
+                      onPointerCancel={handleWaterlineRibbonPointerUp}
+                      onWheel={(e) => {
+                        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                          e.currentTarget.scrollLeft += e.deltaY;
+                        }
+                      }}
+                      style={{ touchAction: "pan-x" }}
                     >
-                      <span className="w-2 h-2 rounded-full shadow-sm shrink-0" style={{ backgroundColor: wl.color }} />
-                      <span className="text-xs font-bold whitespace-nowrap">{wl.shortName}</span>
-                      <span className={`px-1.5 py-0.5 rounded font-mono font-medium text-[10px] whitespace-nowrap ${
-                        isActive ? "bg-white/20 text-white" : "bg-slate-900/90 text-slate-400"
-                      }`}>
-                        Z={wlDraftZ.toFixed(2)}m
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
+                        <Compass size={12} className="text-cyan-500 dark:text-cyan-400" />
+                        <span>Select Waterline ({waterlineLevels.length}):</span>
                       </span>
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400 shadow-sm shadow-emerald-400/50" : "bg-rose-400 shadow-sm shadow-rose-400/50"}`}
-                        title={isWlValid ? "Koreksi Memenuhi Syarat (≤ ±0.05%)" : "Deviasi Melebihi Toleransi"}
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+                      {waterlineLevels.map((wl) => {
+                        const isActive = wl.id === activeWlId;
+                        const wlDraftZ = wl.draftFraction * T;
+                        const wlSummary = masterSummary.find((s) => s.id === wl.id);
+                        const isWlValid = wlSummary?.isValid ?? false;
+                        return (
+                          <button
+                            key={`compact-${wl.id}`}
+                            onClick={() => setActiveWlId(wl.id)}
+                            className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition-all border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
+                              isActive
+                                ? "bg-cyan-500 text-white border-cyan-600 ring-2 ring-cyan-400/40 shadow-sm"
+                                : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-950/80 dark:text-slate-300 border-slate-200 dark:border-slate-800 dark:hover:text-white dark:hover:bg-slate-800/60"
+                            }`}
+                            title={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)}m`}
+                          >
+                            <span className="w-2 h-2 rounded-full ring-1 ring-white/40" style={{ backgroundColor: wl.color }} />
+                            <span>{wl.shortName}</span>
+                            <span className={isActive ? "text-cyan-100 font-medium" : "text-slate-500 dark:text-slate-400 font-normal"}>
+                              {wlDraftZ.toFixed(2)}m
+                            </span>
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400 shadow-xs shadow-emerald-400/50" : "bg-rose-400 shadow-xs shadow-rose-400/50"}`}
+                              title={isWlValid ? "Meets requirement (≤ ±0.05%)" : "Deviation"}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
 
-          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center space-x-2">
-                <TrendingUp size={16} className="text-cyan-500 dark:text-cyan-400" />
-                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                  {language === "en"
-                    ? `Visual Waterplane Plot — ${activeWlConfig.name} (Z = ${activeDraftZ.toFixed(2)}m)`
-                    : `Plot Visual Garis Air — ${activeWlConfig.name} (Sarat Z = ${activeDraftZ.toFixed(2)} m)`}
-                </h3>
-              </div>
+                    {/* Live Parameters readout */}
+                    <div className="hidden lg:flex items-center space-x-2 font-mono text-[11px] text-slate-600 dark:text-slate-400 shrink-0 bg-slate-100 dark:bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-800/90 shadow-inner">
+                      <span>AWL: <strong className="text-cyan-700 dark:text-cyan-400">{AWL.toFixed(1)}m²</strong></span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <span>LCF: <strong className="text-amber-700 dark:text-amber-400">{LCF.toFixed(2)}m</strong></span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <span>Cw: <strong className="text-cyan-700 dark:text-cyan-300">{calculatedCw.toFixed(3)}</strong></span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-md space-y-3 select-none">
+                  {/* Top Bar: Title & Active Parameters */}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800/80">
+                    <div className="flex items-center space-x-3 shrink-0">
+                      <div className="p-2 rounded-xl bg-cyan-50 dark:bg-cyan-600/15 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+                        <Sliders size={17} />
+                      </div>
+                      <div className="flex items-center space-x-2.5">
+                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider whitespace-nowrap">
+                          {language === "en" ? "Waterline Navigator" : "Pilih Garis Air (Waterline)"}
+                        </h4>
+                        <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300 font-bold border border-cyan-200 dark:border-cyan-500/30 whitespace-nowrap">
+                          Aktif: {activeWlConfig.shortName}
+                        </span>
+                      </div>
+                    </div>
 
-              {/* Per-Waterline Zone Extension Toggles */}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={toggleSternOverhang}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1.5 cursor-pointer shadow-sm ${
-                    activeZoneSetting.hasSternOverhang
-                      ? "bg-amber-500/20 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/40"
-                      : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600"
-                  }`}
-                  title="Klik untuk Mengaktifkan / Menonaktifkan perpanjangan buritan di St. B & A (Stern Overhang). Luas AWL otomatis dikalibrasi ulang."
-                >
-                  <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-slate-600"}`} />
-                  <span>Buritan (AP Overhang): {activeZoneSetting.hasSternOverhang ? "ON" : "OFF (0m)"}</span>
-                </button>
+                    {/* Unified Telemetry Parameter Strip */}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/90 rounded-xl px-3.5 py-1.5 font-mono text-xs shadow-inner">
+                      <div className="flex items-center space-x-1.5 whitespace-nowrap">
+                        <span className="text-slate-500 dark:text-slate-400">Sarat</span>
+                        <strong className="text-cyan-700 dark:text-cyan-400 font-bold">Z = {activeDraftZ.toFixed(2)} m</strong>
+                      </div>
+                      <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+                      <div className="flex items-center space-x-1.5 whitespace-nowrap">
+                        <span className="text-slate-500 dark:text-slate-400">Target AWL:</span>
+                        <strong className="text-cyan-700 dark:text-cyan-400 font-bold">{activeTargetAWL.toFixed(2)} m&sup2;</strong>
+                      </div>
+                      <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+                      <div className="flex items-center space-x-1.5 whitespace-nowrap">
+                        <span className="text-slate-500 dark:text-slate-400">Target Cw:</span>
+                        <strong className="text-amber-700 dark:text-amber-400 font-bold">{activeTargetCw.toFixed(3)}</strong>
+                      </div>
+                    </div>
+                  </div>
 
-                <button
-                  onClick={toggleBulbousBow}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1.5 cursor-pointer shadow-sm ${
-                    activeZoneSetting.hasBulbousBow
-                      ? "bg-purple-500/20 border-purple-500/60 text-purple-300 ring-1 ring-purple-500/40"
-                      : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600"
-                  }`}
-                  title="Klik untuk Mengaktifkan / Menonaktifkan tonjolan haluan di St. FP-A & FP-B (Bulbous Bow). Luas AWL otomatis dikalibrasi ulang."
-                >
-                  <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-purple-400 shadow-sm shadow-purple-400/50" : "bg-slate-600"}`} />
-                  <span>Haluan (Bulbous FP): {activeZoneSetting.hasBulbousBow ? "ON" : "OFF (0m)"}</span>
-                </button>
-              </div>
-            </div>
+                  {/* Waterlines Grid / Segmented Control Bar */}
+                  <div className="space-y-2.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                        Select Active Waterline ({waterlineLevels.length} Levels):
+                      </span>
 
-            <div className="w-full bg-slate-900/95 dark:bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center p-3 group select-none shadow-2xl">
-              <div className="absolute top-3 right-3 z-20 flex items-center space-x-1.5 bg-slate-800/90 border border-slate-600/80 rounded-lg p-1 shadow-lg backdrop-blur-sm">
-                <button
-                  onClick={() => setIsFullscreenPlot(true)}
-                  className="px-2.5 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/40 text-cyan-300 hover:text-white rounded text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 shadow-sm"
-                  title="Buka Mode Layar Penuh (Interactive Studio dengan Live Koreksi)"
-                >
-                  <Maximize size={13} />
-                  <span>{language === "en" ? "Fullscreen" : "Layar Penuh"}</span>
-                </button>
-                <button
-                  onClick={() => setIsFullPlanView(!isFullPlanView)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
-                    isFullPlanView
-                      ? "bg-cyan-500 text-white shadow-sm"
-                      : "bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-cyan-300"
-                  }`}
-                  title="Tampilkan Simetri Penuh Kiri & Kanan (Port & Starboard)"
-                >
-                  <Maximize2 size={13} />
-                  <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri Penuh") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
-                </button>
-                <button
-                  onClick={() => setShowAllWlOverlay(!showAllWlOverlay)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
-                    showAllWlOverlay
-                      ? "bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 shadow-sm"
-                      : "bg-slate-700/80 hover:bg-slate-600 text-slate-400 hover:text-slate-200"
-                  }`}
-                  title="Tampilkan / Sembunyikan Garis Air Lainnya (Multi-Waterline Overlay)"
-                >
-                  <Layers size={13} />
-                  <span>{showAllWlOverlay ? "Multi-WL: ON" : "Multi-WL: OFF"}</span>
-                </button>
-                <button
-                  onClick={() => setIsPreviewMode(!isPreviewMode)}
-                  className="p-1.5 hover:bg-slate-700 rounded text-slate-300 hover:text-cyan-300 transition-all cursor-pointer"
-                  title={isPreviewMode ? "Tampilkan Titik & Garis Bantu (Edit Mode)" : "Sembunyikan Titik & Garis Bantu (Preview Mode)"}
-                >
-                  {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-                {onSave && (
-                  <button
-                    onClick={onSave}
-                    disabled={isSaving}
-                    className="px-2.5 py-1 bg-emerald-600/40 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-200 hover:text-white rounded text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shadow-sm ml-1"
-                    title={language === "en" ? "Save Waterline Offsets Permanently (Ctrl+S)" : "Simpan Data Garis Air Permanen (Ctrl+S)"}
-                  >
-                    <Save size={12} className={isSaving ? "animate-spin" : ""} />
-                    <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save" : "Simpan")}</span>
-                  </button>
-                )}
-              </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* Inline Quick WL Count Input & Auto-Generate */}
+                        <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2 py-1 shadow-xs">
+                          <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 font-medium">Berapa WL:</span>
+                          <button
+                            type="button"
+                            onClick={() => setDesiredWlCount((prev) => Math.max(3, prev - 1))}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            title="Kurangi 1 WL"
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min={3}
+                            max={25}
+                            value={desiredWlCount}
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value, 10);
+                              if (!isNaN(v)) setDesiredWlCount(Math.max(3, Math.min(25, v)));
+                            }}
+                            className="w-9 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-center text-xs font-mono font-bold text-cyan-700 dark:text-cyan-300 py-0.5 focus:outline-none focus:border-cyan-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setDesiredWlCount((prev) => Math.min(25, prev + 1))}
+                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            title="Tambah 1 WL"
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleApplyPreset(desiredWlCount)}
+                            className="px-2 py-0.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer shadow-xs flex items-center space-x-1"
+                            title={`Otomatis buat ${desiredWlCount} garis air berjarak seragam dari lunas hingga DWL`}
+                          >
+                            <Sparkles size={11} />
+                            <span>Buat Otomatis</span>
+                          </button>
+                        </div>
 
-              <div className={`w-full relative transition-all duration-300 ${isFullPlanView ? "h-72 sm:h-88 md:h-[420px]" : "h-56 sm:h-68 md:h-80"}`}>
-                {draggingStation !== null && (
-                  <div className="absolute top-2 left-2 z-30 flex items-center space-x-2 bg-slate-900/90 border border-amber-500/60 px-3 py-1 rounded-full font-mono text-[11px] text-amber-300 backdrop-blur-md shadow-lg pointer-events-none animate-pulse">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span>
-                      Mengubah St. {calculatedRows.find(r => r.station === draggingStation)?.label ?? draggingStation}: <strong>0.5 B = {(halfBreadths[draggingStation] ?? 0).toFixed(3)} m</strong>
-                    </span>
-                    <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
-                      Tahan Shift: Mode Sangat Presisi
-                    </span>
+                        <button
+                          onClick={() => setIsWlManagerOpen(true)}
+                          className="px-3 py-1 bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-600/20 dark:hover:bg-cyan-600/40 border border-cyan-200 dark:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-white rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-xs"
+                          title="Buka Studio Kustomisasi Jumlah & Level Garis Air"
+                        >
+                          <SlidersHorizontal size={13} />
+                          <span>Studio Kustomisasi</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      {waterlineLevels.map((wl) => {
+                        const isActive = wl.id === activeWlId;
+                        const wlSummary = masterSummary.find((s) => s.id === wl.id);
+                        const isWlValid = wlSummary?.isValid ?? false;
+                        const wlDraftZ = wl.draftFraction * T;
+
+                        return (
+                          <button
+                            key={wl.id}
+                            onClick={() => setActiveWlId(wl.id)}
+                            className={`flex items-center space-x-2 py-1.5 px-2.5 rounded-xl font-mono transition-all cursor-pointer border relative group shrink-0 ${
+                              isActive
+                                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30 border-cyan-400 ring-2 ring-cyan-400/40 scale-[1.02]"
+                                : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/90 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-slate-700/70"
+                            }`}
+                            title={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)} m (${wl.badge})`}
+                          >
+                            <span className="w-2 h-2 rounded-full shadow-xs shrink-0" style={{ backgroundColor: wl.color }} />
+                            <span className="text-xs font-bold whitespace-nowrap">{wl.shortName}</span>
+                            <span className={`px-1.5 py-0.5 rounded font-mono font-medium text-[10px] whitespace-nowrap ${
+                              isActive ? "bg-white/20 text-white" : "bg-white/80 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-transparent"
+                            }`}>
+                              Z={wlDraftZ.toFixed(2)}m
+                            </span>
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400 shadow-xs shadow-emerald-400/50" : "bg-rose-400 shadow-xs shadow-rose-400/50"}`}
+                              title={isWlValid ? "Correction meets requirement (≤ ±0.05%)" : "Deviation exceeds tolerance"}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className={`bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl backdrop-blur-xl shadow-xl flex flex-col ${
+                compact ? "p-2 space-y-1.5 flex-1 min-h-0 h-full w-full" : "p-5 md:p-6 space-y-4"
+              }`}>
+                {!compact && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center space-x-2">
+                      <TrendingUp size={16} className="text-cyan-500 dark:text-cyan-400" />
+                      <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                        {language === "en"
+                          ? `Visual Waterplane Plot — ${activeWlConfig.name} (Z = ${activeDraftZ.toFixed(2)}m)`
+                          : `Plot Visual Garis Air — ${activeWlConfig.name} (Sarat Z = ${activeDraftZ.toFixed(2)} m)`}
+                      </h3>
+                    </div>
+
+                    {/* Per-Waterline Zone Extension Toggles & Hide/Show Plot */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowVisualPlot(!showVisualPlot)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                        title={showVisualPlot ? (language === "en" ? "Hide Visual Plot" : "Sembunyikan Plot Visual") : (language === "en" ? "Show Visual Plot" : "Tampilkan Plot Visual")}
+                      >
+                        {showVisualPlot ? <EyeOff size={13} className="text-cyan-500" /> : <Eye size={13} className="text-cyan-500" />}
+                        <span>{showVisualPlot ? (language === "en" ? "Hide Plot" : "Sembunyikan Plot") : (language === "en" ? "Show Plot" : "Tampilkan Plot")}</span>
+                      </button>
+
+                      <button
+                        onClick={toggleSternOverhang}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1.5 cursor-pointer shadow-sm ${
+                          activeZoneSetting.hasSternOverhang
+                            ? "bg-amber-500/20 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/40"
+                            : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600"
+                        }`}
+                        title="Klik untuk Mengaktifkan / Menonaktifkan perpanjangan buritan di St. B & A (Stern Overhang). Luas AWL otomatis dikalibrasi ulang."
+                      >
+                        <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-slate-600"}`} />
+                        <span>Buritan (AP Overhang): {activeZoneSetting.hasSternOverhang ? "ON" : "OFF (0m)"}</span>
+                      </button>
+
+                      <button
+                        onClick={toggleBulbousBow}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1.5 cursor-pointer shadow-sm ${
+                          activeZoneSetting.hasBulbousBow
+                            ? "bg-purple-500/20 border-purple-500/60 text-purple-300 ring-1 ring-purple-500/40"
+                            : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600"
+                        }`}
+                        title="Klik untuk Mengaktifkan / Menonaktifkan tonjolan haluan di St. FP-A & FP-B (Bulbous Bow). Luas AWL otomatis dikalibrasi ulang."
+                      >
+                        <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-purple-400 shadow-sm shadow-purple-400/50" : "bg-slate-600"}`} />
+                        <span>Haluan (Bulbous Bow): {activeZoneSetting.hasBulbousBow ? "ON" : "OFF (0m)"}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
-                <svg 
-                  ref={svgRef}
-                  className="w-full h-full select-none cursor-crosshair" 
-                  viewBox={isFullPlanView ? "-8 -2 216 118" : "-8 -2 216 78"} 
-                  preserveAspectRatio="xMidYMid meet"
-                  style={{ touchAction: "none" }}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerUp}
-                >
-                  {renderWaterlineSvgContent()}
-                </svg>
-              </div>
+
+                {showVisualPlot ? (
+                  <div className={`w-full bg-white dark:bg-slate-950/95 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/90 flex flex-col select-none shadow-sm ${
+                    compact ? "flex-1 min-h-0 h-full w-full" : ""
+                  }`}>
+                    {/* DOCKED CANVAS TOOLBAR (Clean, No Overlap, No Emojis) */}
+                    <div className="w-full px-3 py-2 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/60 backdrop-blur-sm flex flex-wrap items-center justify-between gap-2 shrink-0">
+                      {/* Left: Active Waterline Title & Coordinate telemetry */}
+                      <div className="flex items-center space-x-2 font-mono text-xs">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeWlConfig.color }} />
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {activeWlConfig.name}
+                        </span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-800 px-2 py-0.5 rounded font-medium">
+                          Z = {activeDraftZ.toFixed(2)}m
+                        </span>
+                        <span className="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
+                        <span className="hidden sm:inline text-[11px] text-slate-500 dark:text-slate-400">
+                          0.5B = <strong className="text-cyan-600 dark:text-cyan-400 font-bold">{(halfBreadths[10.0] ?? 0).toFixed(3)}m</strong>
+                        </span>
+                      </div>
+
+                      {/* Right: Viewport Controls (NO EMOJIS) */}
+                      <div className="flex items-center space-x-1.5 shrink-0">
+                        {onOpenDualFullscreen && (
+                          <button
+                            type="button"
+                            onClick={onOpenDualFullscreen}
+                            className="px-2.5 py-1 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shadow-xs"
+                            title="Open dual fullscreen mode (waterplane & bilge radius)"
+                          >
+                            <Maximize2 size={12} />
+                            <span>{language === "en" ? "Dual Fullscreen" : "Layar Penuh Keduanya"}</span>
+                          </button>
+                        )}
+
+                        {/* Station Density Switcher: NO EMOJIS */}
+                        <button
+                          type="button"
+                          onClick={() => handleDensityChange(stationDensity === "all" ? "standard" : "all")}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border shadow-xs cursor-pointer flex items-center space-x-1.5 ${
+                            stationDensity === "all"
+                              ? "bg-cyan-50 text-cyan-700 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40"
+                              : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                            title={waterlineFocusMode ? "Mode Focus WL menampilkan tepat 11 gading: 0 sampai 10" : "Beralih antara semua gading lengkap (36 titik) dan gading standar (23 titik)"}
+                        >
+                          <SlidersHorizontal size={11} className="text-cyan-500" />
+                          <span>{waterlineFocusMode ? "Frames (0–10)" : stationDensity === "all" ? "Frames (36)" : "Frames (23)"}</span>
+                        </button>
+
+                        {/* Half-Breadth / Full Hull View */}
+                        <button
+                          onClick={() => setIsFullPlanView(!isFullPlanView)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1 border shadow-xs ${
+                            isFullPlanView
+                              ? "bg-cyan-500 text-white border-cyan-600 shadow-sm font-bold"
+                              : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                          }`}
+                          title="Show full port and starboard symmetry"
+                        >
+                          <Maximize2 size={12} />
+                          <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
+                        </button>
+
+                        {/* Multi-WL Overlay */}
+                        <button
+                          onClick={() => setShowAllWlOverlay(!showAllWlOverlay)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1 border shadow-xs ${
+                            showAllWlOverlay
+                              ? "bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-600/30 dark:border-indigo-500/50 dark:text-indigo-300 font-bold"
+                              : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                          }`}
+                          title="Show / hide other waterlines (multi-waterline overlay)"
+                        >
+                          <Layers size={12} />
+                          <span>{showAllWlOverlay ? "Multi-WL: ON" : "Multi-WL: OFF"}</span>
+                        </button>
+
+                        {/* Preview / Edit Mode Toggle */}
+                        <button
+                          onClick={() => setIsPreviewMode(!isPreviewMode)}
+                          className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+                          title={isPreviewMode ? "Show points and construction guides (Edit Mode)" : "Hide points and construction guides (Preview Mode)"}
+                        >
+                          {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
+                        </button>
+
+                        {/* Fullscreen Single Canvas */}
+                        <button
+                          onClick={() => setIsFullscreenPlot(true)}
+                          className="px-2 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 border border-slate-200 dark:border-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 shadow-xs"
+                          title="Open the waterplane canvas in fullscreen"
+                        >
+                          <Maximize size={12} />
+                          <span className="hidden md:inline">{language === "en" ? "Fullscreen" : "Layar Penuh"}</span>
+                        </button>
+
+                        {/* Save Button */}
+                        {onSave && (
+                          <button
+                            onClick={onSave}
+                            disabled={isSaving}
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-600 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shadow-xs"
+                            title={language === "en" ? "Save Waterline Offsets Permanently (Ctrl+S)" : "Simpan Data Garis Air Permanen (Ctrl+S)"}
+                          >
+                            <Save size={12} className={isSaving ? "animate-spin" : ""} />
+                            <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save" : "Simpan")}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className={`w-full relative transition-all duration-300 flex items-center justify-center p-2 sm:p-3 ${
+                      compact
+                        ? "flex-1 min-h-[460px] sm:min-h-[500px] xl:min-h-[540px] h-full w-full"
+                        : isFullPlanView
+                        ? "h-72 sm:h-88 md:h-[420px]"
+                        : "h-56 sm:h-68 md:h-80"
+                    }`}>
+                      {draggingStation !== null && (
+                        <div className="absolute top-2 left-2 z-30 flex items-center space-x-2 bg-slate-900/90 border border-amber-500/60 px-3 py-1 rounded-full font-mono text-[11px] text-amber-300 backdrop-blur-md shadow-lg pointer-events-none animate-pulse">
+                          <span className="w-2 h-2 rounded-full bg-amber-400" />
+                          <span>
+                            Mengubah St. {calculatedRows.find(r => r.station === draggingStation)?.label ?? draggingStation}: <strong>0.5 B = {(halfBreadths[draggingStation] ?? 0).toFixed(3)} m</strong>
+                          </span>
+                          <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                            Tahan Shift: Mode Sangat Presisi
+                          </span>
+                        </div>
+                      )}
+                      <svg 
+                        ref={svgRef}
+                        className="w-full h-full select-none cursor-crosshair" 
+                        viewBox={isFullPlanView ? "-8 -5 216 122" : "-8 -5 216 83"} 
+                        preserveAspectRatio="xMidYMid meet"
+                        style={{ touchAction: "none" }}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerLeave={handlePointerUp}
+                      >
+                        {renderWaterlineSvgContent()}
+                      </svg>
+                    </div>
 
           {/* Mode Preview CAD Indicator Pill */}
-          <div className="w-full flex items-center justify-center pt-2 select-none">
-            <span className="flex items-center space-x-2 bg-slate-900/90 px-4 py-1.5 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300 shadow-inner">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
-              <span>36 Station Waterplane Plan &mdash; After Peak (3), Peak 1 (10), PMB (10), Peak 2 (10), Fore Peak (3)</span>
-            </span>
-          </div>
+          {!compact && (
+            <div className="w-full flex items-center justify-center pt-2 select-none">
+              <span className="flex items-center space-x-2 bg-slate-900/90 px-4 py-1.5 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300 shadow-inner">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
+                <span>36 Station Waterplane Plan &mdash; After Peak (3), Peak 1 (10), PMB (10), Peak 2 (10), Fore Peak (3)</span>
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center space-x-3 text-slate-500 font-mono">
+            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <TrendingUp size={16} />
+            </div>
+            <div>
+              <span className="font-bold text-slate-900 dark:text-white">
+                "Visual Waterplane Plot is Hidden"
+              </span>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                {activeWlConfig.name} ({activeWlConfig.shortName}) • Sarat Z = {activeDraftZ.toFixed(2)} m • AP Overhang: {activeZoneSetting.hasSternOverhang ? "ON" : "OFF"} • Bulbous: {activeZoneSetting.hasBulbousBow ? "ON" : "OFF"}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowVisualPlot(true)}
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-300 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+          >
+            <Eye size={13} />
+            <span>{language === "en" ? "Open Visual Plot" : "Buka Plot Visual"}</span>
+          </button>
+        </div>
+      )}
+    </div>
+    </>
+    )}
 
       {/* TABLE: 36 STATIONS SIMPSON INTEGRATION & AREA SUBTOTALS */}
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      {!visualOnly && (
+        <>
+          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3">
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+              <TableIcon size={16} className="text-cyan-600 dark:text-cyan-400" />
               <span>{language === "en" ? "Simpson Integration Table Waterplane Ordinates (36 Stations)" : "Tabel Integrasi Simpson Ordinat Garis Air (Water Plane 36 Station)"}</span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -2614,10 +3139,21 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 : "Anda dapat mengedit nilai 0.5 B (m) pada tabel di bawah. Subtotal per area (AP, P1, PMB, P2, FP) dan total sigma akan terhitung otomatis seketika."}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowSimpsonTable(!showSimpsonTable)}
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-sm transition-all cursor-pointer shrink-0"
+            title={showSimpsonTable ? (language === "en" ? "Hide 36-station table" : "Sembunyikan tabel 36 gading") : (language === "en" ? "Show 36-station table" : "Tampilkan tabel 36 gading")}
+          >
+            {showSimpsonTable ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+            <span>{showSimpsonTable ? (language === "en" ? "Hide Table" : "Sembunyikan Tabel") : (language === "en" ? "Show Table (36 St)" : "Tampilkan Tabel (36 St)")}</span>
+          </button>
         </div>
 
-        {/* 5-Area Subtotal Summary Quick-Glance Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
+        {showSimpsonTable ? (
+          <>
+            {/* 5-Area Subtotal Summary Quick-Glance Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
           {AREA_ZONES.map((zone) => {
             const data = zoneSubtotals[zone.id];
             if (!data) return null;
@@ -2874,155 +3410,234 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </tbody>
           </table>
         </div>
+      </>
+    ) : (
+      <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-3 text-slate-600 dark:text-slate-400">
+          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
+            <TableIcon size={18} />
+          </div>
+          <div>
+            <span className="font-bold text-slate-800 dark:text-slate-200">
+              {language === "en" ? "Simpson 36-Station Integration Table is Hidden" : "Tabel Integrasi Simpson (36 Gading) Disembunyikan"}
+            </span>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 flex flex-wrap items-center gap-2">
+              <span>AWL: <strong className="text-cyan-600 dark:text-cyan-400">{AWL.toFixed(2)} m²</strong></span>
+              <span>•</span>
+              <span>LCF: <strong className="text-amber-600 dark:text-amber-400">{LCF.toFixed(2)} m</strong></span>
+              <span>•</span>
+              <span>Cw: <strong className="text-slate-700 dark:text-slate-300">{calculatedCw.toFixed(3)}</strong></span>
+              <span>•</span>
+              <span>&Sigma;1: <strong className="text-emerald-600 dark:text-emerald-400">{effectiveSum1.toFixed(3)}</strong></span>
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowSimpsonTable(true)}
+          className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-300 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+        >
+          <Eye size={14} />
+          <span>{language === "en" ? "Show Table (36 St)" : "Buka Tabel (36 Gading)"}</span>
+        </button>
       </div>
+    )}
+  </div>
 
       {/* SUMMARY RESULT CARDS & VERIFICATION FORMULAS */}
       <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
           <div className="flex items-center space-x-2">
             <Sparkles size={18} className="text-cyan-500 dark:text-cyan-400" />
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               {language === "en" ? "Hydrostatic Integration Results & Waterline Verification" : "Hasil Integrasi Hidrostatik & Koreksi Garis Air (Waterline Verification)"}
             </h3>
           </div>
-          <div className="text-xs font-mono">
-            <span className="text-slate-500 dark:text-slate-400">{language === "en" ? "Max Deviation Target: " : "Target Deviasi Maksimal: "}</span>
-            <strong className="text-emerald-600 dark:text-emerald-400">&le; &plusmn;0.05%</strong>
+          <div className="flex items-center space-x-3">
+            <div className="text-xs font-mono hidden md:block">
+              <span className="text-slate-500 dark:text-slate-400">{language === "en" ? "Max Deviation Target: " : "Target Deviasi Maksimal: "}</span>
+              <strong className="text-emerald-600 dark:text-emerald-400">&le; &plusmn;0.05%</strong>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHydrostaticResults(!showHydrostaticResults)}
+              className="py-1.5 px-3 bg-cyan-600/15 hover:bg-cyan-600/25 text-cyan-700 dark:text-cyan-300 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer border border-cyan-500/30 shadow-sm"
+              title={showHydrostaticResults ? "Sembunyikan hasil perhitungan & rumus" : "Tampilkan hasil perhitungan & rumus"}
+            >
+              {showHydrostaticResults ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+              <span>{showHydrostaticResults ? (language === "en" ? "Hide Results & Formulas" : "Sembunyikan Hasil & Rumus") : (language === "en" ? "Show Results & Formulas" : "Tampilkan Hasil & Rumus")}</span>
+            </button>
           </div>
         </div>
 
-        {/* 6 Key Calculation Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Card 1: AWL */}
-          <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{language === "en" ? "Waterplane Area (AWL)" : "Luas Garis Air (AWL)"}</span>
-              <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">AWL = (2/3) &middot; l &middot; &Sigma;1_efektif</span>
-            </div>
-            <div className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
-              {AWL.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup2;</span>
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono">
-              = (2/3) &times; {l.toFixed(3)} &times; {effectiveSum1.toFixed(3)}
-            </div>
-          </div>
+        {/* 6 Key Calculation Metric Cards & Formulas Box */}
+        {showHydrostaticResults ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Card 1: AWL */}
+              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{language === "en" ? "Waterplane Area (AWL)" : "Luas Garis Air (AWL)"}</span>
+                  <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">AWL = (2/3) &middot; l &middot; &Sigma;1_efektif</span>
+                </div>
+                <div className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
+                  {AWL.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup2;</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono">
+                  = (2/3) &times; {l.toFixed(3)} &times; {effectiveSum1.toFixed(3)}
+                </div>
+              </div>
 
-          {/* Card 2: LCF */}
-          <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{language === "en" ? "Longitudinal Center of Flotation (LCF)" : "Titik Apung Memanjang (LCF)"}</span>
-              <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">LCF = l &middot; &Sigma;2 / &Sigma;1</span>
-            </div>
-            <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
-              {LCF.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m</span>
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono">
-              {LCF < 0
-                ? (language === "en" ? `${Math.abs(LCF).toFixed(3)} m aft of Midship (10)` : `${Math.abs(LCF).toFixed(3)} m di belakang Midship (10)`)
-                : (language === "en" ? `${LCF.toFixed(3)} m forward of Midship (10)` : `${LCF.toFixed(3)} m di depan Midship (10)`)}
-            </div>
-          </div>
+              {/* Card 2: LCF */}
+              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{language === "en" ? "Longitudinal Center of Flotation (LCF)" : "Titik Apung Memanjang (LCF)"}</span>
+                  <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">LCF = l &middot; &Sigma;2 / &Sigma;1</span>
+                </div>
+                <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
+                  {LCF.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono">
+                  {LCF < 0
+                    ? (language === "en" ? `${Math.abs(LCF).toFixed(3)} m aft of Midship (10)` : `${Math.abs(LCF).toFixed(3)} m di belakang Midship (10)`)
+                    : (language === "en" ? `${LCF.toFixed(3)} m forward of Midship (10)` : `${LCF.toFixed(3)} m di depan Midship (10)`)}
+                </div>
+              </div>
 
-          {/* Card 3: IT (Transverse Inertia) */}
-          <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{language === "en" ? "Transverse Inertia (IT)" : "Inersia Melintang (IT)"}</span>
-              <span className="text-[10px] font-mono text-slate-500">IT = (2/9)&middot;l&middot;&Sigma;3_efektif</span>
-            </div>
-            <div className="text-2xl font-black font-mono text-slate-800 dark:text-slate-100">
-              {IT.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup4;</span>
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono">
-              {language === "en" ? "Moment of inertia about longitudinal axis" : "Momen inersia terhadap sumbu longitudinal"}
-            </div>
-          </div>
+              {/* Card 3: IT (Transverse Inertia) */}
+              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{language === "en" ? "Transverse Inertia (IT)" : "Inersia Melintang (IT)"}</span>
+                  <span className="text-[10px] font-mono text-slate-500">IT = (2/9)&middot;l&middot;&Sigma;3_efektif</span>
+                </div>
+                <div className="text-2xl font-black font-mono text-slate-800 dark:text-slate-100">
+                  {IT.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup4;</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono">
+                  {language === "en" ? "Moment of inertia about longitudinal axis" : "Momen inersia terhadap sumbu longitudinal"}
+                </div>
+              </div>
 
-          {/* Card 4: Iy & IL */}
-          <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{language === "en" ? "Longitudinal Inertia (IL)" : "Inersia Memanjang (IL)"}</span>
-              <span className="text-[10px] font-mono text-slate-500">IL = Iy - (AWL &middot; LCF&sup2;)</span>
-            </div>
-            <div className="text-2xl font-black font-mono text-slate-800 dark:text-slate-100">
-              {IL.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup4;</span>
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono">
-              {language === "en" ? `Iy = ${Iy.toFixed(2)} m⁴ | LCF Correction = ${(AWL * Math.pow(LCF, 2)).toFixed(2)} m⁴` : `Iy = ${Iy.toFixed(2)} m⁴ | Koreksi LCF = ${(AWL * Math.pow(LCF, 2)).toFixed(2)} m⁴`}
-            </div>
-          </div>
+              {/* Card 4: Iy & IL */}
+              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{language === "en" ? "Longitudinal Inertia (IL)" : "Inersia Memanjang (IL)"}</span>
+                  <span className="text-[10px] font-mono text-slate-500">IL = Iy - (AWL &middot; LCF&sup2;)</span>
+                </div>
+                <div className="text-2xl font-black font-mono text-slate-800 dark:text-slate-100">
+                  {IL.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup4;</span>
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono">
+                  {language === "en" ? `Iy = ${Iy.toFixed(2)} m⁴ | LCF Correction = ${(AWL * Math.pow(LCF, 2)).toFixed(2)} m⁴` : `Iy = ${Iy.toFixed(2)} m⁴ | Koreksi LCF = ${(AWL * Math.pow(LCF, 2)).toFixed(2)} m⁴`}
+                </div>
+              </div>
 
-          {/* Card 5: CW (Waterplane Coefficient) */}
-          <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>{language === "en" ? "Waterplane Coefficient (Cw)" : "Koefisien Garis Air (Cw)"}</span>
-              <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">CW = AWL / (LWL &middot; BWL)</span>
-            </div>
-            <div className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
-              {calculatedCw.toFixed(4)}
-            </div>
-            <div className="text-[11px] text-slate-500 font-mono">
-              {language === "en" ? "Design Target = " : "Target Rancangan = "}{targetCw.toFixed(2)}
-            </div>
-          </div>
+              {/* Card 5: CW (Waterplane Coefficient) */}
+              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <span>{language === "en" ? "Waterplane Coefficient (Cw)" : "Koefisien Garis Air (Cw)"}</span>
+                  <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">CW = AWL / (LWL &middot; BWL)</span>
+                </div>
+                <div className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
+                  {calculatedCw.toFixed(4)}
+                </div>
+                <div className="text-[11px] text-slate-500 font-mono">
+                  {language === "en" ? "Design Target = " : "Target Rancangan = "}{targetCw.toFixed(2)}
+                </div>
+              </div>
 
-          {/* Card 6: Koreksi Garis Air dengan Batas Toleransi Minimal <= +/- 0.05% */}
-          <div
-            className={`p-4 rounded-xl border space-y-1.5 shadow-sm backdrop-blur-md transition-all ${
-              isCorrectionValid
-                ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
-                : "bg-rose-50 dark:bg-rose-950/30 border-rose-500/40 text-rose-800 dark:text-rose-300"
-            }`}
-          >
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold flex items-center space-x-1.5">
-                {isCorrectionValid ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
-                <span>{language === "en" ? "Water Line Correction" : "Koreksi Water Line"}</span>
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
-                {language === "en" ? "Requirement: ≤ ±0.05%" : "Syarat: ≤ ±0.05%"}
-              </span>
+              {/* Card 6: Koreksi Garis Air dengan Batas Toleransi Minimal <= +/- 0.05% */}
+              <div
+                className={`p-4 rounded-xl border space-y-1.5 shadow-sm backdrop-blur-md transition-all ${
+                  isCorrectionValid
+                    ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
+                    : "bg-rose-50 dark:bg-rose-950/30 border-rose-500/40 text-rose-800 dark:text-rose-300"
+                }`}
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold flex items-center space-x-1.5">
+                    {isCorrectionValid ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+                    <span>{language === "en" ? "Water Line Correction" : "Koreksi Water Line"}</span>
+                  </span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
+                    {language === "en" ? "Requirement: ≤ ±0.05%" : "Syarat: ≤ ±0.05%"}
+                  </span>
+                </div>
+                <div className="text-2xl font-black font-mono">
+                  {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
+                </div>
+                <div className="text-[11px] opacity-90 font-mono flex items-center justify-between">
+                  <span>AWL Target = {activeTargetAWL.toFixed(2)} m&sup2;</span>
+                  <span className={`font-bold ${isCorrectionValid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                    {isCorrectionValid ? "MEETS REQUIREMENT" : "DEVIATION EXCEEDS 0.05%"}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="text-2xl font-black font-mono">
-              {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
-            </div>
-            <div className="text-[11px] opacity-90 font-mono flex items-center justify-between">
-              <span>AWL Target = {activeTargetAWL.toFixed(2)} m&sup2;</span>
-              <span className={`font-bold ${isCorrectionValid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                {isCorrectionValid ? (language === "en" ? "MEETS REQUIREMENT" : "MEMENUHI SYARAT") : (language === "en" ? "DEVIATION EXCEEDS 0.05%" : "DEVIASI MELEBIHI 0.05%")}
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {/* DETAILED PLAIN-TEXT MATHEMATICAL EXPLANATION BOX */}
-        <div className="bg-slate-50 dark:bg-slate-950/90 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-2 text-slate-700 dark:text-slate-300 font-mono leading-relaxed">
-          <div className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1 flex items-center space-x-2">
-            <HelpCircle size={14} className="text-cyan-500 dark:text-cyan-400" />
-            <span>{language === "en" ? "Waterplane Hydrostatic Formulas (Plain-Text Reference):" : "Rumus Hidrostatik Garis Air (Plain-Text Reference):"}</span>
+            {/* DETAILED PLAIN-TEXT MATHEMATICAL EXPLANATION BOX */}
+            {false && <div className="bg-slate-50 dark:bg-slate-950/90 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-2 text-slate-700 dark:text-slate-300 font-mono leading-relaxed">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800/80">
+                <div className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center space-x-2">
+                  <HelpCircle size={14} className="text-cyan-500 dark:text-cyan-400" />
+                  <span>{language === "en" ? "Waterplane Hydrostatic Formulas (Plain-Text Reference):" : "Rumus Hidrostatik Garis Air (Plain-Text Reference):"}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowFormulasBox(!showFormulasBox)}
+                  className="text-xs text-cyan-600 dark:text-cyan-400 font-semibold hover:underline flex items-center space-x-1 cursor-pointer"
+                >
+                  {showFormulasBox ? <EyeOff size={13} /> : <Eye size={13} />}
+                  <span>{showFormulasBox ? (language === "en" ? "Hide Formulas" : "Sembunyikan Rumus") : (language === "en" ? "Show Formulas" : "Tampilkan Rumus")}</span>
+                </button>
+              </div>
+              {showFormulasBox && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-[11px]">
+                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
+                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "1. Waterplane Area (AWL):" : "1. Luas Garis Air (AWL):"}</p>
+                    <p className="text-slate-600 dark:text-slate-400">AWL = (2 / 3) * l * Total_Sigma_1_efektif</p>
+                    <p className="text-slate-600 dark:text-slate-400">AWL = (2 / 3) * {l.toFixed(4)} * {effectiveSum1.toFixed(3)} = <strong className="text-emerald-600 dark:text-emerald-400">{AWL.toFixed(3)} m&sup2;</strong></p>
+                  </div>
+                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
+                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "2. Longitudinal Center of Flotation (LCF):" : "2. Titik Apung Memanjang (LCF):"}</p>
+                    <p className="text-slate-600 dark:text-slate-400">LCF = (l * Total_Sigma_2_efektif) / Total_Sigma_1_efektif</p>
+                    <p className="text-slate-600 dark:text-slate-400">LCF = ({l.toFixed(4)} * {effectiveSum2.toFixed(3)}) / {effectiveSum1.toFixed(3)} = <strong className="text-cyan-700 dark:text-cyan-300">{LCF.toFixed(3)} m</strong></p>
+                  </div>
+                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
+                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "3. Transverse Moment of Inertia (IT):" : "3. Momen Inersia Melintang (IT):"}</p>
+                    <p className="text-slate-600 dark:text-slate-400">IT = (2 / 9) * l * Total_Sigma_3_efektif</p>
+                    <p className="text-slate-600 dark:text-slate-400">IT = (2 / 9) * {l.toFixed(4)} * {effectiveSum3.toFixed(3)} = <strong className="text-purple-700 dark:text-purple-300">{IT.toFixed(3)} m&sup4;</strong></p>
+                  </div>
+                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
+                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "4. Water Line Correction Percentage (Required ≤ ±0.05%):" : "4. Persentase Koreksi Garis Air (Wajib ≤ ±0.05%):"}</p>
+                    <p className="text-slate-600 dark:text-slate-400">{language === "en" ? "Correction = ((AWL - AWL_design) / AWL) * 100%" : "Koreksi = ((AWL - AWL_rancangan) / AWL) * 100%"}</p>
+                    <p className="text-slate-600 dark:text-slate-400">{language === "en" ? "Correction" : "Koreksi"} = (({AWL.toFixed(2)} - {activeTargetAWL.toFixed(2)}) / {AWL.toFixed(2)}) * 100% = <strong className={isCorrectionValid ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}>{correctionPercent.toFixed(3)}%</strong></p>
+                  </div>
+                </div>
+              )}
+            </div>}
+          </>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-3 text-slate-500 font-mono">
+              <span>AWL: <strong className="text-cyan-600 dark:text-cyan-400">{AWL.toFixed(3)} m²</strong></span>
+              <span>•</span>
+              <span>LCF: <strong className="text-amber-600 dark:text-amber-400">{LCF.toFixed(3)} m</strong></span>
+              <span>•</span>
+              <span>Cw: <strong className="text-cyan-600 dark:text-cyan-400">{calculatedCw.toFixed(4)}</strong></span>
+              <span>•</span>
+              <span>Status: <strong className={isCorrectionValid ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-rose-600 dark:text-rose-400 font-bold"}>{isCorrectionValid ? "MEMENUHI SYARAT (≤ ±0.05%)" : `DEVIASI (${correctionPercent.toFixed(3)}%)`}</strong></span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHydrostaticResults(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-400 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+            >
+              <Eye size={13} />
+              <span>{language === "en" ? "Show Results & Formulas" : "Buka Hasil & Rumus"}</span>
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-[11px]">
-            <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "1. Waterplane Area (AWL):" : "1. Luas Garis Air (AWL):"}</p>
-              <p className="text-slate-600 dark:text-slate-400">AWL = (2 / 3) * l * Total_Sigma_1_efektif</p>
-              <p className="text-slate-600 dark:text-slate-400">AWL = (2 / 3) * {l.toFixed(4)} * {effectiveSum1.toFixed(3)} = <strong className="text-emerald-600 dark:text-emerald-400">{AWL.toFixed(3)} m&sup2;</strong></p>
-            </div>
-            <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "2. Longitudinal Center of Flotation (LCF):" : "2. Titik Apung Memanjang (LCF):"}</p>
-              <p className="text-slate-600 dark:text-slate-400">LCF = (l * Total_Sigma_2_efektif) / Total_Sigma_1_efektif</p>
-              <p className="text-slate-600 dark:text-slate-400">LCF = ({l.toFixed(4)} * {effectiveSum2.toFixed(3)}) / {effectiveSum1.toFixed(3)} = <strong className="text-cyan-700 dark:text-cyan-300">{LCF.toFixed(3)} m</strong></p>
-            </div>
-            <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "3. Transverse Moment of Inertia (IT):" : "3. Momen Inersia Melintang (IT):"}</p>
-              <p className="text-slate-600 dark:text-slate-400">IT = (2 / 9) * l * Total_Sigma_3_efektif</p>
-              <p className="text-slate-600 dark:text-slate-400">IT = (2 / 9) * {l.toFixed(4)} * {effectiveSum3.toFixed(3)} = <strong className="text-purple-700 dark:text-purple-300">{IT.toFixed(3)} m&sup4;</strong></p>
-            </div>
-            <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "4. Water Line Correction Percentage (Required ≤ ±0.05%):" : "4. Persentase Koreksi Garis Air (Wajib ≤ ±0.05%):"}</p>
-              <p className="text-slate-600 dark:text-slate-400">{language === "en" ? "Correction = ((AWL - AWL_design) / AWL) * 100%" : "Koreksi = ((AWL - AWL_rancangan) / AWL) * 100%"}</p>
-              <p className="text-slate-600 dark:text-slate-400">{language === "en" ? "Correction" : "Koreksi"} = (({AWL.toFixed(2)} - {activeTargetAWL.toFixed(2)}) / {AWL.toFixed(2)}) * 100% = <strong className={isCorrectionValid ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}>{correctionPercent.toFixed(3)}%</strong></p>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* MASTER HYDROSTATIC SUMMARY TABLE (ALL WATERLINES WL 0 TO WL 6) */}
@@ -3044,93 +3659,120 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </div>
           </div>
 
-          <button
-            onClick={handleExportAllCSV}
-            className="py-2 px-3.5 bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm self-start sm:self-auto"
-            title="Unduh kompilasi seluruh data Waterline 0 s.d 6 dalam format CSV"
-          >
-            <Download size={14} />
-            <span>Export Semua WL (CSV)</span>
-          </button>
+          <div className="flex items-center space-x-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setShowMasterSummaryTable(!showMasterSummaryTable)}
+              className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+              title={showMasterSummaryTable ? (language === "en" ? "Hide summary table" : "Sembunyikan tabel rangkuman") : (language === "en" ? "Show summary table" : "Tampilkan tabel rangkuman")}
+            >
+              {showMasterSummaryTable ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+              <span>{showMasterSummaryTable ? (language === "en" ? "Hide Table" : "Sembunyikan") : (language === "en" ? "Show Table" : "Tampilkan")}</span>
+            </button>
+            <button
+              onClick={handleExportAllCSV}
+              className="py-2 px-3.5 bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+              title="Unduh kompilasi seluruh data Waterline 0 s.d 6 dalam format CSV"
+            >
+              <Download size={14} />
+              <span>Export Semua WL (CSV)</span>
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          <table className="w-full text-xs font-mono text-left">
-            <thead className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="py-2.5 px-3">Garis Air</th>
-                <th className="py-2.5 px-3">Sarat (Z)</th>
-                <th className="py-2.5 px-3">AWL Desain</th>
-                <th className="py-2.5 px-3">AWL Aktual</th>
-                <th className="py-2.5 px-3">LCF (m)</th>
-                <th className="py-2.5 px-3">Cw</th>
-                <th className="py-2.5 px-3">Inersia IT (m⁴)</th>
-                <th className="py-2.5 px-3">Inersia IL (m⁴)</th>
-                <th className="py-2.5 px-3">Koreksi (%)</th>
-                <th className="py-2.5 px-3 text-center">Status</th>
-                <th className="py-2.5 px-3 text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {masterSummary.map((s) => {
-                const isCurrentActive = s.id === activeWlId;
-                return (
-                  <tr
-                    key={`summary-${s.id}`}
-                    className={`transition-colors ${
-                      isCurrentActive
-                        ? "bg-cyan-500/10 dark:bg-cyan-500/15 font-bold"
-                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    }`}
-                  >
-                    <td className="py-2.5 px-3 flex items-center space-x-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                      <span className={isCurrentActive ? "text-cyan-600 dark:text-cyan-300 font-extrabold" : "text-slate-800 dark:text-slate-200"}>
-                        {s.name}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{s.draftZ.toFixed(2)} m</td>
-                    <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">{s.targetAwl.toFixed(2)} m²</td>
-                    <td className="py-2.5 px-3 text-cyan-600 dark:text-cyan-400 font-bold">{s.awl.toFixed(2)} m²</td>
-                    <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400">{s.lcf.toFixed(3)} m</td>
-                    <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300">{s.cw.toFixed(4)}</td>
-                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.it.toFixed(2)}</td>
-                    <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.il.toFixed(2)}</td>
-                    <td className={`py-2.5 px-3 font-bold ${s.isValid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                      {s.correction > 0 ? `+${s.correction.toFixed(3)}%` : `${s.correction.toFixed(3)}%`}
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        s.isValid
-                          ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
-                          : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-500/40"
-                      }`}>
-                        {s.isValid ? "MEMENUHI" : "DEVIASI"}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      {isCurrentActive ? (
-                        <span className="text-[11px] text-cyan-500 font-bold px-2.5 py-1 bg-cyan-500/10 rounded-lg">
-                          Aktif
+        {showMasterSummaryTable ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table className="w-full text-xs font-mono text-left">
+              <thead className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="py-2.5 px-3">Waterline</th>
+                  <th className="py-2.5 px-3">Sarat (Z)</th>
+                  <th className="py-2.5 px-3">AWL Desain</th>
+                  <th className="py-2.5 px-3">AWL Aktual</th>
+                  <th className="py-2.5 px-3">LCF (m)</th>
+                  <th className="py-2.5 px-3">Cw</th>
+                  <th className="py-2.5 px-3">Inersia IT (m⁴)</th>
+                  <th className="py-2.5 px-3">Inersia IL (m⁴)</th>
+                  <th className="py-2.5 px-3">Correction (%)</th>
+                  <th className="py-2.5 px-3 text-center">Status</th>
+                  <th className="py-2.5 px-3 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                {masterSummary.map((s) => {
+                  const isCurrentActive = s.id === activeWlId;
+                  return (
+                    <tr
+                      key={`summary-${s.id}`}
+                      className={`transition-colors ${
+                        isCurrentActive
+                          ? "bg-cyan-500/10 dark:bg-cyan-500/15 font-bold"
+                          : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      }`}
+                    >
+                      <td className="py-2.5 px-3 flex items-center space-x-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                        <span className={isCurrentActive ? "text-cyan-600 dark:text-cyan-300 font-extrabold" : "text-slate-800 dark:text-slate-200"}>
+                          {s.name}
                         </span>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setActiveWlId(s.id);
-                            window.scrollTo({ top: 350, behavior: "smooth" });
-                          }}
-                          className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 hover:text-white dark:hover:bg-cyan-600 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition-all cursor-pointer shadow-sm border border-slate-300 dark:border-slate-700"
-                        >
-                          Buka / Edit
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{s.draftZ.toFixed(2)} m</td>
+                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">{s.targetAwl.toFixed(2)} m²</td>
+                      <td className="py-2.5 px-3 text-cyan-600 dark:text-cyan-400 font-bold">{s.awl.toFixed(2)} m²</td>
+                      <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400">{s.lcf.toFixed(3)} m</td>
+                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300">{s.cw.toFixed(4)}</td>
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.it.toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.il.toFixed(2)}</td>
+                      <td className={`py-2.5 px-3 font-bold ${s.isValid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                        {s.correction > 0 ? `+${s.correction.toFixed(3)}%` : `${s.correction.toFixed(3)}%`}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          s.isValid
+                            ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
+                            : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-500/40"
+                        }`}>
+                          {s.isValid ? "MEMENUHI" : "DEVIASI"}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        {isCurrentActive ? (
+                          <span className="text-[11px] text-cyan-500 font-bold px-2.5 py-1 bg-cyan-500/10 rounded-lg">
+                            Aktif
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setActiveWlId(s.id);
+                              window.scrollTo({ top: 350, behavior: "smooth" });
+                            }}
+                            className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 hover:text-white dark:hover:bg-cyan-600 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition-all cursor-pointer shadow-sm border border-slate-300 dark:border-slate-700"
+                          >
+                            Buka / Edit
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-3.5 flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-slate-400 font-mono">
+              {language === "en" ? `Summary Table Hidden (${masterSummary.length} Waterlines)` : `Tabel Rangkuman Disembunyikan (${masterSummary.length} Garis Air)`}
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowMasterSummaryTable(true)}
+              className="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold text-xs flex items-center space-x-1"
+            >
+              <Eye size={13} />
+              <span>{language === "en" ? "Show Table" : "Buka Tabel"}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* NEXT PAGE ACTION BANNER */}
@@ -3147,20 +3789,22 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           </p>
         </div>
         <button
-          onClick={() => setViewMode("cleanCustom")}
+          onClick={() => handleViewModeChange("cleanCustom")}
           className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-cyan-600/25 transition-all cursor-pointer shrink-0"
         >
           <span>{language === "en" ? "Open Custom Waterline Studio" : "Buka Studio Garis Air Kustom"}</span>
           <ArrowRight size={15} />
         </button>
       </div>
+          </>
+        )}
     </>
   )}
 
       {/* ========================================================= */}
       {/* MODE 2: SINGLE WATERLINE STUDIO & CUSTOM STATIONS TABLE  */}
       {/* ========================================================= */}
-      {viewMode === "cleanCustom" && (
+      {viewMode === "cleanCustom" && !visualOnly && (
         <div className="space-y-6">
           {/* WATERLINE LEVEL SELECTOR NAVIGATOR TABS */}
           <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-xl space-y-3 select-none">
@@ -3297,7 +3941,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       ? "bg-cyan-500 text-white shadow-sm"
                       : "bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-cyan-300"
                   }`}
-                  title="Tampilkan Simetri Penuh Kiri & Kanan (Port & Starboard)"
+                  title="Show full port and starboard symmetry"
                 >
                   <Maximize2 size={13} />
                   <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri Penuh") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
@@ -3622,6 +4266,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
               <div className="flex items-center space-x-2">
                 <button
+                  type="button"
+                  onClick={() => setShowCustomTable(!showCustomTable)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold flex items-center space-x-1.5 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer text-xs shadow-sm"
+                  title={showCustomTable ? (language === "en" ? "Hide table" : "Sembunyikan tabel") : (language === "en" ? "Show table" : "Tampilkan tabel")}
+                >
+                  {showCustomTable ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+                  <span>{showCustomTable ? (language === "en" ? "Hide Table" : "Sembunyikan") : (language === "en" ? "Show Table" : "Tampilkan")}</span>
+                </button>
+                <button
                   onClick={handleCopyCustomTable}
                   className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold flex items-center space-x-1.5 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
                   title="Salin seluruh isi tabel ke clipboard"
@@ -3649,8 +4302,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </div>
 
             {/* ONLY 3-COLUMN TABLE (GADING, POSISI X, 0.5 B) */}
-            <div className="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
-              <table className="w-full text-left text-xs font-mono border-collapse table-fixed min-w-[500px]">
+            {showCustomTable ? (
+              <div className="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
+                <table className="w-full text-left text-xs font-mono border-collapse table-fixed min-w-[500px]">
                 <thead className="sticky top-0 z-20 shadow-md">
                   <tr className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
                     <th className="py-3 px-4 font-bold text-center border-r border-slate-200 dark:border-slate-800/60 w-[30%]">
@@ -3724,9 +4378,24 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </tbody>
               </table>
             </div>
-          </div>
+          ) : (
+            <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-3.5 flex items-center justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400 font-mono">
+                {language === "en" ? `Custom Station Table Hidden (${customStationRows.length} Stations)` : `Tabel Gading Kustom Disembunyikan (${customStationRows.length} Gading)`}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowCustomTable(true)}
+                className="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold text-xs flex items-center space-x-1"
+              >
+                <Eye size={13} />
+                <span>{language === "en" ? "Show Table" : "Buka Tabel"}</span>
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
+    )}
 
       {/* ========================================================================= */}
       {/* CUSTOM WATERLINE STUDIO MODAL (PRESETS, CUSTOM Z LEVELS, ADD, REMOVE)     */}
@@ -3746,7 +4415,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   <SlidersHorizontal size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Kelola & Kustomisasi Garis Air (Waterlines)</h3>
+                  <h3 className="text-base font-bold text-white">Manage & Customize Waterlines</h3>
                   <p className="text-xs text-slate-400">Tentukan jumlah garis air, pilih preset standar, atau tambahkan garis air khusus.</p>
                 </div>
               </div>
@@ -3885,7 +4554,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
                 <label className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
                   <Plus size={14} className="text-cyan-400" />
-                  <span>Tambah Garis Air Baru:</span>
+                      <span>Add New Waterline:</span>
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex-1 min-w-[140px]">
@@ -3920,7 +4589,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     className="px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 shadow"
                   >
                     <Plus size={13} />
-                    <span>Tambah WL</span>
+                      <span>Add WL</span>
                   </button>
                 </div>
               </div>
@@ -3929,7 +4598,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                    Daftar Garis Air Aktif ({waterlineLevels.length} Level):
+                    Active Waterlines ({waterlineLevels.length} Levels):
                   </label>
                   <span className="text-[11px] text-slate-400 font-mono">Sarat Penuh T = {T.toFixed(2)} m</span>
                 </div>
@@ -3952,7 +4621,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           <button
                             onClick={() => handleDeleteWaterline(wl.id)}
                             className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-all cursor-pointer"
-                            title="Hapus Garis Air Ini"
+                            title="Delete this waterline"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -3967,7 +4636,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             {/* STICKY FOOTER */}
             <div className="flex items-center justify-between p-3.5 sm:p-4 border-t border-slate-800 bg-slate-950/90 shrink-0">
               <span className="text-xs text-slate-400 font-mono">
-                Total: <strong className="text-cyan-400">{waterlineLevels.length} Level Garis Air</strong> (Sarat T = {T.toFixed(2)}m)
+                Total: <strong className="text-cyan-400">{waterlineLevels.length} Waterline Levels</strong> (Draft T = {T.toFixed(2)}m)
               </span>
               <div className="flex items-center space-x-2">
                 <button

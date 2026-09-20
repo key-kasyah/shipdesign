@@ -53,3 +53,10 @@ Thumbs.db
 .vscode/
 .idea/
 .agents/
+
+# Database & temp dumps
+shipdesign.db
+*.sqlite3
+dom_dump.html
+*.bak
+!data/indonesia_ports_template.db

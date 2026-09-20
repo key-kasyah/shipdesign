@@ -13,6 +13,7 @@ import {
   Box,
   TrendingUp
 } from "lucide-react";
+import { formatVesselType } from "../../types";
 
 interface ConstraintsSummaryProps {
   lbp_m: number;
@@ -91,7 +92,7 @@ export const DesignConstraintsSummary: React.FC<ConstraintsSummaryProps> = ({
         </div>
 
         <span className="text-[11px] px-3 py-1 bg-slate-900 rounded-lg border border-slate-800 text-slate-300 self-start sm:self-auto">
-          Tipe: <strong className="text-cyan-300">{vesselType}</strong>
+          Tipe: <strong className="text-cyan-300">{formatVesselType(vesselType)}</strong>
         </span>
       </div>
 

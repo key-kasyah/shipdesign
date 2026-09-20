@@ -83,7 +83,7 @@ class TypeValidationRule(BaseValidationRule):
                 field_path="vessel_type",
                 severity=ValidationSeverity.BLOCKING_ERROR,
                 message=f"Tipe kapal '{data.vessel_type}' tidak dikenali.",
-                suggestion=f"Pilih salah satu tipe dari: {[e.value for e in VesselType]}.",
+                suggestion=f"Pilih salah satu tipe dari: {[e.display_name for e in VesselType]}.",
                 actual_value=data.vessel_type,
                 rule_name="Vessel Type Enum Check",
                 rule_source="System Schema"

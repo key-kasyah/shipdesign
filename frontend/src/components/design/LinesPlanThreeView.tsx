@@ -32,6 +32,7 @@ interface LinesPlanThreeViewProps {
   csaOrdinates?: number[];
   waterlinesData?: Record<string, Record<number, number>>;
   waterlineLevels?: WaterlineConfig[];
+  sideProfileData?: any;
 }
 
 export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
@@ -43,7 +44,8 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
   cm = 0.98,
   csaOrdinates,
   waterlinesData,
-  waterlineLevels
+  waterlineLevels,
+  sideProfileData
 }) => {
   const { language } = useLanguage();
   const LBP = Math.max(10, lbp_m);
@@ -76,8 +78,8 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
   // ==========================================
   const engine = useMemo(() => {
     const targetVol = LBP * B * T * Cb;
-    return new FairingEngine(LBP, B, T, H, targetVol, Cm, effectiveLevels);
-  }, [LBP, B, T, H, Cb, Cm, csaOrdinates, effectiveLevels]);
+    return new FairingEngine(LBP, B, T, H, targetVol, Cm, effectiveLevels, undefined, sideProfileData);
+  }, [LBP, B, T, H, Cb, Cm, csaOrdinates, effectiveLevels, sideProfileData]);
 
   const waterlines = engine.waterlines; // dynamic [0, ..., T, H]
   const wlLabels = engine.wlLabels; // dynamic ["WL 0", ..., "WL (DWL)", "DECK"]
@@ -1035,26 +1037,26 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
       {/* ========================================================= */}
       {/* EMBEDDED MAIN COMPONENT VIEW                             */}
       {/* ========================================================= */}
-      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-5 font-sans text-slate-200">
+      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-5 font-sans text-slate-800 dark:text-slate-200">
         {/* HEADER */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-slate-800 gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-4">
           <div className="space-y-1">
             <div className="flex items-center space-x-2.5">
-              <div className="p-2 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400">
+              <div className="p-2 rounded-xl bg-blue-600/10 dark:bg-blue-600/20 border border-blue-500/30 text-blue-600 dark:text-blue-400">
                 <Layers size={20} />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-base font-bold text-white tracking-wide">
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-wide">
                     {language === "en"
                       ? `Lines Plan 2D Projection (${effectiveLevels.length} Waterlines: ${effectiveLevels[effectiveLevels.length - 1]?.shortName} to ${effectiveLevels[0]?.shortName} + Deck)`
                       : `Proyeksi 2D Lines Plan (${effectiveLevels.length} Garis Air: ${effectiveLevels[effectiveLevels.length - 1]?.shortName} s/d ${effectiveLevels[0]?.shortName} + Deck)`}
                   </h2>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/40">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40">
                     Proyeksi 4 Bidang
                   </span>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {language === "en"
                     ? "Full naval architectural projection of Sheer, Body Plan, Half-Breadth, SAC, and Diagonals."
                     : "Penyajian lengkap gambar rencana garis: Sheer, Body Plan, Half-Breadth, SAC, dan Garis Sent terintegrasi."}
@@ -1069,7 +1071,7 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === "cad"
                   ? "bg-blue-600 text-white shadow-md font-bold"
-                  : "bg-slate-800 text-slate-400 hover:text-slate-200"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               CAD Blueprint
@@ -1079,7 +1081,7 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === "table"
                   ? "bg-blue-600 text-white shadow-md font-bold"
-                  : "bg-slate-800 text-slate-400 hover:text-slate-200"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
               }`}
             >
               Table of Offsets
@@ -1110,8 +1112,8 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
         </div>
 
         {/* WATERLINES COLOR-CODED LEGEND RIBBON */}
-        <div className="bg-slate-950/80 p-3 rounded-xl border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-          <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+        <div className="bg-slate-50 dark:bg-slate-950/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
             Garis Air ({effectiveLevels.length} Level WL):
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -1125,13 +1127,13 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
                   onMouseLeave={() => setHoveredWL(null)}
                   className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                     isHovered
-                      ? "bg-slate-800 border-white text-white shadow-md"
-                      : "bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700"
+                      ? "bg-white dark:bg-slate-800 border-slate-400 dark:border-white text-slate-900 dark:text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/90 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-700"
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: conf.color }} />
                   <span>{wlName}</span>
-                  <span className="text-[9px] text-slate-500">({conf.ratio})</span>
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500">({conf.ratio})</span>
                 </button>
               );
             })}
@@ -1140,7 +1142,7 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
 
         {/* TAB 1: CAD BLUEPRINT EMBEDDED VIEW (WHITE CANVAS) */}
         {activeTab === "cad" && (
-          <div className="w-full relative bg-white rounded-xl border-2 border-slate-300 overflow-hidden shadow-2xl group">
+          <div className="w-full relative bg-white rounded-xl border-2 border-slate-300 dark:border-slate-700 overflow-hidden shadow-xl group">
             {/* Zoom Overlay */}
             <div className="absolute right-4 top-4 flex flex-col bg-slate-900/85 p-1 rounded-lg border border-slate-700 backdrop-blur-md z-10 opacity-60 group-hover:opacity-100 transition-opacity shadow-lg">
               <button
@@ -1174,14 +1176,14 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
 
         {/* TAB 2: TABLE OF OFFSETS */}
         {activeTab === "table" && (
-          <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800/80 space-y-4">
+          <div className="bg-white dark:bg-slate-950/80 p-5 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-                  <TableIcon size={16} className="text-cyan-400" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center space-x-2">
+                  <TableIcon size={16} className="text-cyan-500 dark:text-cyan-400" />
                   <span>Table of Offsets (Separuh Lebar Ordinat Y &mdash; {effectiveLevels.length} Garis Air)</span>
                 </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                   Tabel nilai koordinat separuh lebar kapal (m) untuk setiap gading dan level garis air {effectiveLevels[effectiveLevels.length - 1]?.shortName} s/d {effectiveLevels[0]?.shortName} + Geladak.
                 </p>
               </div>
@@ -1194,45 +1196,45 @@ export const LinesPlanThreeView: React.FC<LinesPlanThreeViewProps> = ({
               </button>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-inner no-scrollbar">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner no-scrollbar">
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-950 border-b border-slate-800 text-[11px] text-slate-400 uppercase">
-                    <th className="py-2.5 px-3 font-bold text-cyan-400">Gading</th>
-                    <th className="py-2.5 px-3 font-bold text-slate-300">Pos X (m)</th>
+                  <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 uppercase">
+                    <th className="py-2.5 px-3 font-bold text-cyan-700 dark:text-cyan-400">Gading</th>
+                    <th className="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-300">Pos X (m)</th>
                     {wlLabels.map((l) => (
                       <th
                         key={l}
                         className="py-2.5 px-3 font-bold"
-                        style={{ color: WL_COLORS[l]?.color || "#fff" }}
+                        style={{ color: WL_COLORS[l]?.color || "#0284c7" }}
                       >
                         {l}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-mono text-[11px]">
                   {offsetTable.map((row) => (
                     <tr
                       key={row.station}
-                      className={`hover:bg-cyan-500/10 transition-colors ${
+                      className={`hover:bg-cyan-50 dark:hover:bg-cyan-500/10 transition-colors ${
                         row.station === 10
-                          ? "bg-amber-500/15 font-bold"
-                          : "even:bg-slate-900/40"
+                          ? "bg-amber-50 dark:bg-amber-500/15 font-bold"
+                          : "even:bg-slate-50/60 dark:even:bg-slate-900/40"
                       }`}
                     >
-                      <td className="py-2 px-3 text-cyan-300 font-bold">
+                      <td className="py-2 px-3 text-cyan-700 dark:text-cyan-300 font-bold">
                         {row.station === 0
                           ? "St. 0 (AP)"
                           : row.station === 20
                           ? "St. 20 (FP)"
                           : `St. ${row.station}`}
                       </td>
-                      <td className="py-2 px-3 text-slate-400">
+                      <td className="py-2 px-3 text-slate-500 dark:text-slate-400">
                         {(row.station * (LBP / 20)).toFixed(2)}
                       </td>
                       {wlLabels.map((l) => (
-                        <td key={l} className="py-2 px-3 text-slate-200">
+                        <td key={l} className="py-2 px-3 text-slate-700 dark:text-slate-200">
                           {(row.offsets[l] || 0).toFixed(3)}
                         </td>
                       ))}
