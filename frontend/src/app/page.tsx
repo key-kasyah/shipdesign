@@ -8,8 +8,7 @@ import {
   FileDown,
   RefreshCw,
   Folder,
-  ChevronRight,
-  Ship
+  ChevronRight
 } from "lucide-react";
 import { api } from "../services/api";
 import { useLanguage } from "../context/LanguageContext";
@@ -46,23 +45,20 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="atelier-page space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-5">
+      <div className="atelier-page-header">
         <div className="flex items-center space-x-4">
-          <div className="relative w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 shrink-0">
-            <Ship size={24} className="text-white" />
-          </div>
           <div>
-            <div className="flex items-center space-x-3">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="atelier-page-title">
                 {t("app.title", "SHIP DESIGN AI")}
-              </h2>
-              <span className="text-[10px] font-mono font-semibold bg-blue-50 dark:bg-indigo-500/10 text-blue-700 dark:text-indigo-400 border border-blue-200 dark:border-indigo-500/20 px-2.5 py-0.5 rounded-full">
+              </h1>
+              <span className="text-xs font-medium text-text-tertiary">
                 OPART Lab
               </span>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+            <p className="text-text-secondary text-sm mt-2 max-w-[70ch] leading-relaxed">
               {t("app.subtitle", "Offshore and Subsea Production Research Laboratory - opart")} — {t("app.platform_title", "Platform Rancang Bangun Kapal Terintegrasi AI")}
             </p>
           </div>
@@ -70,45 +66,42 @@ export default function Dashboard() {
         <button
           onClick={fetchDashboardData}
           disabled={loading}
-          className="flex items-center space-x-2 text-xs font-semibold bg-white dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700/60 transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+          className="atelier-button atelier-button-secondary disabled:opacity-50"
         >
-          <RefreshCw size={14} className={loading ? "animate-spin text-blue-500 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"} />
+          <RefreshCw size={14} className={loading ? "animate-spin text-accent-primary" : "text-text-secondary"} />
           <span>{t("dashboard.refresh", "Refresh Data")}</span>
         </button>
       </div>
 
       {/* Total Projects Summary Banner */}
-      <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-border-default">
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
-            <Folder size={22} />
-          </div>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">
+            <span className="text-xs font-semibold text-text-secondary tracking-normal block">
               {t("dashboard.total_projects", "Total Projects")}
             </span>
             <div className="flex items-baseline space-x-3 mt-1">
-              <span className="text-3xl font-bold font-mono text-white">
+              <span className="text-2xl font-medium font-mono tabular-nums text-text-primary">
                 {loading ? "-" : projects.length}
               </span>
-              <span className="text-[10px] font-mono bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-md border border-blue-500/20 font-semibold">
+              <span className="text-xs text-text-secondary">
                 {language === "en" ? "Active" : "Aktif"}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => router.push("/projects/import")}
-            className="flex items-center space-x-2 bg-slate-950/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-sm active:scale-[0.98]"
+            className="atelier-button atelier-button-secondary"
           >
-            <FileDown size={14} className="text-slate-400" />
+            <FileDown size={14} className="text-text-secondary" />
             <span>Import JSON</span>
           </button>
           <button
             onClick={() => router.push("/projects/new")}
-            className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-lg shadow-blue-600/20 border border-blue-400/30 active:scale-[0.98]"
+            className="atelier-button atelier-button-primary"
           >
             <PlusCircle size={14} />
             <span>{language === "en" ? "Create New Project" : "Buat Proyek Baru"}</span>
@@ -117,12 +110,13 @@ export default function Dashboard() {
       </div>
 
       {/* Full-Width Recent Projects Panel */}
-      <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 space-y-4 shadow-2xl backdrop-blur-xl">
-        <div className="flex justify-between items-center pb-2 border-b border-slate-800/60">
-          <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+      {error && <p role="alert" className="rounded-md border border-status-danger-border bg-status-danger-subtle px-4 py-3 text-status-danger">{error}</p>}
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-3 justify-between items-center">
+          <h2 className="text-lg font-semibold text-text-primary">
             {t("dashboard.recent_projects", "Recent Project Requirements")}
-          </h3>
-          <Link href="/projects" className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center space-x-1 transition-colors">
+          </h2>
+          <Link href="/projects" className="text-sm text-accent-primary hover:text-accent-primary font-semibold flex items-center space-x-1 transition-colors">
             <span>{t("dashboard.view_all", "View all projects")}</span>
             <ChevronRight size={14} />
           </Link>
@@ -131,47 +125,47 @@ export default function Dashboard() {
         {loading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-14 bg-slate-800/40 rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-surface-secondary rounded-lg animate-pulse" />
             ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="h-48 border border-dashed border-slate-800/80 rounded-xl flex flex-col items-center justify-center text-slate-500 space-y-3">
-            <Folder size={32} className="text-slate-600" />
-            <p className="text-xs text-slate-400">
+          <div className="h-48 border border-dashed border-border-default rounded-lg flex flex-col items-center justify-center text-text-secondary space-y-3">
+            <Folder size={32} className="text-text-secondary" />
+            <p className="text-sm text-text-secondary">
               {language === "en" ? "No registered ship requirement projects found." : "Belum ada proyek kebutuhan kapal terdaftar."}
             </p>
             <button
               onClick={() => router.push("/projects/new")}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-semibold transition-all cursor-pointer shadow-md"
+              className="bg-accent-primary hover:bg-accent-hover text-on-accent text-sm px-4 py-2 rounded-lg font-semibold transition-colors cursor-pointer"
             >
               {language === "en" ? "Initialize First Project" : "Inisialisasi Proyek Pertama"}
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto border border-slate-800/80 rounded-xl">
-            <table className="w-full text-left border-collapse text-xs">
+          <div tabIndex={0} role="region" aria-label="Scrollable project data" className="overflow-x-auto bg-surface-primary border border-border-default rounded-lg">
+            <table className="w-full min-w-[780px] text-left border-collapse text-sm">
               <thead>
-                <tr className="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800/80 uppercase text-[10px] tracking-wider">
-                  <th className="p-3.5">Project ID</th>
-                  <th className="p-3.5">{language === "en" ? "Project Name" : "Nama Proyek"}</th>
-                  <th className="p-3.5">Active Rev</th>
-                  <th className="p-3.5">Last Updated</th>
-                  <th className="p-3.5 text-right">{language === "en" ? "Action" : "Aksi"}</th>
+                <tr className="bg-surface-inset text-text-secondary font-semibold border-b border-border-default text-xs tracking-normal">
+                  <th className="px-4 py-4">Project ID</th>
+                  <th className="px-4 py-4">{language === "en" ? "Project Name" : "Nama Proyek"}</th>
+                  <th className="px-4 py-4">Active Rev</th>
+                  <th className="px-4 py-4">Last Updated</th>
+                  <th className="px-4 py-4 text-right">{language === "en" ? "Action" : "Aksi"}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-border-default">
                 {projects.slice(0, 5).map((p) => (
-                  <tr key={p.project_id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3.5 font-mono font-bold text-cyan-400">{p.project_id}</td>
-                    <td className="p-3.5 font-medium text-slate-200">{p.project_name}</td>
-                    <td className="p-3.5 font-mono text-slate-400">Rev. {p.latest_revision}</td>
-                    <td className="p-3.5 font-mono text-slate-400 text-[11px]">
+                  <tr key={p.project_id} className="hover:bg-surface-secondary transition-colors">
+                    <td className="px-4 py-4 font-mono font-semibold text-accent-primary">{p.project_id}</td>
+                    <td className="px-4 py-4 font-medium text-text-primary">{p.project_name}</td>
+                    <td className="px-4 py-4 font-mono text-text-secondary">Rev. {p.latest_revision}</td>
+                    <td className="px-4 py-4 font-mono text-text-secondary text-xs">
                       {new Date(p.last_updated).toLocaleString()}
                     </td>
-                    <td className="p-3.5 text-right">
+                    <td className="px-4 py-4 text-right">
                       <Link
                         href={`/projects/${p.project_id}`}
-                        className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-1.5 rounded-lg transition-colors inline-block"
+                        className="atelier-button atelier-button-secondary"
                       >
                         {language === "en" ? "Manage" : "Kelola"}
                       </Link>

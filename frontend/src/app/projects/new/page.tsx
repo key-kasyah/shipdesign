@@ -75,34 +75,36 @@ function PortDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs text-white hover:border-blue-500 transition-colors text-left"
+        aria-expanded={open}
+        className="w-full flex items-center justify-between bg-surface-inset border border-border-default rounded px-3 py-2 text-sm text-text-primary hover:border-border-default transition-colors text-left"
       >
-        <span className="truncate">
+        <span className="min-w-0 whitespace-normal break-words">
           {selectedPort ? `${selectedPort.port_name} (${selectedPort.province})` : (language === "en" ? "Select Port..." : "Pilih Pelabuhan...")}
         </span>
-        <ChevronDown size={14} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown size={14} className={`text-text-secondary transition-transform duration-150 ${open ? "rotate-180" : ""} `} />
       </button>
 
       {/* Downward Dropdown Menu */}
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden flex flex-col p-2 space-y-2">
+        <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-surface-elevated border border-border-default rounded-lg shadow-[var(--shadow-overlay)] overflow-hidden flex flex-col p-2 space-y-2">
           {/* Search Box inside dropdown */}
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-2.5 text-slate-400" />
+            <Search size={12} className="absolute left-2.5 top-2.5 text-text-secondary" />
             <input
               type="text"
               placeholder={language === "en" ? "Search port / province name..." : "Cari nama pelabuhan / provinsi..."}
+              aria-label={language === "en" ? "Search port or province" : "Cari pelabuhan atau provinsi"}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded pl-8 pr-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+              className="w-full bg-surface-inset border border-border-default rounded pl-8 pr-2.5 py-1.5 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default"
               autoFocus
             />
           </div>
 
           {/* Scrollable list options opening downwards */}
-          <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
+          <div tabIndex={0} role="region" aria-label="Scrollable project data" className="max-h-52 overflow-y-auto space-y-1 pr-1">
             {filteredPorts.length === 0 ? (
-              <div className="p-3 text-[11px] text-slate-500 text-center">{language === "en" ? "Port not found" : "Pelabuhan tidak ditemukan"}</div>
+              <div className="p-3 text-xs text-text-secondary text-center">{language === "en" ? "Port not found" : "Pelabuhan tidak ditemukan"}</div>
             ) : (
               filteredPorts.map((p) => (
                 <button
@@ -113,13 +115,13 @@ function PortDropdown({
                     setOpen(false);
                     setSearch("");
                   }}
-                  className={`w-full text-left px-2.5 py-1.5 text-xs rounded transition-colors flex items-center justify-between ${p.port_id === selectedPortId
-                    ? "bg-blue-600/30 text-blue-300 font-semibold border border-blue-500/30"
-                    : "text-slate-200 hover:bg-slate-800 hover:text-white"
-                    }`}
+                  className={`w-full text-left px-2.5 py-1.5 text-sm rounded transition-colors flex items-center justify-between ${p.port_id === selectedPortId
+                    ? "bg-surface-selected text-accent-primary font-semibold border border-border-default"
+                    : "text-text-primary hover:bg-surface-secondary hover:text-text-primary"
+                    } `}
                 >
-                  <span>{p.port_name} <span className="text-[10px] text-slate-400">({p.province})</span></span>
-                  {p.port_id === selectedPortId && <Check size={12} className="text-blue-400" />}
+                  <span>{p.port_name} <span className="text-xs text-text-secondary">({p.province})</span></span>
+                  {p.port_id === selectedPortId && <Check size={12} className="text-accent-primary" />}
                 </button>
               ))
             )}
@@ -304,12 +306,12 @@ export default function NewProject() {
   };
 
   return (
-    <div ref={topRef} className="max-w-3xl mx-auto space-y-6">
+    <div ref={topRef} className="atelier-page max-w-[1120px] space-y-6">
       {/* Breadcrumb Navigation */}
       <div>
         <button
           onClick={() => router.push("/projects")}
-          className="flex items-center space-x-2 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+          className="flex items-center space-x-2 text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
         >
           <ArrowLeft size={14} />
           <span>{language === "en" ? "Back to Projects List" : "Kembali ke Daftar Proyek"}</span>
@@ -318,53 +320,53 @@ export default function NewProject() {
 
       {isSuccess ? (
         /* Success Screen */
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 space-y-6 text-center">
-          <div className="flex justify-center">
-            <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center text-green-400">
+        <div role="status" className="bg-surface-primary border border-border-subtle rounded-lg p-6 md:p-8 space-y-6">
+          <div className="flex">
+            <div className="text-status-success">
               <CheckCircle2 size={32} />
             </div>
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-white">{language === "en" ? "Project Initialization Successful!" : "Inisialisasi Proyek Berhasil!"}</h2>
-            <p className="text-slate-400 text-xs max-w-md mx-auto">
-              {language === "en" ? "New project" : "Proyek baru"} <span className="text-white font-mono font-semibold">{createdProjectId}</span> ({projectName}) {language === "en" ? "has been registered to the system database." : "telah berhasil didaftarkan ke sistem database."}
+            <h1 className="atelier-page-title text-text-primary">{language === "en" ? "Project Initialization Successful!" : "Inisialisasi Proyek Berhasil!"}</h1>
+            <p className="text-text-secondary text-sm max-w-[72ch]">
+              {language === "en" ? "New project" : "Proyek baru"} <span className="text-text-primary font-mono font-semibold">{createdProjectId}</span> ({projectName}) {language === "en" ? "has been registered to the system database." : "telah berhasil didaftarkan ke sistem database."}
             </p>
           </div>
 
           {/* Project Summary Card */}
-          <div className="bg-slate-950 border border-slate-850 rounded-lg p-4 text-left text-xs space-y-3 max-w-lg mx-auto">
-            <div className="flex items-center space-x-2 text-blue-400 font-semibold border-b border-slate-800 pb-2">
+          <div className="border-y border-border-default py-6 text-sm space-y-4">
+            <div className="flex items-center space-x-2 text-accent-primary font-semibold border-b border-border-default pb-2">
               <Ship size={14} />
               <span>{language === "en" ? "Parameter Initialization Summary" : "Ringkasan Inisialisasi Parameter"}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-slate-300">
-              <div><span className="text-slate-500">Project ID:</span> <span className="font-mono">{createdProjectId}</span></div>
-              <div><span className="text-slate-500">{language === "en" ? "Project Name:" : "Nama Proyek:"}</span> {projectName}</div>
-              <div><span className="text-slate-500">Owner:</span> {owner}</div>
-              <div><span className="text-slate-500">{language === "en" ? "Vessel Type:" : "Tipe Kapal:"}</span> {formatVesselType(vesselType)}</div>
-              <div><span className="text-slate-500">Target DWT:</span> {targetDwt} Ton</div>
-              <div><span className="text-slate-500">V ({language === "en" ? "Service Speed" : "Kecepatan"}):</span> {serviceSpeed} knot</div>
-              <div className="col-span-2">
-                <span className="text-slate-500">{language === "en" ? "Voyage Route:" : "Trayek Pelayaran:"}</span> {routeName || "-"}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-text-primary break-words">
+              <div><span className="text-text-secondary">Project ID:</span> <span className="font-mono">{createdProjectId}</span></div>
+              <div><span className="text-text-secondary">{language === "en" ? "Project Name:" : "Nama Proyek:"}</span> {projectName}</div>
+              <div><span className="text-text-secondary">Owner:</span> {owner}</div>
+              <div><span className="text-text-secondary">{language === "en" ? "Vessel Type:" : "Tipe Kapal:"}</span> {formatVesselType(vesselType)}</div>
+              <div><span className="text-text-secondary">Target DWT:</span> {targetDwt} Ton</div>
+              <div><span className="text-text-secondary">V ({language === "en" ? "Service Speed" : "Kecepatan"}):</span> {serviceSpeed} knot</div>
+              <div className="sm:col-span-2">
+                <span className="text-text-secondary">{language === "en" ? "Voyage Route:" : "Trayek Pelayaran:"}</span> {routeName || "-"}
               </div>
-              <div className="col-span-2">
-                <span className="text-slate-500">{language === "en" ? "Max Leg Distance S:" : "Jarak Terjauh S (Leg Terjauh):"}</span> <span className="text-green-400 font-bold">{routeDistance} seamiles</span>
+              <div className="sm:col-span-2">
+                <span className="text-text-secondary">{language === "en" ? "Max Leg Distance S:" : "Jarak Terjauh S (Leg Terjauh):"}</span> <span className="text-status-success font-semibold">{routeDistance} seamiles</span>
               </div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               onClick={() => router.push("/projects")}
-              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              className="px-5 py-2.5 bg-surface-secondary hover:bg-surface-secondary text-text-primary text-sm font-semibold rounded-md transition-colors cursor-pointer"
             >
               {language === "en" ? "Back to Projects List" : "Kembali ke Daftar Proyek"}
             </button>
             <button
               onClick={() => router.push(`/projects/${createdProjectId}`)}
-              className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-accent-primary hover:bg-accent-hover text-on-accent text-sm font-semibold rounded-md transition-colors cursor-pointer"
             >
               <span>{language === "en" ? "Open Stage 1 (Requirements)" : "Buka Tahap 1 (Requirements)"}</span>
               <ArrowRight size={14} />
@@ -373,10 +375,10 @@ export default function NewProject() {
         </div>
       ) : (
         /* Initiation Form */
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 md:p-8 space-y-6">
-          <div className="border-b border-slate-800 pb-4">
-            <h2 className="text-xl font-bold text-white tracking-wide">{t("badge.new_project", "Inisialisasi Proyek Baru")}</h2>
-            <p className="text-slate-400 text-xs mt-1">
+        <div className="bg-surface-primary border border-border-subtle rounded-lg p-5 sm:p-6 space-y-8">
+          <div className="border-b border-border-default pb-4">
+            <h1 className="atelier-page-title text-text-primary">{t("badge.new_project", "Inisialisasi Proyek Baru")}</h1>
+            <p className="text-text-secondary text-sm mt-1">
               {language === "en" ? "Fill in project metadata and select port voyage stops to calculate leg distance automatically." : "Isi data identitas dan pilih rute pelayaran pelabuhan untuk menghitung parameter jarak secara otomatis."}
             </p>
           </div>
@@ -384,34 +386,36 @@ export default function NewProject() {
           {error && (
             <div
               ref={errorRef}
-              className="bg-red-500/15 border-2 border-red-500/50 text-red-300 text-xs px-4 py-3.5 rounded-xl flex items-center space-x-3 shadow-xl animate-pulse"
+              id="new-project-error"
+              role="alert"
+              className="bg-status-danger-subtle border border-status-danger-border text-status-danger text-sm px-4 py-3.5 rounded-md flex items-center space-x-3"
             >
-              <AlertCircle size={20} className="text-red-400 shrink-0" />
+              <AlertCircle size={20} className="text-status-danger shrink-0" />
               <div>
-                <p className="font-bold text-red-200 text-xs">{language === "en" ? "Project Initialization Failed!" : "Gagal Menginisialisasi Proyek!"}</p>
-                <p className="text-[11px] text-red-300/90">{error}</p>
+                <p className="font-semibold text-status-danger text-sm">{language === "en" ? "Project Initialization Failed!" : "Gagal Menginisialisasi Proyek!"}</p>
+                <p className="text-xs text-status-danger">{error}</p>
               </div>
             </div>
           )}
 
-          <form noValidate onSubmit={handleSubmit} className="space-y-6">
+          <form noValidate onSubmit={handleSubmit} className="space-y-8" aria-busy={loading}>
             {/* SECTION 1: IDENTITAS PROYEK */}
             <div className="space-y-4">
-              <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+              <h3 className="text-lg leading-[26px] font-semibold text-text-primary">
                 {language === "en" ? "Section 1 — Project Identity & Owner" : "Section 1 — Identitas & Pemilik Proyek"}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-350 block">Project ID</label>
-                  <div className="w-full bg-slate-950/90 border border-slate-800 rounded-lg px-3 py-2 text-xs text-cyan-400 font-mono font-bold shadow-inner">
+                  <label className="text-sm font-semibold text-text-secondary block">Project ID</label>
+                  <div className="w-full bg-surface-inset border border-border-default rounded-md px-3 py-2 text-sm text-accent-primary font-mono font-semibold">
                     {projectId || "PRJ-2026-..."}
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-350 block">{language === "en" ? "Project Name *" : "Nama Proyek *"}</label>
-                  <input
+                  <label className="text-sm font-semibold text-text-secondary block">{language === "en" ? "Project Name *" : "Nama Proyek *"}</label>
+                  <input aria-label={language === "en" ? "Project Name *" : "Nama Proyek *"}
                     type="text"
                     required
                     value={projectName}
@@ -420,19 +424,19 @@ export default function NewProject() {
                       if (fieldErrors.projectName) setFieldErrors((prev) => ({ ...prev, projectName: false }));
                     }}
                     placeholder={language === "en" ? "e.g. KM Mandiri Utama" : "Contoh: KM Mandiri Utama"}
-                    className={`w-full bg-slate-950 border rounded-lg px-3 py-2 text-xs text-white focus:outline-none ${
+                    className={`w-full bg-surface-inset border rounded-md px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring ${
                       fieldErrors.projectName
-                        ? "border-red-500 ring-2 ring-red-500/30 bg-red-950/10"
-                        : "border-slate-800 focus:border-blue-500"
-                    }`}
+                        ? "border-status-danger-border ring-2 ring-status-danger bg-status-danger-subtle"
+                        : "border-border-default focus:border-border-default"
+                    } `}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-350 block">{language === "en" ? "Owner / Shipowner *" : "Owner / Pemilik *"}</label>
-                  <input
+                  <label className="text-sm font-semibold text-text-secondary block">{language === "en" ? "Owner / Shipowner *" : "Owner / Pemilik *"}</label>
+                  <input aria-label={language === "en" ? "Owner / Shipowner *" : "Owner / Pemilik *"}
                     type="text"
                     required
                     value={owner}
@@ -441,29 +445,29 @@ export default function NewProject() {
                       if (fieldErrors.owner) setFieldErrors((prev) => ({ ...prev, owner: false }));
                     }}
                     placeholder={language === "en" ? "e.g. PT Pelayaran Nusantara" : "Contoh: PT Pelayaran Nusantara"}
-                    className={`w-full bg-slate-950 border rounded-lg px-3 py-2 text-xs text-white focus:outline-none ${
+                    className={`w-full bg-surface-inset border rounded-md px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring ${
                       fieldErrors.owner
-                        ? "border-red-500 ring-2 ring-red-500/30 bg-red-950/10"
-                        : "border-slate-800 focus:border-blue-500"
-                    }`}
+                        ? "border-status-danger-border ring-2 ring-status-danger bg-status-danger-subtle"
+                        : "border-border-default focus:border-border-default"
+                    } `}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-350 block">{language === "en" ? "Organization / Institution" : "Organisasi / Kampus"}</label>
-                  <input
+                  <label className="text-sm font-semibold text-text-secondary block">{language === "en" ? "Organization / Institution" : "Organisasi / Kampus"}</label>
+                  <input aria-label={language === "en" ? "Organization / Institution" : "Organisasi / Kampus"}
                     type="text"
                     value={org}
                     onChange={(e) => setOrg(e.target.value)}
                     placeholder={language === "en" ? "e.g. ITS Surabaya" : "Contoh: ITS Surabaya"}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="w-full bg-surface-inset border border-border-default rounded-md px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-350 block">{language === "en" ? "Creator Email *" : "Aktor Pembuat *"}</label>
-                <input
+                <label className="text-sm font-semibold text-text-secondary block">{language === "en" ? "Creator Email *" : "Aktor Pembuat *"}</label>
+                <input aria-label={language === "en" ? "Creator Email *" : "Aktor Pembuat *"}
                   type="email"
                   required
                   value={creator}
@@ -472,20 +476,20 @@ export default function NewProject() {
                     if (fieldErrors.creator) setFieldErrors((prev) => ({ ...prev, creator: false }));
                   }}
                   placeholder="designer@ship.com"
-                  className={`w-full bg-slate-950 border rounded-lg px-3 py-2 text-xs text-white focus:outline-none ${
+                  className={`w-full bg-surface-inset border rounded-md px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring ${
                     fieldErrors.creator
-                      ? "border-red-500 ring-2 ring-red-500/30 bg-red-950/10"
-                      : "border-slate-800 focus:border-blue-500"
-                  }`}
+                      ? "border-status-danger-border ring-2 ring-status-danger bg-status-danger-subtle"
+                      : "border-border-default focus:border-border-default"
+                  } `}
                 />
               </div>
             </div>
 
             {/* SECTION 2: PARAMETER UTAMA KAPAL & RUTE PELABUHAN */}
-            <div className="space-y-5 pt-4 border-t border-slate-800">
+            <div className="space-y-6 pt-8 border-t border-border-default">
               <div className="flex items-center space-x-2">
-                <Ship size={16} className="text-blue-400" />
-                <h3 className="text-xs font-bold text-blue-400 uppercase tracking-wider">
+                <Ship size={16} className="text-accent-primary" />
+                <h3 className="text-lg leading-[26px] font-semibold text-text-primary">
                   {language === "en" ? "Section 2 — Vessel Key Parameters & Port Route" : "Section 2 — Parameter Utama Kapal & Rute Pelabuhan"}
                 </h3>
               </div>
@@ -493,11 +497,11 @@ export default function NewProject() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Tipe Kapal */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-350 block">{language === "en" ? "Vessel Type *" : "Tipe Kapal *"}</label>
-                  <select
+                  <label className="text-sm font-semibold text-text-secondary block">{language === "en" ? "Vessel Type *" : "Tipe Kapal *"}</label>
+                  <select aria-label={language === "en" ? "Vessel Type *" : "Tipe Kapal *"}
                     value={vesselType}
                     onChange={(e) => setVesselType(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
+                    className="w-full bg-surface-inset border border-border-default rounded-md px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default cursor-pointer"
                   >
                     {Object.values(VesselType).map((t) => (
                       <option key={t} value={t}>
@@ -509,9 +513,9 @@ export default function NewProject() {
 
                 {/* DWT */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-350 block">DWT (Deadweight Tonnage) *</label>
-                  <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg overflow-hidden focus-within:border-blue-500">
-                    <input
+                  <label className="text-sm font-semibold text-text-secondary block">DWT (Deadweight Tonnage) *</label>
+                  <div className="flex items-center bg-surface-inset border border-border-default rounded-md overflow-hidden focus-within:border-border-default">
+                    <input aria-label={["DWT (Deadweight Tonnage) *"].join(" ")}
                       type="number"
                       required
                       min={1}
@@ -519,9 +523,9 @@ export default function NewProject() {
                       value={targetDwt}
                       onChange={(e) => setTargetDwt(e.target.value === "" ? "" : parseFloat(e.target.value))}
                       placeholder="3910"
-                      className="w-full bg-transparent border-none px-3 py-2 text-xs text-white focus:outline-none"
+                      className="w-full bg-transparent border-none px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
                     />
-                    <span className="bg-slate-850 text-slate-400 px-3 py-2 text-xs font-semibold border-l border-slate-800">
+                    <span className="bg-surface-secondary text-text-secondary px-3 py-2 text-sm font-semibold border-l border-border-default">
                       Ton
                     </span>
                   </div>
@@ -530,9 +534,9 @@ export default function NewProject() {
 
               {/* V (Kecepatan) */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-350 block">V ({language === "en" ? "Service Speed" : "Kecepatan Dinas"}) *</label>
-                <div className="flex items-center bg-slate-950 border border-slate-800 rounded-lg overflow-hidden focus-within:border-blue-500 max-w-xs">
-                  <input
+                <label className="text-sm font-semibold text-text-secondary block">V ({language === "en" ? "Service Speed" : "Kecepatan Dinas"}) *</label>
+                <div className="flex items-center bg-surface-inset border border-border-default rounded-md overflow-hidden focus-within:border-border-default max-w-none sm:max-w-[calc(50%-8px)]">
+                  <input aria-label={["V (",String(language === "en" ? "Service Speed" : "Kecepatan Dinas"),") *"].join(" ")}
                     type="number"
                     required
                     min={0.1}
@@ -540,34 +544,34 @@ export default function NewProject() {
                     value={serviceSpeed}
                     onChange={(e) => setServiceSpeed(e.target.value === "" ? "" : parseFloat(e.target.value))}
                     placeholder="12"
-                    className="w-full bg-transparent border-none px-3 py-2 text-xs text-white focus:outline-none"
+                    className="w-full bg-transparent border-none px-3 py-2 text-sm text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
                   />
-                  <span className="bg-slate-850 text-slate-400 px-3 py-2 text-xs font-semibold border-l border-slate-800">
+                  <span className="bg-surface-secondary text-text-secondary px-3 py-2 text-sm font-semibold border-l border-border-default">
                     knot
                   </span>
                 </div>
               </div>
 
               {/* DYNAMIC MULTI-STOP ROUTE BUILDER */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 md:p-5 space-y-4">
-                <div className="flex justify-between items-center border-b border-slate-850 pb-3">
+              <div className="border-t border-border-default pt-8 space-y-4">
+                <div className="flex flex-wrap justify-between items-center gap-3 border-b border-border-default pb-3">
                   <div className="flex items-center space-x-2">
-                    <MapPin size={16} className="text-blue-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    <MapPin size={16} className="text-accent-primary" />
+                    <span className="text-lg leading-[26px] font-semibold text-text-primary">
                       {language === "en" ? "Port Stops Selection & Max Leg Calculation (S)" : "Pemilihan Pelabuhan Singgah & Hitung Jarak Terjauh (S)"}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleAddPortStop}
-                    className="flex items-center space-x-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer"
+                    className="flex items-center space-x-1 bg-surface-selected hover:bg-surface-selected text-accent-primary border border-border-default px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer"
                   >
                     <Plus size={14} />
                     <span>{language === "en" ? "Add Port Stop" : "Tambah Pelabuhan"}</span>
                   </button>
                 </div>
 
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-text-secondary">
                   {language === "en"
                     ? "Select port sequence. The system will automatically compute leg distances and take the longest leg distance (S) from the ports database."
                     : "Pilih urutan pelabuhan singgah. Sistem akan menghitung jarak maritim (seamiles) antar segmen dan mengambil jarak leg terjauh (S) secara otomatis dari database pelabuhan."}
@@ -587,17 +591,17 @@ export default function NewProject() {
                           setDraggedIndex(null);
                         }
                       }}
-                      className={`flex items-center space-x-2.5 bg-slate-900 border p-2.5 rounded-lg transition-all ${draggedIndex === idx ? "opacity-40 border-blue-500 border-dashed" : "border-slate-800 hover:border-slate-700"
-                        }`}
+                      className={`flex flex-wrap sm:flex-nowrap items-center gap-2 bg-surface-primary border p-3 rounded-md transition-colors ${draggedIndex === idx ? "opacity-40 border-border-default border-dashed" : "border-border-default hover:border-border-default"
+                        } `}
                     >
-                      <div className="flex items-center space-x-1.5 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 select-none shrink-0" title="Drag to reorder">
+                      <div className="flex items-center space-x-1.5 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary select-none shrink-0" title="Drag to reorder">
                         <GripVertical size={16} />
-                        <span className="w-6 h-6 bg-slate-800 text-slate-300 rounded-full flex items-center justify-center text-xs font-bold font-mono">
+                        <span className="w-6 h-6 bg-surface-secondary text-text-primary rounded-sm flex items-center justify-center text-sm font-medium font-mono">
                           {idx + 1}
                         </span>
                       </div>
 
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-[140px]">
                         <PortDropdown
                           ports={portsList}
                           selectedPortId={portId}
@@ -605,30 +609,30 @@ export default function NewProject() {
                         />
                       </div>
 
-                      <div className="flex items-center space-x-1 shrink-0 select-none">
-                        <button
+                      <div className="flex items-center gap-2 shrink-0 select-none ml-auto">
+                        <button aria-label={language === "en" ? "Move Up" : "Geser ke Atas"}
                           type="button"
                           disabled={idx === 0}
                           onClick={() => movePortStop(idx, idx - 1)}
-                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer transition-colors"
+                          className="atelier-icon-button text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer transition-colors"
                           title={language === "en" ? "Move Up" : "Geser ke Atas"}
                         >
                           <ArrowUp size={14} />
                         </button>
-                        <button
+                        <button aria-label={language === "en" ? "Move Down" : "Geser ke Bawah"}
                           type="button"
                           disabled={idx === selectedPortIds.length - 1}
                           onClick={() => movePortStop(idx, idx + 1)}
-                          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer transition-colors"
+                          className="atelier-icon-button text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded disabled:opacity-20 disabled:hover:bg-transparent cursor-pointer transition-colors"
                           title={language === "en" ? "Move Down" : "Geser ke Bawah"}
                         >
                           <ArrowDown size={14} />
                         </button>
                         {selectedPortIds.length > 2 && (
-                          <button
+                          <button aria-label={language === "en" ? "Remove Port" : "Hapus Pelabuhan"}
                             type="button"
                             onClick={() => handleRemovePortStop(idx)}
-                            className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors cursor-pointer"
+                            className="atelier-icon-button text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle rounded transition-colors cursor-pointer"
                             title={language === "en" ? "Remove Port" : "Hapus Pelabuhan"}
                           >
                             <Trash2 size={14} />
@@ -641,36 +645,36 @@ export default function NewProject() {
 
                 {/* Calculation Summary Card */}
                 {routeCalcResult && (
-                  <div className="bg-slate-900/80 border border-blue-500/20 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
-                      <span className="font-semibold text-slate-300">{language === "en" ? "Route:" : "Rute:"} <span className="text-white font-medium">{routeCalcResult.route_name}</span></span>
-                      <span className="text-slate-400 font-mono">
+                  <div className="bg-surface-primary border border-border-default rounded-md p-4 space-y-3">
+                    <div className="flex flex-wrap justify-between items-center gap-3 text-sm border-b border-border-default pb-2">
+                      <span className="font-semibold text-text-primary">{language === "en" ? "Route:" : "Rute:"} <span className="text-text-primary font-medium">{routeCalcResult.route_name}</span></span>
+                      <span className="text-text-secondary font-mono">
                         {routeCalcResult.legs.length} {language === "en" ? "Voyage Legs" : "Segmen Pelayaran"}
                       </span>
                     </div>
 
-                    <div className="space-y-1.5 text-xs">
+                    <div className="space-y-1.5 text-sm">
                       {routeCalcResult.legs.map((leg: any, i: number) => (
-                        <div key={i} className="flex justify-between items-center text-slate-300">
+                        <div key={i} className="flex flex-wrap justify-between items-center gap-3 text-text-primary">
                           <span className="flex items-center space-x-1.5">
-                            <Navigation size={12} className="text-slate-500" />
+                            <Navigation size={12} className="text-text-secondary" />
                             <span>{leg.origin_name.split("(")[0].trim()} ➔ {leg.destination_name.split("(")[0].trim()}</span>
                           </span>
-                          <span className="font-mono font-medium text-slate-200">{leg.distance_nm} seamiles</span>
+                          <span className="font-mono font-medium text-text-primary">{leg.distance_nm} seamiles</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <div className="bg-blue-500/10 border border-blue-500/20 p-2.5 rounded-lg flex justify-between items-center">
-                        <span className="text-blue-300 font-medium">{language === "en" ? "Longest Leg (S):" : "Jarak Terjauh (S):"}</span>
-                        <span className="text-sm font-bold text-blue-400 font-mono">
+                    <div className="pt-2 border-t border-border-default grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div className="bg-surface-selected border border-border-default p-2.5 rounded-md flex justify-between items-center">
+                        <span className="text-accent-primary font-medium">{language === "en" ? "Longest Leg (S):" : "Jarak Terjauh (S):"}</span>
+                        <span className="text-sm font-semibold text-accent-primary font-mono">
                           {routeCalcResult.max_leg_nm} seamiles
                         </span>
                       </div>
-                      <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center">
-                        <span className="text-slate-400 font-medium">{language === "en" ? "Total Voyage Distance:" : "Total Rute Jelajah:"}</span>
-                        <span className="text-sm font-bold text-slate-200 font-mono">
+                      <div className="bg-surface-inset border border-border-default p-2.5 rounded-md flex justify-between items-center">
+                        <span className="text-text-secondary font-medium">{language === "en" ? "Total Voyage Distance:" : "Total Rute Jelajah:"}</span>
+                        <span className="text-sm font-semibold text-text-primary font-mono">
                           {routeCalcResult.total_distance_nm} seamiles
                         </span>
                       </div>
@@ -680,18 +684,18 @@ export default function NewProject() {
               </div>
             </div>
 
-            <div className="pt-4 flex items-center space-x-3">
+            <div className="pt-6 border-t border-border-default flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
               <button
                 type="button"
                 onClick={() => router.push("/projects")}
-                className="w-1/3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-lg text-xs transition-colors cursor-pointer text-center"
+                className="atelier-button atelier-button-secondary"
               >
                 {t("action.cancel", "Batal")}
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-2/3 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-50"
+                className="atelier-button atelier-button-primary disabled:opacity-50"
               >
                 <PlusCircle size={16} />
                 <span>{loading ? (language === "en" ? "Saving Project..." : "Menyimpan Proyek...") : (language === "en" ? "Save & Initialize Project" : "Simpan & Inisialisasi Proyek")}</span>

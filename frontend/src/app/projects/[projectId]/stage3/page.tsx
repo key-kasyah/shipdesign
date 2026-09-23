@@ -379,47 +379,47 @@ export default function Stage3BasicDesignPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-[#070B12] text-slate-500 dark:text-slate-400 font-sans">
+      <div className="flex h-screen items-center justify-center bg-surface-canvas text-text-secondary font-sans">
         <div className="flex flex-col items-center space-y-3">
-          <RefreshCw className="animate-spin text-cyan-500" size={32} />
-          <p className="text-sm font-medium tracking-wide">Memuat modul Basic Design & Rencana Garis...</p>
+          <RefreshCw className="animate-spin text-accent-primary" size={32} />
+          <p className="text-sm font-medium tracking-normal">Memuat modul Basic Design & Rencana Garis...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-slate-50 dark:bg-[#070B12] text-slate-900 dark:text-slate-100 font-sans relative">
+    <div className="atelier-stage3 flex min-w-0 flex-col min-h-full bg-surface-canvas text-text-primary font-sans relative">
       {/* Top Header Bar */}
-      <header className="border-b border-slate-200 dark:border-slate-800/80 bg-white/90 dark:bg-slate-950/80 backdrop-blur-xl shrink-0 px-4 sm:px-6 py-3">
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 min-w-0">
+      <header className="border-b border-border-default bg-surface-primary shrink-0 px-4 md:px-6 2xl:px-8 py-6">
+        <div className="flex flex-col justify-between gap-5 min-w-0">
           {/* Left: Navigation and Title Block */}
           <div className="flex items-center space-x-3 min-w-0">
             <button
               onClick={() => router.push(`/projects/${projectId}/stage2`)}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900/90 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center space-x-1.5 text-xs font-semibold shrink-0 shadow-sm"
+              className="px-2.5 py-1.5 rounded-md bg-surface-secondary hover:bg-surface-secondary border border-border-default text-text-primary hover:text-text-primary transition-colors cursor-pointer flex items-center space-x-1.5 text-sm font-semibold shrink-0 min-h-9"
               title={language === "en" ? "Back to Stage 2 Preliminary Design" : "Kembali ke Tahap 2 Pra-Rancangan"}
-            >
-              <ArrowLeft size={14} className="text-slate-500 dark:text-slate-400" />
+             aria-label={language === "en" ? "Back to Stage 2 Preliminary Design" : "Kembali ke Tahap 2 Pra-Rancangan"}>
+              <ArrowLeft size={14} className="text-text-secondary" />
               <span className="hidden sm:inline">{language === "en" ? "Stage 2" : "Tahap 2"}</span>
             </button>
 
-            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 shrink-0 hidden sm:block" />
+            <div className="h-6 w-px bg-surface-secondary shrink-0 hidden sm:block" />
 
             <div className="flex items-center space-x-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 shadow-sm">
+              <div className="text-text-secondary shrink-0">
                 <Compass size={16} />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
-                  <h1 className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white truncate max-w-[220px] sm:max-w-md lg:max-w-xl">
+                  <h1 className="font-semibold text-[22px] leading-7 tracking-[-0.02em] text-text-primary">
                     {language === "en" ? "Stage 3 — Basic Design & Lines Plan" : "Tahap 3 — Desain Awal (Basic Design & Lines Plan)"}
                   </h1>
-                  <span className="text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-[13px] font-mono text-text-secondary px-2 py-1 rounded shrink-0">
                     {projectId}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-lg hidden sm:block mt-0.5">
+                <p className="text-sm text-text-secondary max-w-[72ch] mt-2">
                   {language === "en"
                     ? "Lines plan studio, waterplane calculations, bilge radius & CSA section projection."
                     : "Studio rencana garis, kalkulasi bidang garis air, radius bilga & proyeksi luasan CSA."}
@@ -429,34 +429,34 @@ export default function Stage3BasicDesignPage() {
           </div>
 
           {/* Right: Key Metric Badges & Save Button */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-x-6 gap-y-3">
             {/* Instrument Telemetry Strip */}
-            <div className="flex items-center divide-x divide-slate-200 dark:divide-slate-800/90 rounded-xl bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 px-1 py-1 text-xs font-mono shadow-sm overflow-x-auto max-w-full">
+            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center divide-x divide-border-subtle py-1 text-sm font-mono tabular-nums overflow-x-auto max-w-full mr-auto">
               <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider font-semibold">LBP</span>
-                <span className="text-cyan-600 dark:text-cyan-300 font-bold text-[11px]">{lbp.toFixed(2)}m</span>
+                <span className="text-text-secondary text-xs tracking-normal font-semibold">LBP</span>
+                <span className="text-text-primary font-medium text-sm">{lbp.toFixed(2)}m</span>
               </div>
               <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider font-semibold">LOA</span>
-                <span className="text-amber-600 dark:text-amber-300 font-bold text-[11px]">{currentLoa.toFixed(2)}m</span>
+                <span className="text-text-secondary text-xs tracking-normal font-semibold">LOA</span>
+                <span className="text-text-primary font-medium text-sm">{currentLoa.toFixed(2)}m</span>
               </div>
               <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider font-semibold">B</span>
-                <span className="text-slate-900 dark:text-white font-bold text-[11px]">{breadth.toFixed(2)}m</span>
+                <span className="text-text-secondary text-xs tracking-normal font-semibold">B</span>
+                <span className="text-text-primary font-medium text-sm">{breadth.toFixed(2)}m</span>
               </div>
               <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider font-semibold">T</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[11px]">{draft.toFixed(2)}m</span>
+                <span className="text-text-secondary text-xs tracking-normal font-semibold">T</span>
+                <span className="text-text-primary font-medium text-sm">{draft.toFixed(2)}m</span>
               </div>
               <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Cb</span>
-                <span className="text-amber-600 dark:text-amber-400 font-bold text-[11px]">{cb.toFixed(3)}</span>
+                <span className="text-text-secondary text-xs tracking-normal font-semibold">Cb</span>
+                <span className="text-text-primary font-medium text-sm">{cb.toFixed(3)}</span>
               </div>
             </div>
 
             {lastSaved && (
-              <span className="hidden 2xl:flex items-center space-x-1.5 text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/60 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800/60" title="Waktu terakhir data tersimpan aman">
-                <Clock size={11} className="text-emerald-500 dark:text-emerald-400" />
+              <span className="hidden 2xl:flex items-center space-x-1.5 text-xs font-mono text-text-secondary bg-surface-secondary px-2.5 py-1.5 rounded-lg border border-border-default" title="Waktu terakhir data tersimpan aman">
+                <Clock size={11} className="text-status-success" />
                 <span>{lastSaved}</span>
               </span>
             )}
@@ -465,21 +465,21 @@ export default function Stage3BasicDesignPage() {
             <button
               onClick={() => handleSaveAll(true)}
               disabled={saving}
-              className={`h-8 px-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 shadow-lg shrink-0 ${
+              className={`min-h-9 px-3.5 rounded-md text-sm font-semibold transition-colors cursor-pointer flex items-center space-x-2 shrink-0 ${
                 saving
-                  ? "bg-amber-600/30 text-amber-700 dark:text-amber-300 border border-amber-500/50 animate-pulse cursor-wait"
+                  ? "bg-status-warning-subtle text-status-warning border border-status-warning-border animate-pulse cursor-wait min-h-9"
                   : hasUnsavedChanges
-                  ? "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border border-cyan-400/50 shadow-cyan-900/40 hover:scale-[1.02]"
-                  : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border border-emerald-400/50 shadow-emerald-950/40 hover:scale-[1.02]"
-              }`}
+                  ? "text-on-accent border border-border-default bg-accent-primary min-h-9"
+                  : "text-on-accent border border-status-success-border bg-accent-primary min-h-9"
+              } `}
               title={language === "en" ? "Save all Stage 3 design data permanently to server & storage (Ctrl+S)" : "Simpan semua data perancangan Tahap 3 secara permanen ke server & penyimpanan (Ctrl+S)"}
-            >
+             aria-label={language === "en" ? "Save all Stage 3 design data permanently to server & storage (Ctrl+S)" : "Simpan semua data perancangan Tahap 3 secara permanen ke server & penyimpanan (Ctrl+S)"}>
               {saving ? (
-                <RefreshCw size={13} className="animate-spin text-amber-300" />
+                <RefreshCw size={13} className="animate-spin text-status-warning" />
               ) : hasUnsavedChanges ? (
-                <Save size={13} className="text-cyan-200" />
+                <Save size={16} />
               ) : (
-                <CheckCircle2 size={13} className="text-emerald-200" />
+                <CheckCircle2 size={16} />
               )}
               <span>
                 {saving
@@ -488,7 +488,7 @@ export default function Stage3BasicDesignPage() {
                   ? (language === "en" ? "Save Changes" : "Simpan Perubahan")
                   : (language === "en" ? "Save Design" : "Simpan Desain")}
               </span>
-              <span className="hidden sm:inline-block text-[9.5px] opacity-80 font-mono px-1.5 py-0.5 rounded bg-black/20 dark:bg-black/30 border border-white/20 font-medium">
+              <span className="hidden sm:inline-block text-xs font-mono px-1.5 py-0.5 rounded border border-current font-medium">
                 Ctrl+S
               </span>
             </button>
@@ -498,30 +498,31 @@ export default function Stage3BasicDesignPage() {
 
       {/* Error Alert Banner */}
       {error && (
-        <div className="mx-4 sm:mx-6 mt-3 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-300 dark:border-red-500/50 text-red-800 dark:text-red-200 flex items-center justify-between text-xs shadow-sm">
+        <div role="alert" className="mx-4 sm:mx-6 mt-3 p-3.5 rounded-lg bg-status-danger-subtle border border-status-danger-border text-status-danger flex items-center justify-between text-sm gap-3">
           <div className="flex items-center space-x-2">
-            <AlertCircle size={16} className="text-red-500 dark:text-red-400 shrink-0" />
+            <AlertCircle size={16} className="text-status-danger shrink-0" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer">
+          <button onClick={() => setError(null)} aria-label={language === "en" ? "Dismiss error" : "Tutup pesan kesalahan"} className="text-text-secondary hover:text-text-primary cursor-pointer min-h-9 min-w-9">
             <X size={14} />
           </button>
         </div>
       )}
 
       {/* Sub Navigation Tabs */}
-      <nav className="bg-white/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800/80 flex w-full px-3 sm:px-4 gap-2 overflow-x-auto items-center shrink-0 backdrop-blur-md py-2 no-scrollbar shadow-sm">
+      <nav aria-label={language === "en" ? "Basic design workspaces" : "Ruang kerja desain dasar"} className="bg-surface-primary border-b border-border-default flex w-full min-w-0 px-4 md:px-6 2xl:px-8 gap-6 overflow-x-auto items-stretch shrink-0">
         {navTabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex flex-1 basis-0 min-w-max justify-center items-center space-x-2 px-3.5 py-2 text-xs font-semibold rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+              aria-pressed={isActive}
+              className={`flex min-h-12 shrink-0 justify-center items-center gap-2 px-1 py-3 text-sm font-medium whitespace-nowrap cursor-pointer border-b-2 ${
                 isActive
-                  ? "bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/40 shadow-sm font-bold"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/60 border border-transparent"
-              }`}
+                  ? "text-accent-primary border-accent-primary font-semibold"
+                  : "text-text-secondary hover:text-text-primary border-transparent"
+              } `}
             >
               {tab.icon}
               <span>{tab.label}</span>
@@ -531,7 +532,7 @@ export default function Stage3BasicDesignPage() {
       </nav>
 
       {/* Workspace Content */}
-      <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+      <section aria-label="Design editor" className="flex-1 min-w-0 p-4 md:p-6 2xl:p-8 w-full mx-auto space-y-8">
         {/* TAB 1: TAMPAK SAMPING & NURBS EDITOR (SHEER PLAN) */}
         <div className={activeTab === "profile" ? "block space-y-6" : "hidden"}>
           <SideProfileNurbsEditor
@@ -555,24 +556,24 @@ export default function Stage3BasicDesignPage() {
           {/* ══════════════════════════════════════════════════════════════════════ */}
           {/* BLOK 1: STUDIO VISUAL TERPADU (GARIS AIR ATAS, RADIUS BILGA BAWAH)     */}
           {/* ══════════════════════════════════════════════════════════════════════ */}
-          <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-sm dark:shadow-2xl space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-3 sm:p-5 md:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-default pb-4">
               <div className="flex items-center space-x-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/40 text-cyan-600 dark:text-cyan-400 shadow-sm">
+                <div className="text-accent-primary shrink-0">
                   <Sparkles size={20} />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-wide">
+                    <h2 className="text-base font-semibold text-text-primary tracking-normal">
                       {language === "en"
                         ? "Dual Visual Studio: Waterplane & Midship Bilge"
                       : "Integrated Visual Studio: Waterplane & Bilge Radius"}
                     </h2>
-                    <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-500/30 text-[10px] font-mono font-bold">
+                    <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-surface-selected text-accent-primary border border-border-default text-xs font-mono font-semibold">
                       Simultaneous View
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-sm text-text-secondary mt-0.5">
                     {language === "en"
                       ? "Direct simultaneous inspection: Waterplane curvature on top and Midship Bilge section 10 underneath."
                       : "Live simultaneous inspection: waterplane curves above and the Station 10 bilge-radius section below."}
@@ -584,9 +585,9 @@ export default function Stage3BasicDesignPage() {
                 <button
                   type="button"
                   onClick={() => setIsDualFullscreen(true)}
-                  className="py-2 px-3.5 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center space-x-2 transition-all cursor-pointer shadow-md shadow-cyan-600/20 ring-1 ring-cyan-400/30 hover:scale-[1.02] active:scale-95"
+                  className="py-2 px-3.5 text-on-accent rounded-md text-sm font-semibold flex items-center space-x-2 transition-colors cursor-pointer ring-1 ring-focus-ring bg-accent-primary min-h-9"
                   title="Buka Mode Layar Penuh untuk kedua komponen visual secara bersamaan"
-                >
+                 aria-label="Buka Mode Layar Penuh untuk kedua komponen visual secara bersamaan">
                   <Maximize2 size={14} />
                   <span>{language === "en" ? "Dual Fullscreen Studio" : "Mode Layar Penuh Keduanya"}</span>
                 </button>
@@ -594,10 +595,10 @@ export default function Stage3BasicDesignPage() {
                 <button
                   type="button"
                   onClick={() => setShowCombinedVisualStudio(!showCombinedVisualStudio)}
-                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer"
+                  className="py-2 px-3 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors border border-border-default cursor-pointer min-h-9"
                   title={showCombinedVisualStudio ? "Hide Visual Studio" : "Show Visual Studio"}
-                >
-                  {showCombinedVisualStudio ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                 aria-pressed={showCombinedVisualStudio} aria-label={showCombinedVisualStudio ? "Hide Visual Studio" : "Show Visual Studio"}>
+                  {showCombinedVisualStudio ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                   <span>{showCombinedVisualStudio ? (language === "en" ? "Hide Studio" : "Sembunyikan Visual") : (language === "en" ? "Show Studio" : "Tampilkan Visual")}</span>
                 </button>
               </div>
@@ -606,13 +607,13 @@ export default function Stage3BasicDesignPage() {
             {showCombinedVisualStudio ? (
               <div className="flex flex-col space-y-6 w-full">
                 {/* ATAS: VISUAL GARIS AIR (WATERPLANE PLAN) */}
-                <div className="flex flex-col space-y-2 bg-slate-50 dark:bg-slate-950/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-cyan-600 dark:text-cyan-400 px-1 shrink-0 pb-1.5 border-b border-slate-200 dark:border-slate-800/70">
+                <div className="flex flex-col space-y-2 sm:bg-surface-canvas sm:p-3.5 sm:rounded-lg sm:border sm:border-border-default">
+                  <div className="flex items-center justify-between text-sm font-semibold text-accent-primary px-1 shrink-0 pb-1.5 border-b border-border-default">
                     <span className="flex items-center space-x-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-sm shadow-cyan-400/50" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-accent-primary" />
                       <span>1. {language === "en" ? "WATERPLANE PLAN (HALF-BREADTH 0.5B)" : "RENCANA GARIS AIR (WATERPLANE PLAN 0.5B)"}</span>
                     </span>
-                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2 py-0.5 rounded-lg">
+                    <span className="text-xs font-mono text-text-secondary bg-surface-secondary border border-border-default px-2 py-0.5 rounded-lg">
                       Top View
                     </span>
                   </div>
@@ -652,18 +653,18 @@ export default function Stage3BasicDesignPage() {
                 </div>
 
                 {/* BAWAH: VISUAL BODY PLAN & RADIUS BILGA */}
-                <div className="flex flex-col space-y-2 bg-slate-50 dark:bg-slate-950/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800/90 shadow-sm">
-                  <div className="flex items-center justify-between text-xs font-bold text-amber-600 dark:text-amber-400 px-1 shrink-0 pb-1.5 border-b border-slate-200 dark:border-slate-800/70">
+                <div className="flex flex-col space-y-2 bg-surface-canvas p-3.5 rounded-lg border border-border-default">
+                  <div className="flex items-center justify-between text-sm font-semibold text-status-warning px-1 shrink-0 pb-1.5 border-b border-border-default">
                     <span className="flex items-center space-x-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-400/50" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-status-warning" />
                       <span>2. {language === "en" ? "BODY PLAN & BILGE RADIUS" : "BODY PLAN PENAMPANG GADING & BILGA"}</span>
                     </span>
                     <div className="flex items-center space-x-2">
-                      <span className="text-[10px] font-mono text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-300 dark:border-cyan-500/30 px-2 py-0.5 rounded-lg flex items-center space-x-1">
-                        <Zap size={10} className="text-cyan-500 fill-cyan-500" />
+                      <span className="text-xs font-mono text-accent-primary bg-surface-selected border border-border-default px-2 py-0.5 rounded-lg flex items-center space-x-1">
+                        <Zap size={10} className="text-accent-primary fill-chart-primary" />
                         <span>Real-Time (St. 10 ⇄ Section 10)</span>
                       </span>
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-2 py-0.5 rounded-lg">
+                      <span className="text-xs font-mono text-text-secondary bg-surface-secondary border border-border-default px-2 py-0.5 rounded-lg">
                         Body Plan View
                       </span>
                     </div>
@@ -700,16 +701,16 @@ export default function Stage3BasicDesignPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
-                  <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+              <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <div className="flex items-center space-x-3 text-text-secondary">
+                  <div className="text-text-secondary shrink-0">
                     <EyeOff size={18} />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white">
+                    <span className="font-semibold text-text-primary">
                       {language === "en" ? "Dual Visual Studio is Hidden" : "Studio Visual Terpadu (Atas & Bawah) Disembunyikan"}
                     </span>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                    <p className="text-sm text-text-secondary font-sans mt-0.5">
                       The waterplane and bilge radius views are minimized. Open the studio to display them.
                     </p>
                   </div>
@@ -717,7 +718,7 @@ export default function Stage3BasicDesignPage() {
                 <button
                   type="button"
                   onClick={() => setShowCombinedVisualStudio(true)}
-                  className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-500/15 dark:hover:bg-cyan-500/25 text-cyan-700 dark:text-cyan-300 text-xs font-bold border border-cyan-300 dark:border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-surface-selected hover:bg-surface-selected text-accent-primary text-sm font-semibold border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
                 >
                   <Eye size={14} />
                   <span>{language === "en" ? "Open Visual Studio" : "Buka Studio Visual"}</span>
@@ -731,29 +732,29 @@ export default function Stage3BasicDesignPage() {
           {/* ══════════════════════════════════════════════════════════════════════ */}
 
           {/* Quick-Jump Anchor Bar with Global Section Controls */}
-          <div className="order-3 w-full bg-white dark:bg-slate-950/90 backdrop-blur-xl border border-slate-200 dark:border-slate-800/90 rounded-2xl p-2.5 px-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div className="order-3 w-full bg-surface-primary border border-border-default rounded-lg p-2.5 px-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-mono text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider hidden sm:inline">
+              <span className="text-xs font-mono text-text-secondary font-semibold tracking-normal hidden sm:inline">
                 {language === "en" ? "Tables:" : "Detail Tabel:"}
               </span>
               <a
                 href="#section-waterplane"
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-sm ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors ${
                   showSection2A
-                    ? "bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-500/30 hover:bg-cyan-100"
-                    : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                    ? "bg-surface-selected text-accent-primary border-border-default hover:bg-surface-selected"
+                    : "bg-surface-secondary text-text-secondary border-border-default hover:text-text-primary"
+                } `}
               >
                 <Layers size={13} />
                 <span>2A. {language === "en" ? "Waterplane Tables" : "Tabel Garis Air"}</span>
               </a>
               <a
                 href="#section-bilge"
-                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-sm ${
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors ${
                   showSection2B
-                    ? "bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/30 hover:bg-amber-100"
-                    : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                    ? "bg-status-warning-subtle text-status-warning border-status-warning-border hover:bg-status-warning-subtle"
+                    : "bg-surface-secondary text-text-secondary border-border-default hover:text-text-primary"
+                } `}
               >
                 <Activity size={13} />
                 <span>2B. {language === "en" ? "Midship Tables" : "Tabel Midship & Bilga"}</span>
@@ -764,14 +765,14 @@ export default function Stage3BasicDesignPage() {
                   setShowSection2A(false);
                   setShowSection2B(true);
                 }}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-sm bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-500/40 hover:bg-purple-100 dark:hover:bg-purple-500/30 cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors bg-surface-selected text-accent-primary border-border-default hover:bg-surface-selected cursor-pointer"
               >
                 <TableIcon size={13} />
                 <span>2C. {language === "en" ? "3D XYZ Offsets Table" : "Tabel Koordinat 3D (XYZ)"}</span>
               </a>
             </div>
 
-            <div className="flex items-center space-x-2 text-xs">
+            <div className="flex items-center space-x-2 text-sm">
               <button
                 type="button"
                 onClick={() => {
@@ -779,9 +780,9 @@ export default function Stage3BasicDesignPage() {
                   setShowSection2A(anyHidden);
                   setShowSection2B(anyHidden);
                 }}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 font-semibold text-xs transition-all cursor-pointer shadow-sm"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default font-semibold text-sm transition-colors cursor-pointer min-h-9"
               >
-                {showSection2A && showSection2B ? <EyeOff size={13} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={13} className="text-cyan-600 dark:text-cyan-400" />}
+                {showSection2A && showSection2B ? <EyeOff size={13} className="text-accent-primary" /> : <Eye size={13} className="text-accent-primary" />}
                 <span>
                   {showSection2A && showSection2B
                     ? (language === "en" ? "Collapse All Tables" : "Sembunyikan Semua Tabel")
@@ -789,7 +790,7 @@ export default function Stage3BasicDesignPage() {
                 </span>
               </button>
 
-              <span className="hidden md:inline-block px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/20 text-[10px] font-mono">
+              <span className="hidden md:inline-block px-2.5 py-1 rounded-full bg-surface-selected text-accent-primary border border-border-default text-xs font-mono">
                 {waterlineLevels.length} WL Active
               </span>
             </div>
@@ -797,16 +798,16 @@ export default function Stage3BasicDesignPage() {
 
           {/* SEKSI 2A: DETAIL PERHITUNGAN GARIS AIR & SIMPSON */}
           <section id="section-waterplane" className="order-4 space-y-4 scroll-mt-24">
-            <div className="flex items-center justify-between bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-2xl px-4 py-3 backdrop-blur-md shadow-sm">
+            <div className="flex items-center justify-between bg-surface-primary border border-border-default rounded-lg px-4 py-3">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-700 dark:text-cyan-300 font-extrabold font-mono text-xs flex items-center justify-center shadow-inner">
+                <div className="w-8 h-8 rounded-lg bg-surface-selected border border-border-default text-accent-primary font-semibold font-mono text-sm flex items-center justify-center">
                   2A
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide uppercase">
+                  <h2 className="text-sm font-semibold text-text-primary tracking-normal">
                     {language === "en" ? "Part 2A: Waterplane Geometry & Simpson Calculation (AWL & LCF)" : "Bagian 2A: Rencana Garis Air & Perhitungan Simpson (AWL & LCF)"}
                   </h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-text-secondary">
                     {language === "en"
                       ? "Interactive hull waterline plan, half-breadth 0.5B ordinates, and hydrostatic coefficients"
                       : "Studio kurva garis air interaktif, ordinat separuh lebar 0.5B (36 gading), dan integrasi hidrostatik"}
@@ -817,13 +818,13 @@ export default function Stage3BasicDesignPage() {
                 <button
                   type="button"
                 onClick={toggleSection2A}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-sm"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default transition-colors cursor-pointer min-h-9"
                   title={showSection2A ? (language === "en" ? "Hide Section 2A" : "Sembunyikan Bagian 2A") : (language === "en" ? "Show Section 2A" : "Tampilkan Bagian 2A")}
-                >
-                  {showSection2A ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                 aria-label={showSection2A ? (language === "en" ? "Hide Section 2A" : "Sembunyikan Bagian 2A") : (language === "en" ? "Show Section 2A" : "Tampilkan Bagian 2A")}>
+                  {showSection2A ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                   <span>{showSection2A ? (language === "en" ? "Hide Section" : "Sembunyikan") : (language === "en" ? "Show Section" : "Tampilkan")}</span>
                 </button>
-                <span className="hidden sm:inline text-[10px] font-mono font-bold bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-500/30 px-2.5 py-1 rounded-lg">
+                <span className="hidden sm:inline text-xs font-mono font-semibold bg-surface-selected text-accent-primary border border-border-default px-2.5 py-1 rounded-lg">
                   AWL & LCF
                 </span>
               </div>
@@ -863,16 +864,16 @@ export default function Stage3BasicDesignPage() {
                 showPageTabs={false}
               />
             ) : (
-              <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
-                  <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+              <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <div className="flex items-center space-x-3 text-text-secondary">
+                  <div className="text-text-secondary shrink-0">
                     <Layers size={18} />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white">
+                    <span className="font-semibold text-text-primary">
                       {language === "en" ? "Section 2A: Waterplane Sheet is Hidden" : "Bagian 2A: Rencana Garis Air & Perhitungan Simpson Disembunyikan"}
                     </span>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                    <p className="text-sm text-text-secondary font-sans mt-0.5">
                       LBP: {lbp.toFixed(2)}m • B: {breadth.toFixed(2)}m • T: {draft.toFixed(2)}m • {waterlineLevels.length} Linked Waterlines
                     </p>
                   </div>
@@ -882,17 +883,17 @@ export default function Stage3BasicDesignPage() {
           </section>
 
           {/* SEKSI 2B: DETAIL PERHITUNGAN RADIUS BILGA & MIDSHIP */}
-          <section id="section-bilge" className="order-2 space-y-4 scroll-mt-24 pt-4 border-t border-slate-200 dark:border-slate-800/80">
-            <div className="flex items-center justify-between bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-2xl px-4 py-3 backdrop-blur-md shadow-sm">
+          <section id="section-bilge" className="order-2 space-y-4 scroll-mt-24 pt-4 border-t border-border-default">
+            <div className="flex items-center justify-between bg-surface-primary border border-border-default rounded-lg px-4 py-3">
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-300 font-extrabold font-mono text-xs flex items-center justify-center shadow-inner">
+                <div className="w-8 h-8 rounded-lg bg-status-warning-subtle border border-status-warning-border text-status-warning font-semibold font-mono text-sm flex items-center justify-center">
                   2B
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-wide uppercase">
+                  <h2 className="text-sm font-semibold text-text-primary tracking-normal">
                     {language === "en" ? "Part 2B: Bilge Radius & Midship Station 10 Section" : "Bagian 2B: Radius Bilga & Penampang Midship Gading 10"}
                   </h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-text-secondary">
                     {language === "en"
                       ? "Midship section arc geometry, vertical draft-wise Simpson integration, and waterline alignment check"
                       : "Geometri busur bilga gading 10, integrasi sarat vertikal (z), dan verifikasi keselarasan garis air"}
@@ -903,13 +904,13 @@ export default function Stage3BasicDesignPage() {
                 <button
                   type="button"
                 onClick={toggleSection2B}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-sm"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default transition-colors cursor-pointer min-h-9"
                   title={showSection2B ? (language === "en" ? "Hide Section 2B" : "Sembunyikan Bagian 2B") : (language === "en" ? "Show Section 2B" : "Tampilkan Bagian 2B")}
-                >
-                  {showSection2B ? <EyeOff size={14} className="text-amber-600 dark:text-amber-400" /> : <Eye size={14} className="text-amber-600 dark:text-amber-400" />}
+                 aria-label={showSection2B ? (language === "en" ? "Hide Section 2B" : "Sembunyikan Bagian 2B") : (language === "en" ? "Show Section 2B" : "Tampilkan Bagian 2B")}>
+                  {showSection2B ? <EyeOff size={14} className="text-status-warning" /> : <Eye size={14} className="text-status-warning" />}
                   <span>{showSection2B ? (language === "en" ? "Hide Section" : "Sembunyikan") : (language === "en" ? "Show Section" : "Tampilkan")}</span>
                 </button>
-                <span className="hidden sm:inline text-[10px] font-mono font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 px-2.5 py-1 rounded-lg">
+                <span className="hidden sm:inline text-xs font-mono font-semibold bg-status-warning-subtle text-status-warning border border-status-warning-border px-2.5 py-1 rounded-lg">
                   STATION 10 (MID)
                 </span>
               </div>
@@ -942,16 +943,16 @@ export default function Stage3BasicDesignPage() {
                 tablesOnly={true}
               />
             ) : (
-              <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
-                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <div className="flex items-center space-x-3 text-text-secondary">
+                  <div className="p-2 rounded-lg bg-status-warning-subtle text-status-warning border border-status-warning-border">
                     <Activity size={18} />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white">
+                    <span className="font-semibold text-text-primary">
                       {language === "en" ? "Section 2B: Bilge Radius & Midship is Hidden" : "Bagian 2B: Radius Bilga & Penampang Midship Gading 10 Disembunyikan"}
                     </span>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+                    <p className="text-sm text-text-secondary font-sans mt-0.5">
                       Midship Section 10 • Verwey Formula & Circular Bilge Arc
                     </p>
                   </div>
@@ -983,27 +984,27 @@ export default function Stage3BasicDesignPage() {
 
         {/* TAB 4: AI BASIC DESIGN ASSISTANT */}
         <div
-          className={activeTab === "ai" ? "flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4 backdrop-blur-xl shadow-sm dark:shadow-2xl" : "hidden"}
+          className={activeTab === "ai" ? "flex flex-col bg-surface-primary border border-border-default p-5 rounded-lg space-y-4" : "hidden"}
           style={{ height: "calc(100vh - 210px)", minHeight: "520px" }}
         >
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3">
+          <div className="flex items-center justify-between border-b border-border-default pb-3">
               <div className="flex items-center space-x-2.5">
-                <div className="p-1.5 rounded-lg bg-cyan-600/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+                <div className="text-text-secondary shrink-0">
                   <Cpu size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">AI Basic Design & Lines Plan Companion</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{language === "en" ? "Consultation on hull curves, Body Plan, and classification rules" : "Konsultasi kurva lambung, Body Plan, dan aturan klasifikasi"}</p>
+                  <h3 className="text-sm font-semibold text-text-primary">AI Basic Design & Lines Plan Companion</h3>
+                  <p className="text-sm text-text-secondary">{language === "en" ? "Consultation on hull curves, Body Plan, and classification rules" : "Konsultasi kurva lambung, Body Plan, dan aturan klasifikasi"}</p>
                 </div>
               </div>
-              <span className="text-[10px] text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-300 dark:border-cyan-500/20 font-mono">
+              <span className="text-xs text-accent-primary bg-surface-selected px-2.5 py-0.5 rounded-full border border-border-default font-mono">
                 Naval Architect AI
               </span>
             </div>
 
             {/* Quick Prompt Chips */}
-            <div className="space-y-1.5 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
+            <div className="space-y-1.5 border-b border-border-default pb-3">
+              <span className="text-xs text-text-secondary font-semibold block">
                 {language === "en" ? "Quick Questions:" : "Pertanyaan Cepat:"}
               </span>
               <div className="flex flex-wrap gap-2">
@@ -1018,7 +1019,7 @@ export default function Stage3BasicDesignPage() {
                   <button
                     key={idx}
                     onClick={() => handleAskAi(preset)}
-                    className="text-xs bg-slate-100 hover:bg-cyan-50 dark:bg-slate-950/80 dark:hover:bg-cyan-950/40 text-slate-700 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-cyan-400/40 transition-all cursor-pointer font-sans shadow-sm"
+                    className="text-sm bg-surface-secondary hover:bg-surface-selected text-text-primary hover:text-accent-primary px-3 py-1.5 rounded-md border border-border-default hover:border-border-default transition-colors cursor-pointer font-sans min-h-9"
                   >
                     {preset}
                   </button>
@@ -1027,16 +1028,16 @@ export default function Stage3BasicDesignPage() {
             </div>
 
             {/* Chat Box Log */}
-            <div
-              className="flex-1 border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-slate-50 dark:bg-slate-950/80 p-4 overflow-y-auto space-y-3 no-scrollbar backdrop-blur-md shadow-inner"
+            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace"
+              className="flex-1 border border-border-default rounded-lg bg-surface-canvas p-4 overflow-y-auto space-y-3"
               style={{ minHeight: 0 }}
             >
               {aiChat.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 space-y-3 p-6">
-                  <Sparkles size={30} className="text-cyan-500 dark:text-cyan-400 animate-pulse" />
+                <div className="h-full flex flex-col items-center justify-center text-center text-text-secondary space-y-3 p-6">
+                  <Sparkles size={30} className="text-accent-primary animate-pulse" />
                   <div>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white">{language === "en" ? "AI Basic Design Assistant Ready" : "AI Basic Design Assistant Siap"}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md leading-relaxed">
+                    <p className="text-sm font-semibold text-text-primary">{language === "en" ? "AI Basic Design Assistant Ready" : "AI Basic Design Assistant Siap"}</p>
+                    <p className="text-sm text-text-secondary mt-1 max-w-md leading-relaxed">
                       {language === "en"
                         ? "Select a quick question button above or ask your specific question about Lines Plan!"
                         : "Pilih salah satu tombol pertanyaan cepat di atas atau ajukan pertanyaan spesifik Anda seputar Lines Plan!"}
@@ -1047,19 +1048,19 @@ export default function Stage3BasicDesignPage() {
                 aiChat.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} `}
                   >
                     <div
-                      className={`max-w-2xl p-4 rounded-2xl text-xs leading-relaxed shadow-md ${
+                      className={`max-w-2xl p-4 rounded-lg text-sm leading-relaxed ${
                         msg.sender === "user"
-                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none border border-blue-400/30"
-                          : "bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none font-sans shadow-sm"
-                      }`}
+                          ? "text-on-accent rounded-tr-none border border-border-default bg-accent-primary"
+                          : "bg-surface-primary border border-border-default text-text-primary rounded-tl-none font-sans"
+                      } `}
                     >
-                      <p className="font-semibold mb-1.5 opacity-70 text-[10px] uppercase tracking-wider font-mono">
+                      <p className="font-semibold mb-1.5 opacity-70 text-sm tracking-normal font-sans">
                         {msg.sender === "user" ? (language === "en" ? "Designer" : "Perancang") : (language === "en" ? "AI Assistant" : "AI Asisten")}
                       </p>
-                      <div className="space-y-2 text-slate-800 dark:text-slate-200">
+                      <div className="space-y-2 text-text-primary">
                         {msg.text
                           .split("\n")
                           .filter((l) => l.trim() !== "")
@@ -1069,7 +1070,7 @@ export default function Stage3BasicDesignPage() {
                               return (
                                 <h3
                                   key={lidx}
-                                  className="text-xs font-bold text-cyan-600 dark:text-cyan-300 mt-2 mb-1"
+                                  className="text-sm font-semibold text-accent-primary mt-2 mb-1"
                                   dangerouslySetInnerHTML={{ __html: formattedLine.replace("### ", "") }}
                                 />
                               );
@@ -1078,7 +1079,7 @@ export default function Stage3BasicDesignPage() {
                               return (
                                 <li
                                   key={lidx}
-                                  className="ml-4 list-disc text-slate-700 dark:text-slate-300"
+                                  className="ml-4 list-disc text-text-primary"
                                   dangerouslySetInnerHTML={{ __html: formattedLine.replace(/^[-*]\s*/, "") }}
                                 />
                               );
@@ -1100,42 +1101,42 @@ export default function Stage3BasicDesignPage() {
 
             {/* Input Bar */}
             <div className="flex space-x-2 shrink-0">
-              <input
+              <input aria-label={language === "en" ? "Ask about lines plan analysis, stem/stern curve smoothing, or CSA formulas..." : "Tanyakan analisis lines plan, perataan kurva haluan/buritan, atau formula CSA..."}
                 type="text"
                 value={aiQuestion}
                 onChange={(e) => setAiQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !aiLoading && handleAskAi()}
                 placeholder={language === "en" ? "Ask about lines plan analysis, stem/stern curve smoothing, or CSA formulas..." : "Tanyakan analisis lines plan, perataan kurva haluan/buritan, atau formula CSA..."}
-                className="flex-1 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-sans shadow-sm"
+                className="flex-1 bg-surface-primary border border-border-default rounded-md px-4 py-2.5 text-sm text-text-primary placeholder-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default font-sans min-h-10"
               />
               <button
                 onClick={() => handleAskAi()}
                 disabled={aiLoading || !aiQuestion.trim()}
-                className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 text-white font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-cyan-600/20"
+                className="px-5 py-2.5 rounded-md bg-accent-primary hover:bg-accent-hover disabled:opacity-40 text-on-accent font-semibold text-sm flex items-center space-x-1.5 transition-colors cursor-pointer min-h-9"
               >
                 {aiLoading ? <RefreshCw className="animate-spin" size={14} /> : <Sparkles size={14} />}
                 <span>{language === "en" ? "Send" : "Kirim"}</span>
               </button>
             </div>
           </div>
-      </main>
+      </section>
 
       {/* Floating Permanent Save Success Toast */}
       {showSaveToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-slate-900/95 border border-emerald-500/60 text-white px-5 py-3.5 rounded-2xl shadow-2xl backdrop-blur-xl flex items-center space-x-3.5 ring-1 ring-emerald-500/30 transition-all">
-          <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
+        <div role="status" aria-live="polite" className="fixed bottom-6 left-4 sm:left-auto right-4 sm:right-6 max-w-lg z-50 bg-surface-elevated border border-status-success-border text-text-primary px-5 py-3.5 rounded-lg flex items-center space-x-3.5 shadow-overlay">
+          <div className="p-2 rounded-lg bg-status-success-subtle text-status-success">
             <CheckCircle2 size={22} />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h4 className="text-xs font-bold text-white">
+              <h4 className="text-sm font-semibold text-text-primary">
                 {language === "en" ? "Stage 3 Saved Permanently" : "Data Tahap 3 Tersimpan Permanen"}
               </h4>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/30">
+              <span className="text-xs font-mono text-status-success bg-status-success-subtle px-2 py-0.5 rounded-md border border-status-success-border">
                 {lastSaved}
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 mt-0.5">
+            <p className="text-sm text-text-primary mt-0.5">
               {language === "en"
                 ? "All waterline offsets, calculations, and hull curves have been securely written to storage."
                 : "Seluruh ordinat garis air, integrasi Simpson, dan profil lambung telah tersimpan di server & database."}
@@ -1146,30 +1147,30 @@ export default function Stage3BasicDesignPage() {
 
       {/* DUAL FULLSCREEN OVERLAY: WATERLINE (ATAS) & BILGA (BAWAH) SIMULTANEOUSLY */}
       {isDualFullscreen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/80 dark:bg-slate-950/98 backdrop-blur-3xl flex flex-col p-2 sm:p-4 overflow-hidden select-none animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-surface-primary flex flex-col p-2 sm:p-4 overflow-hidden select-none duration-200">
           {/* Top Cockpit Header */}
-          <div className="w-full bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 mb-3 shadow-xl flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="w-full bg-surface-primary border border-border-default rounded-lg p-3 mb-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-xl bg-cyan-500/10 dark:bg-cyan-500/20 border border-cyan-500/30 dark:border-cyan-500/40 text-cyan-600 dark:text-cyan-400 shadow-md">
+              <div className="text-text-secondary shrink-0">
                 <Sparkles size={20} />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                  <h2 className="text-sm sm:text-base font-semibold text-text-primary flex items-center space-x-2">
                     <span>{language === "en" ? "Dual Visual Studio (Simultaneous Fullscreen)" : "Studio Visual Terpadu: Garis Air & Radius Bilga"}</span>
                   </h2>
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 text-[10px] font-mono font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-surface-selected text-accent-primary border border-border-default text-xs font-mono font-semibold">
                     DUAL COCKPIT
                   </span>
                 </div>
-                <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-2 mt-0.5">
-                  <span>LBP: <strong className="text-slate-900 dark:text-white">{lbp.toFixed(2)}m</strong></span>
+                <div className="text-xs font-mono text-text-secondary flex flex-wrap items-center gap-2 mt-0.5">
+                  <span>LBP: <strong className="text-text-primary">{lbp.toFixed(2)}m</strong></span>
                   <span>•</span>
-                  <span>B: <strong className="text-slate-900 dark:text-white">{breadth.toFixed(2)}m</strong></span>
+                  <span>B: <strong className="text-text-primary">{breadth.toFixed(2)}m</strong></span>
                   <span>•</span>
-                  <span>T: <strong className="text-slate-900 dark:text-white">{draft.toFixed(2)}m</strong></span>
+                  <span>T: <strong className="text-text-primary">{draft.toFixed(2)}m</strong></span>
                   <span>•</span>
-                  <span>Cm: <strong className="text-amber-600 dark:text-amber-400">{cm}</strong></span>
+                  <span>Cm: <strong className="text-status-warning">{cm}</strong></span>
                   <span>•</span>
                   <span>{waterlineLevels.length} WL Aktif</span>
                 </div>
@@ -1178,32 +1179,32 @@ export default function Stage3BasicDesignPage() {
 
             {/* Dual Studio Layout Indicator & Close */}
             <div className="flex items-center space-x-2.5">
-              <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 text-xs font-mono font-bold shadow-inner">
-                <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+              <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary text-sm font-mono font-semibold">
+                <span className="w-2 h-2 rounded-full bg-accent-primary" />
                 <span>⬌ {language === "en" ? "Side by Side (Left & Right)" : "Berdampingan (Kiri & Kanan)"}</span>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsDualFullscreen(false)}
-                className="p-2 bg-slate-100 hover:bg-rose-600 text-slate-700 hover:text-white dark:bg-slate-800 dark:text-slate-300 rounded-xl transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-md"
+                className="p-2 bg-surface-secondary hover:bg-status-danger text-text-primary hover:text-text-primary rounded-md transition-colors cursor-pointer border border-border-default min-h-9"
                 title="Keluar Layar Penuh (Esc)"
-              >
+               aria-label="Keluar Layar Penuh (Esc)">
                 <X size={18} />
               </button>
             </div>
           </div>
 
           {/* Split Dual Workspaces (Side-by-Side: Left & Right) */}
-          <div className="flex-1 w-full min-h-0 gap-3 overflow-hidden grid grid-cols-1 lg:grid-cols-2 h-full">
+          <div className="flex-1 w-full min-h-0 gap-4 overflow-auto grid grid-cols-1 lg:grid-cols-2 h-full auto-rows-[minmax(560px,1fr)] lg:auto-rows-auto">
             {/* TOP / LEFT: Waterplane Visual Studio */}
-            <div className="h-full min-h-0 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col overflow-hidden shadow-xl">
-              <div className="flex items-center justify-between text-[11px] font-bold text-cyan-700 dark:text-cyan-400 pb-1 mb-1 border-b border-slate-200 dark:border-slate-800/80 shrink-0">
+            <div className="h-full min-h-0 bg-surface-primary border border-border-default rounded-lg p-2 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between text-xs font-semibold text-accent-primary pb-1 mb-1 border-b border-border-default shrink-0">
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                  <span className="w-2 h-2 rounded-full bg-accent-primary" />
                   <span>▲ STUDIO GARIS AIR (WATERPLANE PLAN 0.5B)</span>
                 </span>
-                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">Top View</span>
+                <span className="text-xs font-mono text-text-secondary">Top View</span>
               </div>
               <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
                 <WaterPlaneCalculationSheet
@@ -1240,13 +1241,13 @@ export default function Stage3BasicDesignPage() {
             </div>
 
             {/* BOTTOM / RIGHT: Midship Bilge Visual Studio */}
-            <div className="h-full min-h-0 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl p-2 flex flex-col overflow-hidden shadow-xl">
-              <div className="flex items-center justify-between text-[11px] font-bold text-amber-700 dark:text-amber-400 pb-1 mb-1 border-b border-slate-200 dark:border-slate-800/80 shrink-0">
+            <div className="h-full min-h-0 bg-surface-primary border border-border-default rounded-lg p-2 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between text-xs font-semibold text-status-warning pb-1 mb-1 border-b border-border-default shrink-0">
                 <span className="flex items-center space-x-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="w-2 h-2 rounded-full bg-status-warning" />
                   <span>▼ STUDIO PENAMPANG MIDSHIP & RADIUS BILGA (SECTION 10)</span>
                 </span>
-                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">Transverse Section View</span>
+                <span className="text-xs font-mono text-text-secondary">Transverse Section View</span>
               </div>
               <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
                 <MidshipBilgeCalculationSheet

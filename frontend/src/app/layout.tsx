@@ -49,7 +49,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden antialiased bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100`}>
+      <body className={` ${geistSans.variable}  ${geistMono.variable} h-screen overflow-hidden antialiased bg-surface-canvas text-text-primary`}>
         <LanguageProvider>
           <DashboardLayout>{children}</DashboardLayout>
         </LanguageProvider>

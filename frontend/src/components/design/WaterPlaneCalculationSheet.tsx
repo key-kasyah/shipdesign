@@ -1,5 +1,7 @@
 "use client";
 
+import { engineeringColor } from "./EngineeringPalette";
+
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
@@ -76,26 +78,26 @@ export const WaterPlanePageTabs: React.FC<{
   const { language } = useLanguage();
 
   return (
-    <div className="flex items-center justify-between bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner">
+    <div className="flex items-center justify-between bg-surface-secondary p-1.5 rounded-lg border border-border-default">
       <div className="flex items-center space-x-1.5">
         <button
           onClick={() => onChange("fullSheet")}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors cursor-pointer ${
             viewMode === "fullSheet"
-              ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-300 shadow-md border border-slate-200 dark:border-slate-700"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+              ? "bg-surface-primary text-accent-primary border border-border-default min-h-9"
+              : "text-text-secondary hover:text-text-primary min-h-9"
+          } `}
         >
           <TableIcon size={15} />
           <span>{language === "en" ? "Page 1: Full Simpson Sheet & Visual Plot" : "Halaman 1: Tabel Integrasi Simpson & Plot Visual"}</span>
         </button>
         <button
           onClick={() => onChange("cleanCustom")}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors cursor-pointer ${
             viewMode === "cleanCustom"
-              ? "bg-white dark:bg-slate-800 text-cyan-600 dark:text-cyan-300 shadow-md border border-slate-200 dark:border-slate-700"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          }`}
+              ? "bg-surface-primary text-accent-primary border border-border-default min-h-9"
+              : "text-text-secondary hover:text-text-primary min-h-9"
+          } `}
         >
           <Layers size={15} />
           <span>{language === "en" ? "Page 2: Custom Stations & Single Waterline Studio" : "Halaman 2: Studio Garis Air & Evaluasi Gading Kustom"}</span>
@@ -200,9 +202,9 @@ export interface AreaZone {
   startStation: number;
   endStation: number;
   bgFill: string;
+  badgeColor: string;
   watermark: string;
   textColor: string;
-  badgeColor: string;
   description: string;
 }
 
@@ -215,9 +217,9 @@ export const AREA_ZONES: AreaZone[] = [
     startStation: -2.0,
     endStation: 0.0,
     bgFill: "rgba(51, 65, 85, 0.40)", // Sleek Dark Slate
+    badgeColor: "bg-slate-800/90 border-slate-700/80 text-slate-300",
     watermark: "AP",
     textColor: "text-slate-300",
-    badgeColor: "bg-slate-800/90 border-slate-700/80 text-slate-300",
     description: "Area After Peak (AP) - 3 Titik: St. B, St. A, St. 0 (Buritan Kapal / Transisi Cant)"
   },
   {
@@ -228,9 +230,9 @@ export const AREA_ZONES: AreaZone[] = [
     startStation: 0.0,
     endStation: 5.0,
     bgFill: "rgba(14, 165, 233, 0.18)", // Subtle Marine Sky
+    badgeColor: "bg-sky-950/60 border-sky-800/50 text-sky-300",
     watermark: "P1",
     textColor: "text-sky-300",
-    badgeColor: "bg-sky-950/60 border-sky-800/50 text-sky-300",
     description: "Area Peak 1 (P1) - 10 Titik: St. 0.5 s/d 5.0 (Run Body / Transisi Buritan ke PMB, Spacing = la')"
   },
   {
@@ -241,9 +243,9 @@ export const AREA_ZONES: AreaZone[] = [
     startStation: 6.0,
     endStation: 15.0,
     bgFill: "rgba(6, 182, 212, 0.24)", // Flagship Deep Cyan
+    badgeColor: "bg-cyan-950/70 border-cyan-700/60 text-cyan-300",
     watermark: "PMB",
     textColor: "text-cyan-300",
-    badgeColor: "bg-cyan-950/70 border-cyan-700/60 text-cyan-300",
     description: "Area Parallel Middle Body (PMB) - 10 Titik: St. 6.0 s/d 15.0 (Badan Tengah Maksimum 0.5B, Spacing = l)"
   },
   {
@@ -254,9 +256,9 @@ export const AREA_ZONES: AreaZone[] = [
     startStation: 15.0,
     endStation: 20.0,
     bgFill: "rgba(14, 165, 233, 0.18)", // Subtle Marine Sky
+    badgeColor: "bg-sky-950/60 border-sky-800/50 text-sky-300",
     watermark: "P2",
     textColor: "text-sky-300",
-    badgeColor: "bg-sky-950/60 border-sky-800/50 text-sky-300",
     description: "Area Peak 2 (P2) - 10 Titik: St. 15.5 s/d 20.0 (Entrance Body Haluan, Spacing = lf)"
   },
   {
@@ -267,9 +269,9 @@ export const AREA_ZONES: AreaZone[] = [
     startStation: 20.0,
     endStation: 21.0,
     bgFill: "rgba(51, 65, 85, 0.40)", // Sleek Dark Slate
+    badgeColor: "bg-slate-800/90 border-slate-700/80 text-slate-300",
     watermark: "FP",
     textColor: "text-slate-300",
-    badgeColor: "bg-slate-800/90 border-slate-700/80 text-slate-300",
     description: "Area Fore Peak (FP) - 3 Titik: St. 20 (FP), FP-A, FP-B (Ordinat = 0 m pada WL 6)"
   }
 ];
@@ -1766,17 +1768,17 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       <>
         <defs>
           <marker id="dim-arrow-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
-            <path d="M 9 1.5 L 1 5 L 9 8.5 z" fill="#64748b" />
+            <path d="M 9 1.5 L 1 5 L 9 8.5 z" fill={engineeringColor("#64748b")} />
           </marker>
           <marker id="dim-arrow-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="3.5" markerHeight="3.5" orient="auto">
-            <path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#64748b" />
+            <path d="M 1 1.5 L 9 5 L 1 8.5 z" fill={engineeringColor("#64748b")} />
           </marker>
         </defs>
 
         <text 
           x="-6" 
           y="28" 
-          fill="#94a3b8" 
+          fill={engineeringColor("#94a3b8", "text")}
           fontSize="2.6" 
           fontFamily="monospace" 
           transform="rotate(-90 -6 28)" 
@@ -1792,7 +1794,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <text 
                 x="-1.0" 
                 y={yPos + 0.9} 
-                fill="#94a3b8" 
+                fill={engineeringColor("#94a3b8", "text")}
                 fontSize="2.4" 
                 fontFamily="monospace" 
                 textAnchor="end"
@@ -1805,7 +1807,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   y1={yPos} 
                   x2="204" 
                   y2={yPos} 
-                  stroke="#1e293b" 
+                  stroke={engineeringColor("#1e293b")}
                   strokeWidth="0.18" 
                   strokeDasharray="1,1" 
                 />
@@ -1815,9 +1817,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         })}
 
         {!waterlineFocusMode && (
-          <line x1="4" y1="48" x2="206" y2="48" stroke="#475569" strokeWidth="0.4" strokeDasharray="1.5,1.5" />
+          <line x1="4" y1="48" x2="206" y2="48" stroke={engineeringColor("#475569")} strokeWidth="0.4" strokeDasharray="1.5,1.5" />
         )}
-        <text x="2" y="51.5" fill="#64748b" fontSize="2.4" fontFamily="monospace" textAnchor="end">
+        <text x="2" y="51.5" fill={engineeringColor("#64748b", "text")} fontSize="2.4" fontFamily="monospace" textAnchor="end">
           CL
         </text>
 
@@ -1839,14 +1841,14 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   y1={isFullPlanView ? "88" : "48"} 
                   x2={xPos} 
                   y2={isFullPlanView ? "86" : "46"} 
-                  stroke={isMidship ? "#06b6d4" : "rgba(245, 158, 11, 0.7)"} 
+                  stroke={engineeringColor(isMidship ? "#06b6d4" : "rgba(245, 158, 11, 0.7)")}
                   strokeWidth="0.4" 
                 />
               )}
               <text 
                 x={xPos} 
                 y={isAp || isFp || isMidship ? "51.5" : Number.isInteger(cfg.station) ? "51.5" : "53.2"} 
-                fill={waterlineFocusMode ? "#0f172a" : isAp || isFp || isMidship ? "#e2e8f0" : isStationB || isStationA ? "#fde68a" : cfg.station > 20.0 ? "#c084fc" : Number.isInteger(cfg.station) ? "#cbd5e1" : "#64748b"} 
+                fill={engineeringColor(waterlineFocusMode ? "#0f172a" : isAp || isFp || isMidship ? "#e2e8f0" : isStationB || isStationA ? "#fde68a" : cfg.station > 20.0 ? "#c084fc" : Number.isInteger(cfg.station) ? "#cbd5e1" : "#64748b", "text")}
                 fontSize={isAp || isFp || isMidship ? "2.3" : isStationB || isStationA ? "2.1" : Number.isInteger(cfg.station) ? "2.0" : "1.5"} 
                 fontWeight={isAp || isFp || isMidship || isStationB || isStationA || Number.isInteger(cfg.station) ? "bold" : "normal"}
                 fontFamily="monospace" 
@@ -1858,7 +1860,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 <text 
                   x={xPos} 
                   y="55.0" 
-                  fill="#06b6d4" 
+                  fill={engineeringColor("#06b6d4", "text")}
                   fontSize="2.4" 
                   fontWeight="bold" 
                   fontFamily="monospace" 
@@ -1890,23 +1892,23 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             const mirroredD = getSmoothPathD(mirrored);
 
             return (
-              <g key={`overlay-${wl.id}`} opacity="0.5" className="transition-all duration-300 pointer-events-none">
+              <g key={`overlay-${wl.id}`} opacity="0.5" className="transition-colors duration-300 pointer-events-none">
                 <path
                   d={`M ${first.x},${first.y} ${pathD}`}
                   fill="none"
-                  stroke={wl.color}
+                  stroke={engineeringColor(wl.color)}
                   strokeWidth="0.35"
                 />
                 {isFullPlanView && (
                   <path
                     d={`M ${first.x},${48 + (48 - first.y)} ${mirroredD}`}
                     fill="none"
-                    stroke={wl.color}
+                    stroke={engineeringColor(wl.color)}
                     strokeWidth="0.35"
                   />
                 )}
                 {/* Waterline ID Tag at afterbody */}
-                <text x={first.x - 1.5} y={first.y + 0.8} fill={wl.color} fontSize="1.8" fontFamily="monospace" textAnchor="end">
+                <text x={first.x - 1.5} y={first.y + 0.8} fill={engineeringColor(wl.color, "text")} fontSize="1.8" fontFamily="monospace" textAnchor="end">
                   {wl.shortName}
                 </text>
               </g>
@@ -1934,7 +1936,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   y1={getSvgY(ordinate)}
                   x2={x}
                   y2="48"
-                  stroke={isEndStation ? "#f59e0b" : "#0891b2"}
+                  stroke={engineeringColor(isEndStation ? "#f59e0b" : "#0891b2")}
                   strokeWidth={isEndStation ? "0.7" : "0.48"}
                   strokeDasharray="none"
                   opacity="0.95"
@@ -1944,7 +1946,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             <text
               x="204"
               y="6"
-              fill="#d97706"
+              fill={engineeringColor("#d97706", "text")}
               fontSize="2.3"
               fontFamily="monospace"
               fontWeight="bold"
@@ -1977,12 +1979,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             <g>
               <path
                 d={`M ${firstPt.x},48 L ${firstPt.x},${firstPt.y} ${smoothPath} L ${lastPt.x},48 Z`}
-                fill={`${activeWlConfig.color}1f`}
+                fill={engineeringColor(`${activeWlConfig.color}1f`)}
               />
               <path
                 d={`M ${firstPt.x},${firstPt.y} ${smoothPath}`}
                 fill="none"
-                stroke={activeWlConfig.color}
+                stroke={engineeringColor(activeWlConfig.color)}
                 strokeWidth="0.55"
                 strokeLinecap="round"
               />
@@ -1990,12 +1992,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 <g opacity="0.95">
                   <path
                     d={`M ${firstPt.x},48 L ${firstPt.x},${48 + (48 - firstPt.y)} ${mirroredSmoothPath} L ${lastPt.x},48 Z`}
-                    fill={`${activeWlConfig.color}14`}
+                    fill={engineeringColor(`${activeWlConfig.color}14`)}
                   />
                   <path
                     d={`M ${firstPt.x},${48 + (48 - firstPt.y)} ${mirroredSmoothPath}`}
                     fill="none"
-                    stroke={activeWlConfig.color}
+                    stroke={engineeringColor(activeWlConfig.color)}
                     strokeWidth="0.55"
                     strokeLinecap="round"
                   />
@@ -2038,7 +2040,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     cy={y}
                     r={isDragging ? "2.6" : "2.0"}
                     fill="none"
-                    stroke="#38bdf8"
+                    stroke={engineeringColor("#38bdf8")}
                     strokeWidth="0.45"
                     opacity="0.8"
                     strokeDasharray="1.2,1.2"
@@ -2048,8 +2050,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   cx={x}
                   cy={y}
                   r={isDragging ? "1.4" : isMidship ? "1.25" : isFpZone ? "0.85" : "0.8"}
-                  fill={fillColor}
-                  stroke={isMidship ? "#ecfeff" : isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff"}
+                  fill={engineeringColor(fillColor)}
+                  stroke={engineeringColor(isMidship ? "#ecfeff" : isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff")}
                   strokeWidth={isDragging || isMidship ? "0.3" : "0.18"}
                   className={
                     isFixed
@@ -2076,8 +2078,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     cx={x}
                     cy={48 + (48 - y)}
                     r={isFpZone ? "0.85" : isMidship ? "1.25" : "0.8"}
-                    fill={fillColor}
-                    stroke={isMidship ? "#ecfeff" : isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff"}
+                    fill={engineeringColor(fillColor)}
+                    stroke={engineeringColor(isMidship ? "#ecfeff" : isAp ? "#fef3c7" : isFpZone ? "#f3e8ff" : "#ffffff")}
                     strokeWidth="0.18"
                     opacity="0.85"
                   />
@@ -2091,12 +2093,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           const lcfX = getStationX(10.0) + (LCF / (l || 1)) * 8.0;
           return (
             <g>
-              <line x1={lcfX} y1="6" x2={lcfX} y2="48" stroke="#f59e0b" strokeWidth="0.5" strokeDasharray="1.5,1.5" />
+              <line x1={lcfX} y1="6" x2={lcfX} y2="48" stroke={engineeringColor("#f59e0b")} strokeWidth="0.5" strokeDasharray="1.5,1.5" />
               <polygon
                 points={`${lcfX},6 ${lcfX - 1.4},8.5 ${lcfX + 1.4},8.5`}
-                fill="#f59e0b"
+                fill={engineeringColor("#f59e0b")}
               />
-              <text x={lcfX} y="4.5" fill="#f59e0b" fontSize="2.8" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
+              <text x={lcfX} y="4.5" fill={engineeringColor("#f59e0b", "text")} fontSize="2.8" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
                 LCF
               </text>
             </g>
@@ -2107,46 +2109,46 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         <g display={waterlineFocusMode ? "none" : "inline"}>
         <g 
           onClick={() => setActiveZone(activeZone === 'after-peak' ? null : 'after-peak')}
-          className="cursor-pointer transition-all"
+          className="cursor-pointer transition-colors"
         >
-          <rect x="10" y={zoneBarY} width="16" height="4.5" rx="1" fill="#1e293b" stroke="#334155" strokeWidth="0.3" />
-          <text x="18" y={zoneBarTextY} fill="#cbd5e1" fontSize="1.9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          <rect x="10" y={zoneBarY} width="16" height="4.5" rx="1" fill="var(--surface-inset)" stroke={engineeringColor("#334155")} strokeWidth="0.3" />
+          <text x="18" y={zoneBarTextY} fill={engineeringColor("#cbd5e1", "text")} fontSize="1.9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
             After Peak
           </text>
         </g>
         <g 
           onClick={() => setActiveZone(activeZone === 'peak-1' ? null : 'peak-1')}
-          className="cursor-pointer transition-all"
+          className="cursor-pointer transition-colors"
         >
-          <rect x="26" y={zoneBarY} width="48" height="4.5" rx="1" fill="#0f2b48" stroke="#0284c7" strokeWidth="0.3" />
-          <text x="50" y={zoneBarTextY} fill="#bae6fd" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          <rect x="26" y={zoneBarY} width="48" height="4.5" rx="1" fill={engineeringColor("#0f2b48")} stroke={engineeringColor("#0284c7")} strokeWidth="0.3" />
+          <text x="50" y={zoneBarTextY} fill={engineeringColor("#bae6fd", "text")} fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
             Peak 1 (1-10)
           </text>
         </g>
         <g 
           onClick={() => setActiveZone(activeZone === 'parallel-middle-body' ? null : 'parallel-middle-body')}
-          className="cursor-pointer transition-all"
+          className="cursor-pointer transition-colors"
         >
-          <rect x="74" y={zoneBarY} width="72" height="4.5" rx="1" fill="#083344" stroke="#06b6d4" strokeWidth="0.35" />
-          <text x="110" y={zoneBarTextY} fill="#a5f3fc" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          <rect x="74" y={zoneBarY} width="72" height="4.5" rx="1" fill={engineeringColor("#083344")} stroke={engineeringColor("#06b6d4")} strokeWidth="0.35" />
+          <text x="110" y={zoneBarTextY} fill={engineeringColor("#a5f3fc", "text")} fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
             Parallel Middle Body (11-20)
           </text>
         </g>
         <g 
           onClick={() => setActiveZone(activeZone === 'peak-2' ? null : 'peak-2')}
-          className="cursor-pointer transition-all"
+          className="cursor-pointer transition-colors"
         >
-          <rect x="146" y={zoneBarY} width="40" height="4.5" rx="1" fill="#0f2b48" stroke="#0284c7" strokeWidth="0.3" />
-          <text x="166" y={zoneBarTextY} fill="#bae6fd" fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          <rect x="146" y={zoneBarY} width="40" height="4.5" rx="1" fill={engineeringColor("#0f2b48")} stroke={engineeringColor("#0284c7")} strokeWidth="0.3" />
+          <text x="166" y={zoneBarTextY} fill={engineeringColor("#bae6fd", "text")} fontSize="2.0" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
             Peak 2 (21-30)
           </text>
         </g>
         <g 
           onClick={() => setActiveZone(activeZone === 'fore-peak' ? null : 'fore-peak')}
-          className="cursor-pointer transition-all"
+          className="cursor-pointer transition-colors"
         >
-          <rect x="186" y={zoneBarY} width="8" height="4.5" rx="1" fill="#1e293b" stroke="#334155" strokeWidth="0.3" />
-          <text x="190" y={zoneBarTextY} fill="#cbd5e1" fontSize="1.8" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+          <rect x="186" y={zoneBarY} width="8" height="4.5" rx="1" fill="var(--surface-inset)" stroke={engineeringColor("#334155")} strokeWidth="0.3" />
+          <text x="190" y={zoneBarTextY} fill={engineeringColor("#cbd5e1", "text")} fontSize="1.8" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
             FP (31-33)
           </text>
         </g>
@@ -2157,12 +2159,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           y1={dimArrowY} 
           x2="74" 
           y2={dimArrowY} 
-          stroke="#64748b" 
+          stroke={engineeringColor("#64748b")}
           strokeWidth="0.3" 
           markerStart="url(#dim-arrow-start)" 
           markerEnd="url(#dim-arrow-end)" 
         />
-        <text x="50" y={dimTextY1} fill="#94a3b8" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+        <text x="50" y={dimTextY1} fill={engineeringColor("#94a3b8", "text")} fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
           {language === "en" ? `Aft la' = ${la_prime.toFixed(4)} m` : `Buritan la' = ${la_prime.toFixed(4)} m`}
         </text>
 
@@ -2171,15 +2173,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           y1={dimArrowY} 
           x2="146" 
           y2={dimArrowY} 
-          stroke="#06b6d4" 
+          stroke={engineeringColor("#06b6d4")}
           strokeWidth="0.35" 
           markerStart="url(#dim-arrow-start)" 
           markerEnd="url(#dim-arrow-end)" 
         />
-        <text x="110" y={dimTextY1} fill="#38bdf8" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+        <text x="110" y={dimTextY1} fill={engineeringColor("#38bdf8", "text")} fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
           {language === "en" ? `Midship PMB l = ${l.toFixed(4)} m` : `Bagian Tengah (PMB) l = ${l.toFixed(4)} m`}
         </text>
-        <text x="110" y={dimTextY2} fill="#67e8f9" fontSize="1.8" fontFamily="monospace" textAnchor="middle">
+        <text x="110" y={dimTextY2} fill={engineeringColor("#67e8f9", "text")} fontSize="1.8" fontFamily="monospace" textAnchor="middle">
           {language === "en" ? `Standard Frame Spacing l = ${l.toFixed(4)} m (10 PMB Stations)` : `Jarak Standar Antar Gading = ${l.toFixed(4)} m (10 Gading: 11 s.d 20)`}
         </text>
 
@@ -2188,12 +2190,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           y1={dimArrowY} 
           x2="186" 
           y2={dimArrowY} 
-          stroke="#64748b" 
+          stroke={engineeringColor("#64748b")}
           strokeWidth="0.3" 
           markerStart="url(#dim-arrow-start)" 
           markerEnd="url(#dim-arrow-end)" 
         />
-        <text x="166" y={dimTextY1} fill="#94a3b8" fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
+        <text x="166" y={dimTextY1} fill={engineeringColor("#94a3b8", "text")} fontSize="2.0" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
           {language === "en" ? `Fore lf = ${lf.toFixed(4)} m` : `Haluan lf = ${lf.toFixed(4)} m`}
         </text>
         </g>
@@ -2204,51 +2206,51 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   return (
     <div className={compact ? "w-full flex flex-col space-y-2 flex-1 min-h-0 h-full" : "space-y-6"}>
       {isFullscreenPlot && (
-        <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-3xl flex flex-col p-2 sm:p-3 overflow-hidden select-none animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 bg-surface-inset flex flex-col p-2 sm:p-3 overflow-hidden select-none duration-200">
           {/* COMPACT TOP COCKPIT HEADER */}
-          <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 mb-2 shadow-2xl space-y-2 shrink-0">
+          <div className="w-full bg-surface-primary border border-border-default rounded-lg p-2.5 mb-2 space-y-2 shrink-0">
             <div className="flex flex-wrap items-center justify-between gap-2">
               {/* Left: Studio Title & Active WL */}
               <div className="flex items-center space-x-2.5">
-                <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                <div className="text-text-secondary shrink-0">
                   <TrendingUp size={16} />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-sm font-bold text-white tracking-wide whitespace-nowrap">
-                    Waterplane Studio &mdash; <span className="text-cyan-400">{activeWlConfig.name}</span>
+                  <h2 className="text-sm font-semibold text-text-primary tracking-normal whitespace-nowrap">
+                    Waterplane Studio &mdash; <span className="text-accent-primary">{activeWlConfig.name}</span>
                   </h2>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase whitespace-nowrap">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-selected text-accent-primary border border-border-default font-semibold whitespace-nowrap">
                     Z = {activeDraftZ.toFixed(2)} m
                   </span>
                 </div>
               </div>
 
               {/* Middle: Live HUD Telemetry Strip */}
-              <div className="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-1 font-mono text-xs shadow-inner">
+              <div className="flex items-center gap-2 bg-surface-inset border border-border-default rounded-lg px-3 py-1 font-mono text-sm">
                 <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-[10px] text-slate-400 uppercase">Correction:</span>
-                  <span className={`font-bold ${isCorrectionValid ? "text-emerald-400" : "text-rose-400"}`}>
+                  <span className="text-xs text-text-secondary">Correction:</span>
+                  <span className={`font-semibold ${isCorrectionValid ? "text-status-success" : "text-status-danger"} `}>
                     {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
                   </span>
-                  <span className={`text-[9px] px-1 py-0.2 rounded font-bold ${isCorrectionValid ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}>
+                  <span className={`text-xs px-1 py-0.2 rounded font-semibold ${isCorrectionValid ? "bg-status-success-subtle text-status-success" : "bg-status-danger-subtle text-status-danger"} `}>
                     {isCorrectionValid ? "VALID" : "DEVIATION"}
                   </span>
                 </div>
-                <span className="text-slate-700 hidden md:inline">|</span>
+                <span className="text-text-primary hidden md:inline">|</span>
                 <div className="flex items-center space-x-1 whitespace-nowrap">
-                  <span className="text-[10px] text-slate-400">AWL:</span>
-                  <span className="font-bold text-cyan-400">{AWL.toFixed(2)}</span>
-                  <span className="text-[10px] text-slate-500">/ {activeTargetAWL.toFixed(2)}m²</span>
+                  <span className="text-xs text-text-secondary">AWL:</span>
+                  <span className="font-semibold text-accent-primary">{AWL.toFixed(2)}</span>
+                  <span className="text-xs text-text-secondary">/ {activeTargetAWL.toFixed(2)}m²</span>
                 </div>
-                <span className="text-slate-700 hidden md:inline">|</span>
+                <span className="text-text-primary hidden md:inline">|</span>
                 <div className="flex items-center space-x-1 whitespace-nowrap">
-                  <span className="text-[10px] text-slate-400">LCF:</span>
-                  <span className="font-bold text-amber-400">{LCF.toFixed(3)} m</span>
+                  <span className="text-xs text-text-secondary">LCF:</span>
+                  <span className="font-semibold text-status-warning">{LCF.toFixed(3)} m</span>
                 </div>
-                <span className="text-slate-700 hidden md:inline">|</span>
+                <span className="text-text-primary hidden md:inline">|</span>
                 <div className="flex items-center space-x-1 whitespace-nowrap">
-                  <span className="text-[10px] text-slate-400">Cw:</span>
-                  <span className="font-bold text-cyan-400">{calculatedCw.toFixed(4)}</span>
+                  <span className="text-xs text-text-secondary">Cw:</span>
+                  <span className="font-semibold text-accent-primary">{calculatedCw.toFixed(4)}</span>
                 </div>
               </div>
 
@@ -2256,27 +2258,27 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <div className="flex items-center space-x-1.5">
                 <button
                   onClick={toggleSternOverhang}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1 cursor-pointer ${
+                  className={`px-2 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1 cursor-pointer ${
                     activeZoneSetting.hasSternOverhang
-                      ? "bg-amber-500/20 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/40 shadow-sm"
-                      : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
-                  }`}
+                      ? "bg-status-warning-subtle border-status-warning-border text-status-warning ring-1 ring-status-warning min-h-9"
+                      : "bg-surface-secondary border-border-default text-text-secondary hover:text-text-primary min-h-9"
+                  } `}
                   title="Enable / disable stern overhang at St. B & A"
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-amber-400" : "bg-slate-600"}`} />
+                 aria-label="Enable / disable stern overhang at St. B & A">
+                  <span className={`w-1.5 h-1.5 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-status-warning-subtle" : "bg-surface-secondary"} `} />
                   <span>Buritan: {activeZoneSetting.hasSternOverhang ? "ON" : "OFF"}</span>
                 </button>
 
                 <button
                   onClick={toggleBulbousBow}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1 cursor-pointer ${
+                  className={`px-2 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1 cursor-pointer ${
                     activeZoneSetting.hasBulbousBow
-                      ? "bg-purple-500/20 border-purple-500/60 text-purple-300 ring-1 ring-purple-500/40 shadow-sm"
-                      : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
-                  }`}
+                      ? "bg-surface-selected border-border-default text-accent-primary ring-1 ring-focus-ring min-h-9"
+                      : "bg-surface-secondary border-border-default text-text-secondary hover:text-text-primary min-h-9"
+                  } `}
                   title="Enable / disable the bulbous bow at St. FP-A & FP-B"
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-purple-400" : "bg-slate-600"}`} />
+                 aria-label="Enable / disable the bulbous bow at St. FP-A & FP-B">
+                  <span className={`w-1.5 h-1.5 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-surface-selected" : "bg-surface-secondary"} `} />
                   <span>Bulbous FP: {activeZoneSetting.hasBulbousBow ? "ON" : "OFF"}</span>
                 </button>
               </div>
@@ -2285,97 +2287,97 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <div className="flex items-center space-x-1.5">
                 <button
                   onClick={handleAutoFineTune}
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg font-mono text-xs font-bold transition-all shadow-md flex items-center space-x-1 cursor-pointer"
+                  className="px-2.5 py-1.5 text-on-accent rounded-md font-sans text-sm font-semibold transition-colors flex items-center space-x-1 cursor-pointer bg-accent-primary min-h-9"
                   title="Otomatis ratakan dan seimbangkan kurva hingga memenuhi syarat <= ±0.05%"
-                >
+                 aria-label="Otomatis ratakan dan seimbangkan kurva hingga memenuhi syarat <= ±0.05%">
                   <Wand2 size={13} />
                   <span>Auto-Fit</span>
                 </button>
                 <button
                   onClick={handleReset}
-                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
+                  className="p-1.5 bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary rounded-md transition-colors cursor-pointer min-h-9"
                   title="Reset ke Posisi Desain Awal"
-                >
+                 aria-label="Reset ke Posisi Desain Awal">
                   <RotateCcw size={15} />
                 </button>
                 {/* Station Density Switcher */}
                 <button
                   type="button"
                   onClick={() => handleDensityChange(stationDensity === "all" ? "standard" : "all")}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border flex items-center space-x-1 cursor-pointer ${
+                  className={`px-2 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1 cursor-pointer ${
                     stationDensity === "all"
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                      : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
-                  }`}
+                      ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
+                      : "bg-surface-secondary text-text-secondary border-border-default hover:text-text-primary min-h-9"
+                  } `}
                   title={waterlineFocusMode ? "Mode Focus WL menampilkan tepat 11 gading: 0 sampai 10" : "Beralih antara semua gading lengkap (36 titik) dan gading standar (23 titik)"}
-                >
-                  <SlidersHorizontal size={11} className="text-cyan-400" />
+                 aria-label={waterlineFocusMode ? "Mode Focus WL menampilkan tepat 11 gading: 0 sampai 10" : "Beralih antara semua gading lengkap (36 titik) dan gading standar (23 titik)"}>
+                  <SlidersHorizontal size={11} className="text-accent-primary" />
                   <span>{waterlineFocusMode ? "Frames: 0–10 (11)" : stationDensity === "all" ? "Frames: All (36)" : "Frames: Standard (23)"}</span>
                 </button>
 
                 <button
                   onClick={() => setIsFullPlanView(!isFullPlanView)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
+                  className={`px-2.5 py-1.5 rounded-md text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 ${
                     isFullPlanView
-                      ? "bg-cyan-500 text-white shadow-sm"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
-                  }`}
+                      ? "bg-accent-primary text-on-accent min-h-9"
+                      : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-accent-primary min-h-9"
+                  } `}
                   title="Show full port and starboard symmetry"
-                >
+                 aria-pressed={isFullPlanView} aria-label="Show full port and starboard symmetry">
                   <Maximize2 size={13} />
                   <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri Penuh") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
                 </button>
                 <button
                   onClick={() => setShowAllWlOverlay(!showAllWlOverlay)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
+                  className={`px-2.5 py-1.5 rounded-md text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 ${
                     showAllWlOverlay
-                      ? "bg-indigo-600/30 border border-indigo-500/50 text-indigo-300 shadow-sm"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200"
-                  }`}
+                      ? "bg-surface-selected border border-border-default text-accent-primary min-h-9"
+                      : "bg-surface-secondary hover:bg-surface-secondary text-text-secondary hover:text-text-primary min-h-9"
+                  } `}
                   title="Show / hide other waterlines (multi-waterline overlay)"
-                >
+                 aria-pressed={showAllWlOverlay} aria-label="Show / hide other waterlines (multi-waterline overlay)">
                   <Layers size={13} />
                   <span>{showAllWlOverlay ? "Multi-WL: ON" : "Multi-WL: OFF"}</span>
                 </button>
                 <button
                   onClick={() => setIsPreviewMode(!isPreviewMode)}
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                     isPreviewMode
-                      ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
-                  }`}
+                      ? "bg-status-warning-subtle border border-status-warning-border text-status-warning min-h-9"
+                      : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-accent-primary min-h-9"
+                  } `}
                     title={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}
-                >
+                 aria-pressed={isPreviewMode} aria-label={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}>
                   {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
                 {onSave && (
                   <button
                     onClick={onSave}
                     disabled={isSaving}
-                    className="px-2.5 py-1.5 bg-emerald-600/40 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-200 hover:text-white rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shadow-sm ml-1"
+                    className="px-2.5 py-1.5 bg-status-success-subtle hover:bg-status-success border border-status-success-border text-status-success hover:text-text-primary rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1 ml-1 min-h-9"
                     title={language === "en" ? "Save Waterline Offsets Permanently (Ctrl+S)" : "Simpan Data Garis Air Permanen (Ctrl+S)"}
-                  >
+                   aria-label={language === "en" ? "Save Waterline Offsets Permanently (Ctrl+S)" : "Simpan Data Garis Air Permanen (Ctrl+S)"}>
                     <Save size={13} className={isSaving ? "animate-spin" : ""} />
                     <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save" : "Simpan")}</span>
                   </button>
                 )}
                 <button
                   onClick={() => setIsFullscreenPlot(false)}
-                  className="p-1.5 bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 text-rose-300 hover:text-white rounded-lg transition-all cursor-pointer ml-1"
+                  className="p-1.5 bg-status-danger-subtle hover:bg-status-danger border border-status-danger-border text-status-danger hover:text-text-primary rounded-md transition-colors cursor-pointer ml-1 min-h-9"
                   title="Tutup Mode Layar Penuh (Esc)"
-                >
+                 aria-label="Tutup Mode Layar Penuh (Esc)">
                   <X size={16} />
                 </button>
               </div>
             </div>
 
             {/* Slim Waterline Quick-Switch Bar */}
-            <div className="flex flex-wrap items-center gap-1 pt-1.5 border-t border-slate-800/70">
+            <div className="flex flex-wrap items-center gap-1 pt-1.5 border-t border-border-default">
               <button
                 onClick={() => setIsWlManagerOpen(true)}
-                className="px-2 py-1 bg-cyan-600/20 hover:bg-cyan-600/40 border border-cyan-500/40 text-cyan-300 hover:text-white rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shrink-0 mr-1 shadow-sm"
+                className="px-2 py-1 bg-surface-selected hover:bg-surface-selected border border-border-default text-accent-primary hover:text-text-primary rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1 shrink-0 mr-1 min-h-9"
                 title="Manage and customize waterlines (presets / add / remove)"
-              >
+               aria-label="Manage and customize waterlines (presets / add / remove)">
                 <SlidersHorizontal size={12} />
                 <span>Kelola WL ({waterlineLevels.length})</span>
               </button>
@@ -2389,28 +2391,28 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   <button
                     key={`fs-wl-${wl.id}`}
                     onClick={() => setActiveWlId(wl.id)}
-                    className={`flex items-center justify-center space-x-1.5 py-1 px-1.5 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer whitespace-nowrap border ${
+                    className={`flex items-center justify-center space-x-1.5 py-1 px-1.5 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer whitespace-nowrap border ${
                       isActive
-                        ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md border-cyan-400 ring-1 ring-cyan-400/40"
-                        : "bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/60"
-                    }`}
+                        ? "text-on-accent border-border-default ring-1 ring-focus-ring bg-accent-primary min-h-9"
+                        : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary border-border-default min-h-9"
+                    } `}
                   >
-                    <span className="w-2 h-2 rounded-full shadow-sm shrink-0" style={{ backgroundColor: wl.color }} />
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: engineeringColor(wl.color) }} />
                     <span>{wl.shortName}</span>
-                    <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${isActive ? "bg-white/20 text-white" : "bg-slate-900/60 text-slate-400"}`}>
+                    <span className={`text-xs px-1 py-0.2 rounded font-mono ${isActive ? "bg-surface-primary text-text-primary" : "bg-surface-primary text-text-secondary"} `}>
                       Z={wlDraftZ.toFixed(2)}m
                     </span>
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400" : "bg-rose-400"}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-status-success-subtle" : "bg-status-danger-subtle"} `} />
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex-1 w-full min-h-0 bg-slate-900/95 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-1 sm:p-2.5 shadow-2xl">
+          <div className="flex-1 w-full min-h-0 bg-surface-primary rounded-lg border border-border-default relative overflow-hidden flex flex-col items-center justify-center p-1 sm:p-2.5">
             {draggingStation !== null && (
-              <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-amber-500/20 border border-amber-500/50 px-3 py-1 rounded-full font-mono text-xs text-amber-300 backdrop-blur-md shadow-lg animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-status-warning-subtle border border-status-warning-border px-3 py-1 rounded-full font-mono text-sm text-status-warning">
+                <span className="w-2 h-2 rounded-full bg-status-warning-subtle" />
                 <span>
                   Mengubah St. {calculatedRows.find(r => r.station === draggingStation)?.label ?? draggingStation}: <strong>0.5 B = {(halfBreadths[draggingStation] ?? 0).toFixed(3)} m</strong>
                 </span>
@@ -2430,12 +2432,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </svg>
           </div>
 
-          <div className="w-full flex items-center justify-between pt-1 px-1 text-[11px] font-mono text-slate-400 shrink-0">
+          <div className="w-full flex items-center justify-between pt-1 px-1 text-xs font-mono text-text-secondary shrink-0">
             <span className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="w-2 h-2 rounded-full bg-surface-selected" />
               <span>Geser titik pada kurva untuk mengubah bentuk garis air. Tekan <strong>Esc</strong> atau tombol silang untuk kembali.</span>
             </span>
-            <span className="text-slate-500">36 Frame Stations</span>
+            <span className="text-text-secondary">36 Frame Stations</span>
           </div>
         </div>
       )}
@@ -2443,29 +2445,29 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       {/* HEADER: LINES PLAN TITLE BLOCK & SHIP MAIN PARTICULARS */}
       {!visualOnly && (
         <>
-          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 backdrop-blur-xl shadow-xl space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3 gap-3">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-4 md:p-5 space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border-default pb-3 gap-3">
           <div>
             <div className="flex items-center space-x-2.5">
-              <div className="p-2 rounded-xl bg-cyan-600/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+              <div className="text-text-secondary shrink-0">
                 <TableIcon size={20} />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-base md:text-lg font-semibold text-text-primary tracking-tight">
                     Waterplane Hydrostatics
                   </h2>
                   <span
-                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                    className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full border ${
                       isCorrectionValid
-                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
-                        : "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-500/40 animate-pulse"
-                    }`}
+                        ? "bg-status-success-subtle text-status-success border-status-success-border"
+                        : "bg-status-danger-subtle text-status-danger border-status-danger-border"
+                    } `}
                   >
                     {language === "en" ? "Tolerance: ≤ ±0.05%" : "Toleransi: ≤ ±0.05%"}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-text-secondary">
                   {language === "en"
                     ? "AWL, LCF, moments of inertia, and waterplane coefficient."
                     : "Perhitungan Luas Garis Air (AWL), Titik Apung Memanjang (LCF), Momen Inersia Melintang (IT) & Memanjang (IL), serta Koefisien Cw."}
@@ -2478,32 +2480,32 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             <button
               type="button"
               onClick={() => setShowParticulars(!showParticulars)}
-              className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold flex items-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
+              className="p-2 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded-md text-sm font-semibold flex items-center transition-colors cursor-pointer border border-border-default min-h-9"
               title={showParticulars ? "Hide main particulars" : "Show main particulars"}
-            >
-              {showParticulars ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+             aria-pressed={showParticulars} aria-label={showParticulars ? "Hide main particulars" : "Show main particulars"}>
+              {showParticulars ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
             </button>
             <button
               onClick={handleAutoFineTune}
-              className="py-2 px-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-emerald-600/20"
+              className="py-2 px-3 text-on-accent rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer bg-accent-primary min-h-9"
               title="Automatically adjust ordinates until correction is within ±0.05%"
-            >
+             aria-label="Automatically adjust ordinates until correction is within ±0.05%">
               <Wand2 size={14} />
               <span>Auto-Fit</span>
             </button>
             <button
               onClick={handleReset}
-              className="py-2 px-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
+              className="py-2 px-2.5 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer border border-border-default min-h-9"
               title="Reset ordinates to the standard design curve"
-            >
+             aria-label="Reset ordinates to the standard design curve">
               <RotateCcw size={14} />
               <span>Reset</span>
             </button>
             <button
               onClick={handleExportCSV}
-              className="py-2 px-2.5 bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+              className="py-2 px-2.5 bg-surface-selected hover:bg-surface-selected text-accent-primary border border-border-default rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer min-h-9"
               title="Download calculation data as CSV"
-            >
+             aria-label="Download calculation data as CSV">
               <Download size={14} />
               <span>CSV</span>
             </button>
@@ -2511,13 +2513,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-lg ${
+                className={`py-2 px-3 rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer ${
                   isSaving
-                    ? "bg-amber-600/30 text-amber-300 border border-amber-500/50 animate-pulse"
-                    : "bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white border border-emerald-400/40 shadow-emerald-950/40 hover:scale-[1.02]"
-                }`}
+                    ? "bg-status-warning-subtle text-status-warning border border-status-warning-border animate-pulse min-h-9"
+                    : "text-on-accent border border-status-success-border bg-accent-primary min-h-9"
+                } `}
                 title={language === "en" ? "Save all waterline calculations permanently (Ctrl+S)" : "Simpan semua kalkulasi garis air permanen (Ctrl+S)"}
-              >
+               aria-label={language === "en" ? "Save all waterline calculations permanently (Ctrl+S)" : "Simpan semua kalkulasi garis air permanen (Ctrl+S)"}>
                 <Save size={14} className={isSaving ? "animate-spin" : ""} />
                 <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save" : "Simpan")}</span>
               </button>
@@ -2526,38 +2528,38 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
 
         {showParticulars && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 bg-slate-50 dark:bg-slate-950/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800/80 font-mono text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 bg-surface-canvas p-3 rounded-lg border border-border-default font-mono text-sm">
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">LBP</span>
-              <div className="font-bold text-cyan-600 dark:text-cyan-300">{LBP.toFixed(2)} m</div>
+              <span className="text-xs text-text-secondary">LBP</span>
+              <div className="font-semibold text-accent-primary">{LBP.toFixed(2)} m</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">LWL</span>
-              <div className="font-bold text-cyan-600 dark:text-cyan-300">{LWL.toFixed(2)} m</div>
+              <span className="text-xs text-text-secondary">LWL</span>
+              <div className="font-semibold text-accent-primary">{LWL.toFixed(2)} m</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">BWL (Breadth)</span>
-              <div className="font-bold text-cyan-600 dark:text-cyan-300">{BWL.toFixed(2)} m</div>
+              <span className="text-xs text-text-secondary">BWL (Breadth)</span>
+              <div className="font-semibold text-accent-primary">{BWL.toFixed(2)} m</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">Draft (T)</span>
-              <div className="font-bold text-cyan-600 dark:text-cyan-300">{T.toFixed(2)} m</div>
+              <span className="text-xs text-text-secondary">Draft (T)</span>
+              <div className="font-semibold text-accent-primary">{T.toFixed(2)} m</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">Block Coefficient (Cb)</span>
-              <div className="font-bold text-cyan-600 dark:text-cyan-300">{cb.toFixed(3)}</div>
+              <span className="text-xs text-text-secondary">Block Coefficient (Cb)</span>
+              <div className="font-semibold text-accent-primary">{cb.toFixed(3)}</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">Target Cw</span>
-              <div className="font-bold text-amber-600 dark:text-amber-300">{targetCw.toFixed(3)}</div>
+              <span className="text-xs text-text-secondary">Target Cw</span>
+              <div className="font-semibold text-status-warning">{targetCw.toFixed(3)}</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">Frame Spacing (l)</span>
-              <div className="font-bold text-slate-700 dark:text-slate-300">{l.toFixed(3)} m</div>
+              <span className="text-xs text-text-secondary">Frame Spacing (l)</span>
+              <div className="font-semibold text-text-primary">{l.toFixed(3)} m</div>
             </div>
             <div className="space-y-0.5">
-              <span className="text-[10px] text-slate-500 uppercase">AWL Desain</span>
-              <div className="font-bold text-emerald-600 dark:text-emerald-400">{AWL_rancangan.toFixed(2)} m&sup2;</div>
+              <span className="text-xs text-text-secondary">AWL Desain</span>
+              <div className="font-semibold text-status-success">{AWL_rancangan.toFixed(2)} m&sup2;</div>
             </div>
           </div>
         )}
@@ -2573,15 +2575,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           {!tablesOnly && (
             <>
               {compact ? (
-                <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 backdrop-blur-xl shadow-sm select-none shrink-0 space-y-2.5">
+                <div className="bg-surface-primary border border-border-default rounded-lg p-2.5 select-none shrink-0 space-y-2.5">
                   {/* TIER 1: Primary Controls & Presets & Actions */}
                   <div className="flex flex-wrap items-center justify-between gap-2.5">
                     {/* Left Group: Waterline Presets + Inline Stepper */}
-                    <div className="flex items-center space-x-2.5 overflow-x-auto">
+                    <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2.5 overflow-x-auto">
                       {/* Waterline Preset & Stepper Group */}
-                      <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-inner shrink-0">
-                        <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 px-1.5 font-semibold flex items-center space-x-1">
-                          <Layers size={12} className="text-cyan-500 dark:text-cyan-400" />
+                      <div className="flex items-center space-x-1 bg-surface-secondary p-1 rounded-lg border border-border-default shrink-0">
+                        <span className="text-xs font-mono text-text-secondary px-1.5 font-semibold flex items-center space-x-1">
+                          <Layers size={12} className="text-accent-primary" />
                           <span className="hidden sm:inline">Preset:</span>
                         </span>
                         {[4, 7, 11, 13, 21].map((cnt) => (
@@ -2589,19 +2591,19 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                             key={`compact-preset-${cnt}`}
                             type="button"
                             onClick={() => handleApplyPreset(cnt)}
-                            className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border cursor-pointer ${
+                            className={`px-2 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer ${
                               waterlineLevels.length === cnt
-                                ? "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-400 dark:border-cyan-500/40 shadow-xs font-black"
-                                : "bg-transparent text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/60"
-                            }`}
+                                ? "bg-surface-selected text-accent-primary border-border-default font-semibold min-h-9"
+                                : "bg-transparent text-text-secondary border-transparent hover:text-text-primary hover:bg-surface-secondary min-h-9"
+                            } `}
                             title={`Apply ${cnt} waterlines`}
-                          >
+                           aria-label={`Apply ${cnt} waterlines`}>
                             {cnt}
                           </button>
                         ))}
 
                         {/* Compact Stepper */}
-                        <div className="flex items-center pl-1 border-l border-slate-300 dark:border-slate-800 space-x-0.5">
+                        <div className="flex items-center pl-1 border-l border-border-default space-x-0.5">
                           <button
                             type="button"
                             onClick={() => {
@@ -2609,12 +2611,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                               setDesiredWlCount(next);
                               handleApplyPreset(next);
                             }}
-                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer transition-colors min-h-9 min-w-9"
                             title="Kurangi 1 WL"
-                          >
+                           aria-label="Kurangi 1 WL">
                             -
                           </button>
-                          <span className="w-5 text-center text-[11px] font-mono font-bold text-cyan-700 dark:text-cyan-300">
+                          <span className="w-5 text-center text-xs font-mono font-semibold text-accent-primary">
                             {waterlineLevels.length}
                           </span>
                           <button
@@ -2624,9 +2626,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                               setDesiredWlCount(next);
                               handleApplyPreset(next);
                             }}
-                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer transition-colors min-h-9 min-w-9"
                             title="Tambah 1 WL"
-                          >
+                           aria-label="Tambah 1 WL">
                             +
                           </button>
                         </div>
@@ -2637,20 +2639,20 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     <div className="flex items-center space-x-2 shrink-0">
                       {/* Live HUD Status Pill */}
                       <div
-                        className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold transition-all shadow-xs ${
+                        className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold transition-colors ${
                           isCorrectionValid
-                            ? "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
-                            : "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-500/30 text-rose-700 dark:text-rose-300"
-                        }`}
+                            ? "bg-status-success-subtle border-status-success-border text-status-success"
+                            : "bg-status-danger-subtle border-status-danger-border text-status-danger"
+                        } `}
                         title={`Target AWL: ${activeTargetAWL.toFixed(2)} m² | AWL Hitung: ${AWL.toFixed(2)} m²`}
                       >
-                        <span className={`w-2 h-2 rounded-full ${isCorrectionValid ? "bg-emerald-500" : "bg-rose-500 animate-pulse"}`} />
+                        <span className={`w-2 h-2 rounded-full ${isCorrectionValid ? "bg-status-success" : "bg-status-danger"} `} />
                         <span>Correction: {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}</span>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold hidden sm:inline ${
+                        <span className={`text-xs px-1.5 py-0.5 rounded font-semibold hidden sm:inline ${
                           isCorrectionValid
-                            ? "bg-emerald-100 dark:bg-slate-900/60 text-emerald-800 dark:text-emerald-300"
-                            : "bg-rose-100 dark:bg-slate-900/60 text-rose-800 dark:text-rose-300"
-                        }`}>
+                            ? "bg-status-success-subtle text-status-success"
+                            : "bg-status-danger-subtle text-status-danger"
+                        } `}>
                           {isCorrectionValid ? "VALID" : "DEVIATION"}
                         </span>
                       </div>
@@ -2659,9 +2661,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       <button
                         type="button"
                         onClick={handleAutoFineTune}
-                        className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-mono text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5 cursor-pointer ring-1 ring-emerald-400/30 active:scale-95"
+                        className="px-3 py-1.5 text-on-accent rounded-md font-sans text-sm font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer ring-1 ring-status-success bg-accent-primary min-h-9"
                         title="Otomatis ratakan & selaraskan kurva garis air agar koreksi ≤ ±0.05%"
-                      >
+                       aria-label="Otomatis ratakan & selaraskan kurva garis air agar koreksi ≤ ±0.05%">
                         <Wand2 size={13} />
                         <span>Auto-Fit</span>
                       </button>
@@ -2670,9 +2672,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       <button
                         type="button"
                         onClick={handleReset}
-                        className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-xl transition-all cursor-pointer border border-slate-300 dark:border-slate-800 shadow-xs"
+                        className="p-1.5 bg-surface-secondary hover:bg-surface-secondary text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer border border-border-default min-h-9"
                         title="Reset ordinat garis air ke kurva desain standar"
-                      >
+                       aria-label="Reset ordinat garis air ke kurva desain standar">
                         <RotateCcw size={14} />
                       </button>
 
@@ -2680,9 +2682,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       <button
                         type="button"
                         onClick={() => setIsWlManagerOpen(true)}
-                        className="px-2.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/60 dark:hover:bg-cyan-900/60 border border-cyan-300 dark:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-white rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-xs"
+                        className="px-2.5 py-1.5 bg-surface-selected hover:bg-surface-selected border border-border-default text-accent-primary hover:text-accent-primary rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 min-h-9"
                         title="Open the full waterline count and level customization studio"
-                      >
+                       aria-label="Open the full waterline count and level customization studio">
                         <SlidersHorizontal size={13} />
                         <span className="hidden sm:inline">Studio WL</span>
                       </button>
@@ -2690,12 +2692,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   </div>
 
                   {/* TIER 2: Waterline Navigation Ribbon */}
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">
-                    <div
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-default">
+                    <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace"
                       ref={waterlineRibbonRef}
-                      className={`flex items-center space-x-2 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${
+                      className={`flex items-center space-x-2 overflow-x-auto py-1     ${
                         waterlineRibbonDragRef.current ? "cursor-grabbing" : "cursor-grab"
-                      }`}
+                      } `}
                       onPointerDown={handleWaterlineRibbonPointerDown}
                       onPointerMove={handleWaterlineRibbonPointerMove}
                       onPointerUp={handleWaterlineRibbonPointerUp}
@@ -2707,8 +2709,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       }}
                       style={{ touchAction: "pan-x" }}
                     >
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
-                        <Compass size={12} className="text-cyan-500 dark:text-cyan-400" />
+                      <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
+                        <Compass size={12} className="text-accent-primary" />
                         <span>Select Waterline ({waterlineLevels.length}):</span>
                       </span>
                       {waterlineLevels.map((wl) => {
@@ -2720,20 +2722,20 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           <button
                             key={`compact-${wl.id}`}
                             onClick={() => setActiveWlId(wl.id)}
-                            className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition-all border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
+                            className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
                               isActive
-                                ? "bg-cyan-500 text-white border-cyan-600 ring-2 ring-cyan-400/40 shadow-sm"
-                                : "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-950/80 dark:text-slate-300 border-slate-200 dark:border-slate-800 dark:hover:text-white dark:hover:bg-slate-800/60"
-                            }`}
+                                ? "bg-accent-primary text-on-accent border-border-default ring-2 ring-focus-ring min-h-9"
+                                : "bg-surface-secondary hover:bg-surface-secondary text-text-primary border-border-default min-h-9"
+                            } `}
                             title={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)}m`}
-                          >
-                            <span className="w-2 h-2 rounded-full ring-1 ring-white/40" style={{ backgroundColor: wl.color }} />
+                           aria-label={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)}m`}>
+                            <span className="w-2 h-2 rounded-full ring-1 ring-border-default" style={{ backgroundColor: engineeringColor(wl.color) }} />
                             <span>{wl.shortName}</span>
-                            <span className={isActive ? "text-cyan-100 font-medium" : "text-slate-500 dark:text-slate-400 font-normal"}>
+                            <span className={isActive ? "text-accent-primary font-medium" : "text-text-secondary font-normal"}>
                               {wlDraftZ.toFixed(2)}m
                             </span>
                             <span
-                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400 shadow-xs shadow-emerald-400/50" : "bg-rose-400 shadow-xs shadow-rose-400/50"}`}
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-status-success-subtle" : "bg-status-danger-subtle"} `}
                               title={isWlValid ? "Meets requirement (≤ ±0.05%)" : "Deviation"}
                             />
                           </button>
@@ -2742,48 +2744,48 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     </div>
 
                     {/* Live Parameters readout */}
-                    <div className="hidden lg:flex items-center space-x-2 font-mono text-[11px] text-slate-600 dark:text-slate-400 shrink-0 bg-slate-100 dark:bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-800/90 shadow-inner">
-                      <span>AWL: <strong className="text-cyan-700 dark:text-cyan-400">{AWL.toFixed(1)}m²</strong></span>
-                      <span className="text-slate-300 dark:text-slate-700">•</span>
-                      <span>LCF: <strong className="text-amber-700 dark:text-amber-400">{LCF.toFixed(2)}m</strong></span>
-                      <span className="text-slate-300 dark:text-slate-700">•</span>
-                      <span>Cw: <strong className="text-cyan-700 dark:text-cyan-300">{calculatedCw.toFixed(3)}</strong></span>
+                    <div className="hidden lg:flex items-center space-x-2 font-mono text-xs text-text-secondary shrink-0 bg-surface-secondary px-2.5 py-1 rounded-lg border border-border-default">
+                      <span>AWL: <strong className="text-accent-primary">{AWL.toFixed(1)}m²</strong></span>
+                      <span className="text-text-primary">•</span>
+                      <span>LCF: <strong className="text-status-warning">{LCF.toFixed(2)}m</strong></span>
+                      <span className="text-text-primary">•</span>
+                      <span>Cw: <strong className="text-accent-primary">{calculatedCw.toFixed(3)}</strong></span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-md space-y-3 select-none">
+                <div className="bg-surface-primary border border-border-default rounded-lg p-4 space-y-3 select-none">
                   {/* Top Bar: Title & Active Parameters */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800/80">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-border-default">
                     <div className="flex items-center space-x-3 shrink-0">
-                      <div className="p-2 rounded-xl bg-cyan-50 dark:bg-cyan-600/15 border border-cyan-200 dark:border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+                      <div className="text-text-secondary shrink-0">
                         <Sliders size={17} />
                       </div>
                       <div className="flex items-center space-x-2.5">
-                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider whitespace-nowrap">
+                        <h4 className="text-sm font-semibold text-text-primary tracking-normal whitespace-nowrap">
                           {language === "en" ? "Waterline Navigator" : "Pilih Garis Air (Waterline)"}
                         </h4>
-                        <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300 font-bold border border-cyan-200 dark:border-cyan-500/30 whitespace-nowrap">
+                        <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-surface-selected text-accent-primary font-semibold border border-border-default whitespace-nowrap">
                           Aktif: {activeWlConfig.shortName}
                         </span>
                       </div>
                     </div>
 
                     {/* Unified Telemetry Parameter Strip */}
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/90 rounded-xl px-3.5 py-1.5 font-mono text-xs shadow-inner">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-surface-canvas border border-border-default rounded-lg px-3.5 py-1.5 font-mono text-sm">
                       <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                        <span className="text-slate-500 dark:text-slate-400">Sarat</span>
-                        <strong className="text-cyan-700 dark:text-cyan-400 font-bold">Z = {activeDraftZ.toFixed(2)} m</strong>
+                        <span className="text-text-secondary">Sarat</span>
+                        <strong className="text-accent-primary font-semibold">Z = {activeDraftZ.toFixed(2)} m</strong>
                       </div>
-                      <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+                      <span className="text-text-primary hidden sm:inline">|</span>
                       <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                        <span className="text-slate-500 dark:text-slate-400">Target AWL:</span>
-                        <strong className="text-cyan-700 dark:text-cyan-400 font-bold">{activeTargetAWL.toFixed(2)} m&sup2;</strong>
+                        <span className="text-text-secondary">Target AWL:</span>
+                        <strong className="text-accent-primary font-semibold">{activeTargetAWL.toFixed(2)} m&sup2;</strong>
                       </div>
-                      <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
+                      <span className="text-text-primary hidden sm:inline">|</span>
                       <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                        <span className="text-slate-500 dark:text-slate-400">Target Cw:</span>
-                        <strong className="text-amber-700 dark:text-amber-400 font-bold">{activeTargetCw.toFixed(3)}</strong>
+                        <span className="text-text-secondary">Target Cw:</span>
+                        <strong className="text-status-warning font-semibold">{activeTargetCw.toFixed(3)}</strong>
                       </div>
                     </div>
                   </div>
@@ -2791,47 +2793,47 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   {/* Waterlines Grid / Segmented Control Bar */}
                   <div className="space-y-2.5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
+                      <span className="text-xs font-mono text-text-secondary font-semibold tracking-normal">
                         Select Active Waterline ({waterlineLevels.length} Levels):
                       </span>
 
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Inline Quick WL Count Input & Auto-Generate */}
-                        <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-2 py-1 shadow-xs">
-                          <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 font-medium">Berapa WL:</span>
+                        <div className="flex items-center space-x-1.5 bg-surface-secondary border border-border-default rounded-lg px-2 py-1">
+                          <span className="text-xs font-mono text-text-secondary font-medium">Berapa WL:</span>
                           <button
                             type="button"
                             onClick={() => setDesiredWlCount((prev) => Math.max(3, prev - 1))}
-                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer transition-colors min-h-9 min-w-9"
                             title="Kurangi 1 WL"
-                          >
+                           aria-label="Kurangi 1 WL">
                             -
                           </button>
                           <input
                             type="number"
                             min={3}
                             max={25}
-                            value={desiredWlCount}
+                            aria-label="Waterline count" value={desiredWlCount}
                             onChange={(e) => {
                               const v = parseInt(e.target.value, 10);
                               if (!isNaN(v)) setDesiredWlCount(Math.max(3, Math.min(25, v)));
                             }}
-                            className="w-9 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-center text-xs font-mono font-bold text-cyan-700 dark:text-cyan-300 py-0.5 focus:outline-none focus:border-cyan-400"
+                            className="w-9 bg-surface-primary border border-border-default rounded text-center text-sm font-mono font-semibold text-accent-primary py-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
                           />
                           <button
                             type="button"
                             onClick={() => setDesiredWlCount((prev) => Math.min(25, prev + 1))}
-                            className="w-5 h-5 flex items-center justify-center rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs cursor-pointer transition-all"
+                            className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer transition-colors min-h-9 min-w-9"
                             title="Tambah 1 WL"
-                          >
+                           aria-label="Tambah 1 WL">
                             +
                           </button>
                           <button
                             type="button"
                             onClick={() => handleApplyPreset(desiredWlCount)}
-                            className="px-2 py-0.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer shadow-xs flex items-center space-x-1"
+                            className="px-2 py-0.5 text-on-accent rounded-md text-sm font-semibold font-sans transition-colors cursor-pointer flex items-center space-x-1 bg-accent-primary min-h-9"
                             title={`Otomatis buat ${desiredWlCount} garis air berjarak seragam dari lunas hingga DWL`}
-                          >
+                           aria-label={`Otomatis buat ${desiredWlCount} garis air berjarak seragam dari lunas hingga DWL`}>
                             <Sparkles size={11} />
                             <span>Buat Otomatis</span>
                           </button>
@@ -2839,9 +2841,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
                         <button
                           onClick={() => setIsWlManagerOpen(true)}
-                          className="px-3 py-1 bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-600/20 dark:hover:bg-cyan-600/40 border border-cyan-200 dark:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-white rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-xs"
+                          className="px-3 py-1 bg-surface-selected hover:bg-surface-selected border border-border-default text-accent-primary hover:text-accent-primary rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 min-h-9"
                           title="Buka Studio Kustomisasi Jumlah & Level Garis Air"
-                        >
+                         aria-label="Buka Studio Kustomisasi Jumlah & Level Garis Air">
                           <SlidersHorizontal size={13} />
                           <span>Studio Kustomisasi</span>
                         </button>
@@ -2859,22 +2861,22 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           <button
                             key={wl.id}
                             onClick={() => setActiveWlId(wl.id)}
-                            className={`flex items-center space-x-2 py-1.5 px-2.5 rounded-xl font-mono transition-all cursor-pointer border relative group shrink-0 ${
+                            className={`flex items-center space-x-2 py-1.5 px-2.5 rounded-md font-sans transition-colors cursor-pointer border relative group shrink-0 ${
                               isActive
-                                ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-600/30 border-cyan-400 ring-2 ring-cyan-400/40 scale-[1.02]"
-                                : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/90 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-slate-700/70"
-                            }`}
+                                ? "text-on-accent border-border-default ring-2 ring-focus-ring bg-accent-primary min-h-9"
+                                : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary border-border-default min-h-9"
+                            } `}
                             title={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)} m (${wl.badge})`}
-                          >
-                            <span className="w-2 h-2 rounded-full shadow-xs shrink-0" style={{ backgroundColor: wl.color }} />
-                            <span className="text-xs font-bold whitespace-nowrap">{wl.shortName}</span>
-                            <span className={`px-1.5 py-0.5 rounded font-mono font-medium text-[10px] whitespace-nowrap ${
-                              isActive ? "bg-white/20 text-white" : "bg-white/80 dark:bg-slate-900/90 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-transparent"
-                            }`}>
+                           aria-label={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)} m (${wl.badge})`}>
+                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: engineeringColor(wl.color) }} />
+                            <span className="text-sm font-semibold whitespace-nowrap">{wl.shortName}</span>
+                            <span className={`px-1.5 py-0.5 rounded font-mono font-medium text-xs whitespace-nowrap ${
+                              isActive ? "bg-surface-primary text-text-primary" : "bg-surface-primary text-text-secondary border border-border-default dark:border-transparent"
+                            } `}>
                               Z={wlDraftZ.toFixed(2)}m
                             </span>
                             <span
-                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400 shadow-xs shadow-emerald-400/50" : "bg-rose-400 shadow-xs shadow-rose-400/50"}`}
+                              className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-status-success-subtle" : "bg-status-danger-subtle"} `}
                               title={isWlValid ? "Correction meets requirement (≤ ±0.05%)" : "Deviation exceeds tolerance"}
                             />
                           </button>
@@ -2885,14 +2887,14 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </div>
               )}
 
-              <div className={`bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl backdrop-blur-xl shadow-xl flex flex-col ${
+              <div className={`bg-surface-primary border border-border-default rounded-lg flex flex-col ${
                 compact ? "p-2 space-y-1.5 flex-1 min-h-0 h-full w-full" : "p-5 md:p-6 space-y-4"
-              }`}>
+              } `}>
                 {!compact && (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center space-x-2">
-                      <TrendingUp size={16} className="text-cyan-500 dark:text-cyan-400" />
-                      <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                      <TrendingUp size={16} className="text-accent-primary" />
+                      <h3 className="text-sm font-semibold text-text-primary tracking-normal">
                         {language === "en"
                           ? `Visual Waterplane Plot — ${activeWlConfig.name} (Z = ${activeDraftZ.toFixed(2)}m)`
                           : `Plot Visual Garis Air — ${activeWlConfig.name} (Sarat Z = ${activeDraftZ.toFixed(2)} m)`}
@@ -2904,36 +2906,36 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       <button
                         type="button"
                         onClick={() => setShowVisualPlot(!showVisualPlot)}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1.5 shadow-sm"
+                        className="px-2.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default rounded-md text-sm font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 min-h-9"
                         title={showVisualPlot ? (language === "en" ? "Hide Visual Plot" : "Sembunyikan Plot Visual") : (language === "en" ? "Show Visual Plot" : "Tampilkan Plot Visual")}
-                      >
-                        {showVisualPlot ? <EyeOff size={13} className="text-cyan-500" /> : <Eye size={13} className="text-cyan-500" />}
+                       aria-pressed={showVisualPlot} aria-label={showVisualPlot ? (language === "en" ? "Hide Visual Plot" : "Sembunyikan Plot Visual") : (language === "en" ? "Show Visual Plot" : "Tampilkan Plot Visual")}>
+                        {showVisualPlot ? <EyeOff size={13} className="text-accent-primary" /> : <Eye size={13} className="text-accent-primary" />}
                         <span>{showVisualPlot ? (language === "en" ? "Hide Plot" : "Sembunyikan Plot") : (language === "en" ? "Show Plot" : "Tampilkan Plot")}</span>
                       </button>
 
                       <button
                         onClick={toggleSternOverhang}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1.5 cursor-pointer shadow-sm ${
+                        className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1.5 cursor-pointer ${
                           activeZoneSetting.hasSternOverhang
-                            ? "bg-amber-500/20 border-amber-500/60 text-amber-300 ring-1 ring-amber-500/40"
-                            : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600"
-                        }`}
+                            ? "bg-status-warning-subtle border-status-warning-border text-status-warning ring-1 ring-status-warning min-h-9"
+                            : "bg-surface-secondary border-border-default text-text-secondary hover:text-text-primary hover:border-border-default min-h-9"
+                        } `}
                         title="Klik untuk Mengaktifkan / Menonaktifkan perpanjangan buritan di St. B & A (Stern Overhang). Luas AWL otomatis dikalibrasi ulang."
-                      >
-                        <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-amber-400 shadow-sm shadow-amber-400/50" : "bg-slate-600"}`} />
+                       aria-label="Klik untuk Mengaktifkan / Menonaktifkan perpanjangan buritan di St. B & A (Stern Overhang). Luas AWL otomatis dikalibrasi ulang.">
+                        <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasSternOverhang ? "bg-status-warning-subtle" : "bg-surface-secondary"} `} />
                         <span>Buritan (AP Overhang): {activeZoneSetting.hasSternOverhang ? "ON" : "OFF (0m)"}</span>
                       </button>
 
                       <button
                         onClick={toggleBulbousBow}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all border flex items-center space-x-1.5 cursor-pointer shadow-sm ${
+                        className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1.5 cursor-pointer ${
                           activeZoneSetting.hasBulbousBow
-                            ? "bg-purple-500/20 border-purple-500/60 text-purple-300 ring-1 ring-purple-500/40"
-                            : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600"
-                        }`}
+                            ? "bg-surface-selected border-border-default text-accent-primary ring-1 ring-focus-ring min-h-9"
+                            : "bg-surface-secondary border-border-default text-text-secondary hover:text-text-primary hover:border-border-default min-h-9"
+                        } `}
                         title="Klik untuk Mengaktifkan / Menonaktifkan tonjolan haluan di St. FP-A & FP-B (Bulbous Bow). Luas AWL otomatis dikalibrasi ulang."
-                      >
-                        <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-purple-400 shadow-sm shadow-purple-400/50" : "bg-slate-600"}`} />
+                       aria-label="Klik untuk Mengaktifkan / Menonaktifkan tonjolan haluan di St. FP-A & FP-B (Bulbous Bow). Luas AWL otomatis dikalibrasi ulang.">
+                        <span className={`w-2 h-2 rounded-full ${activeZoneSetting.hasBulbousBow ? "bg-surface-selected" : "bg-surface-secondary"} `} />
                         <span>Haluan (Bulbous Bow): {activeZoneSetting.hasBulbousBow ? "ON" : "OFF (0m)"}</span>
                       </button>
                     </div>
@@ -2941,23 +2943,23 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 )}
 
                 {showVisualPlot ? (
-                  <div className={`w-full bg-white dark:bg-slate-950/95 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/90 flex flex-col select-none shadow-sm ${
+                  <div className={`w-full bg-surface-primary rounded-lg overflow-hidden border border-border-default flex flex-col select-none ${
                     compact ? "flex-1 min-h-0 h-full w-full" : ""
-                  }`}>
+                  } `}>
                     {/* DOCKED CANVAS TOOLBAR (Clean, No Overlap, No Emojis) */}
-                    <div className="w-full px-3 py-2 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-900/60 backdrop-blur-sm flex flex-wrap items-center justify-between gap-2 shrink-0">
+                    <div className="w-full px-3 py-2 border-b border-border-default bg-surface-canvas flex flex-wrap items-center justify-between gap-2 shrink-0">
                       {/* Left: Active Waterline Title & Coordinate telemetry */}
-                      <div className="flex items-center space-x-2 font-mono text-xs">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeWlConfig.color }} />
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                      <div className="flex items-center space-x-2 font-mono text-sm">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: engineeringColor(activeWlConfig.color) }} />
+                        <span className="font-semibold text-text-primary">
                           {activeWlConfig.name}
                         </span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-200/70 dark:bg-slate-800 px-2 py-0.5 rounded font-medium">
+                        <span className="text-xs text-text-secondary bg-surface-secondary px-2 py-0.5 rounded font-medium">
                           Z = {activeDraftZ.toFixed(2)}m
                         </span>
-                        <span className="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
-                        <span className="hidden sm:inline text-[11px] text-slate-500 dark:text-slate-400">
-                          0.5B = <strong className="text-cyan-600 dark:text-cyan-400 font-bold">{(halfBreadths[10.0] ?? 0).toFixed(3)}m</strong>
+                        <span className="hidden sm:inline text-text-primary">|</span>
+                        <span className="hidden sm:inline text-xs text-text-secondary">
+                          0.5B = <strong className="text-accent-primary font-semibold">{(halfBreadths[10.0] ?? 0).toFixed(3)}m</strong>
                         </span>
                       </div>
 
@@ -2967,9 +2969,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           <button
                             type="button"
                             onClick={onOpenDualFullscreen}
-                            className="px-2.5 py-1 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shadow-xs"
+                            className="px-2.5 py-1 text-on-accent rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1 bg-accent-primary min-h-9"
                             title="Open dual fullscreen mode (waterplane & bilge radius)"
-                          >
+                           aria-label="Open dual fullscreen mode (waterplane & bilge radius)">
                             <Maximize2 size={12} />
                             <span>{language === "en" ? "Dual Fullscreen" : "Layar Penuh Keduanya"}</span>
                           </button>
@@ -2979,27 +2981,27 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         <button
                           type="button"
                           onClick={() => handleDensityChange(stationDensity === "all" ? "standard" : "all")}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border shadow-xs cursor-pointer flex items-center space-x-1.5 ${
+                          className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer flex items-center space-x-1.5 ${
                             stationDensity === "all"
-                              ? "bg-cyan-50 text-cyan-700 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40"
-                              : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}
+                              ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
+                              : "bg-surface-primary hover:bg-surface-secondary text-text-primary border-border-default min-h-9"
+                          } `}
                             title={waterlineFocusMode ? "Mode Focus WL menampilkan tepat 11 gading: 0 sampai 10" : "Beralih antara semua gading lengkap (36 titik) dan gading standar (23 titik)"}
-                        >
-                          <SlidersHorizontal size={11} className="text-cyan-500" />
+                         aria-label={waterlineFocusMode ? "Mode Focus WL menampilkan tepat 11 gading: 0 sampai 10" : "Beralih antara semua gading lengkap (36 titik) dan gading standar (23 titik)"}>
+                          <SlidersHorizontal size={11} className="text-accent-primary" />
                           <span>{waterlineFocusMode ? "Frames (0–10)" : stationDensity === "all" ? "Frames (36)" : "Frames (23)"}</span>
                         </button>
 
                         {/* Half-Breadth / Full Hull View */}
                         <button
                           onClick={() => setIsFullPlanView(!isFullPlanView)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1 border shadow-xs ${
+                          className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1 border ${
                             isFullPlanView
-                              ? "bg-cyan-500 text-white border-cyan-600 shadow-sm font-bold"
-                              : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                          }`}
+                              ? "bg-accent-primary text-on-accent border-border-default font-semibold min-h-9"
+                              : "bg-surface-primary hover:bg-surface-secondary text-text-primary border-border-default min-h-9"
+                          } `}
                           title="Show full port and starboard symmetry"
-                        >
+                         aria-pressed={isFullPlanView} aria-label="Show full port and starboard symmetry">
                           <Maximize2 size={12} />
                           <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
                         </button>
@@ -3007,13 +3009,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         {/* Multi-WL Overlay */}
                         <button
                           onClick={() => setShowAllWlOverlay(!showAllWlOverlay)}
-                          className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-semibold transition-all cursor-pointer flex items-center space-x-1 border shadow-xs ${
+                          className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1 border ${
                             showAllWlOverlay
-                              ? "bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-600/30 dark:border-indigo-500/50 dark:text-indigo-300 font-bold"
-                              : "bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-700"
-                          }`}
+                              ? "bg-surface-selected text-accent-primary border-border-default font-semibold min-h-9"
+                              : "bg-surface-primary hover:bg-surface-secondary text-text-primary border-border-default min-h-9"
+                          } `}
                           title="Show / hide other waterlines (multi-waterline overlay)"
-                        >
+                         aria-pressed={showAllWlOverlay} aria-label="Show / hide other waterlines (multi-waterline overlay)">
                           <Layers size={12} />
                           <span>{showAllWlOverlay ? "Multi-WL: ON" : "Multi-WL: OFF"}</span>
                         </button>
@@ -3021,18 +3023,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         {/* Preview / Edit Mode Toggle */}
                         <button
                           onClick={() => setIsPreviewMode(!isPreviewMode)}
-                          className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+                          className="p-1.5 bg-surface-primary hover:bg-surface-secondary rounded-md text-text-secondary hover:text-accent-primary border border-border-default transition-colors cursor-pointer min-h-9"
                           title={isPreviewMode ? "Show points and construction guides (Edit Mode)" : "Hide points and construction guides (Preview Mode)"}
-                        >
+                         aria-pressed={isPreviewMode} aria-label={isPreviewMode ? "Show points and construction guides (Edit Mode)" : "Hide points and construction guides (Preview Mode)"}>
                           {isPreviewMode ? <EyeOff size={13} /> : <Eye size={13} />}
                         </button>
 
                         {/* Fullscreen Single Canvas */}
                         <button
                           onClick={() => setIsFullscreenPlot(true)}
-                          className="px-2 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 border border-slate-200 dark:border-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 shadow-xs"
+                          className="px-2 py-1 bg-surface-primary hover:bg-surface-secondary text-text-primary border border-border-default rounded-md text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 min-h-9"
                           title="Open the waterplane canvas in fullscreen"
-                        >
+                         aria-label="Open the waterplane canvas in fullscreen">
                           <Maximize size={12} />
                           <span className="hidden md:inline">{language === "en" ? "Fullscreen" : "Layar Penuh"}</span>
                         </button>
@@ -3042,9 +3044,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           <button
                             onClick={onSave}
                             disabled={isSaving}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white border border-emerald-600 rounded-lg text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center space-x-1 shadow-xs"
+                            className="px-2.5 py-1 bg-status-success hover:bg-status-success text-on-accent border border-status-success-border rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1 min-h-9"
                             title={language === "en" ? "Save Waterline Offsets Permanently (Ctrl+S)" : "Simpan Data Garis Air Permanen (Ctrl+S)"}
-                          >
+                           aria-label={language === "en" ? "Save Waterline Offsets Permanently (Ctrl+S)" : "Simpan Data Garis Air Permanen (Ctrl+S)"}>
                             <Save size={12} className={isSaving ? "animate-spin" : ""} />
                             <span>{isSaving ? (language === "en" ? "Saving..." : "Menyimpan...") : (language === "en" ? "Save" : "Simpan")}</span>
                           </button>
@@ -3052,20 +3054,20 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       </div>
                     </div>
 
-                    <div className={`w-full relative transition-all duration-300 flex items-center justify-center p-2 sm:p-3 ${
+                    <div className={`w-full relative transition-colors duration-300 flex items-center justify-center p-2 sm:p-3 ${
                       compact
                         ? "flex-1 min-h-[460px] sm:min-h-[500px] xl:min-h-[540px] h-full w-full"
                         : isFullPlanView
                         ? "h-72 sm:h-88 md:h-[420px]"
                         : "h-56 sm:h-68 md:h-80"
-                    }`}>
+                    } `}>
                       {draggingStation !== null && (
-                        <div className="absolute top-2 left-2 z-30 flex items-center space-x-2 bg-slate-900/90 border border-amber-500/60 px-3 py-1 rounded-full font-mono text-[11px] text-amber-300 backdrop-blur-md shadow-lg pointer-events-none animate-pulse">
-                          <span className="w-2 h-2 rounded-full bg-amber-400" />
+                        <div className="absolute top-2 left-2 z-30 flex items-center space-x-2 bg-surface-primary border border-status-warning-border px-3 py-1 rounded-full font-mono text-xs text-status-warning pointer-events-none">
+                          <span className="w-2 h-2 rounded-full bg-status-warning-subtle" />
                           <span>
                             Mengubah St. {calculatedRows.find(r => r.station === draggingStation)?.label ?? draggingStation}: <strong>0.5 B = {(halfBreadths[draggingStation] ?? 0).toFixed(3)} m</strong>
                           </span>
-                          <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                          <span className="text-xs text-text-secondary bg-surface-secondary px-1.5 py-0.5 rounded border border-border-default">
                             Tahan Shift: Mode Sangat Presisi
                           </span>
                         </div>
@@ -3087,24 +3089,24 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           {/* Mode Preview CAD Indicator Pill */}
           {!compact && (
             <div className="w-full flex items-center justify-center pt-2 select-none">
-              <span className="flex items-center space-x-2 bg-slate-900/90 px-4 py-1.5 rounded-full border border-slate-800 text-[11px] font-mono text-slate-300 shadow-inner">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
+              <span className="flex items-center space-x-2 bg-surface-primary px-4 py-1.5 rounded-full border border-border-default text-xs font-mono text-text-primary">
+                <span className="w-2 h-2 rounded-full bg-surface-selected" />
                 <span>36 Station Waterplane Plan &mdash; After Peak (3), Peak 1 (10), PMB (10), Peak 2 (10), Fore Peak (3)</span>
               </span>
             </div>
           )}
         </div>
       ) : (
-        <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="flex items-center space-x-3 text-slate-500 font-mono">
-            <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+        <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+          <div className="flex items-center space-x-3 text-text-secondary font-mono">
+            <div className="text-text-secondary shrink-0">
               <TrendingUp size={16} />
             </div>
             <div>
-              <span className="font-bold text-slate-900 dark:text-white">
+              <span className="font-semibold text-text-primary">
                 "Visual Waterplane Plot is Hidden"
               </span>
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-sm text-text-secondary mt-0.5">
                 {activeWlConfig.name} ({activeWlConfig.shortName}) • Sarat Z = {activeDraftZ.toFixed(2)} m • AP Overhang: {activeZoneSetting.hasSternOverhang ? "ON" : "OFF"} • Bulbous: {activeZoneSetting.hasBulbousBow ? "ON" : "OFF"}
               </p>
             </div>
@@ -3112,7 +3114,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           <button
             type="button"
             onClick={() => setShowVisualPlot(true)}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-300 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-md bg-surface-selected hover:bg-surface-selected text-accent-primary text-sm font-semibold border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
           >
             <Eye size={13} />
             <span>{language === "en" ? "Open Visual Plot" : "Buka Plot Visual"}</span>
@@ -3126,14 +3128,14 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       {/* TABLE: 36 STATIONS SIMPSON INTEGRATION & AREA SUBTOTALS */}
       {!visualOnly && (
         <>
-          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-3">
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-              <TableIcon size={16} className="text-cyan-600 dark:text-cyan-400" />
+            <h3 className="text-sm font-semibold text-text-primary flex items-center space-x-2">
+              <TableIcon size={16} className="text-accent-primary" />
               <span>{language === "en" ? "Simpson Integration Table Waterplane Ordinates (36 Stations)" : "Tabel Integrasi Simpson Ordinat Garis Air (Water Plane 36 Station)"}</span>
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-sm text-text-secondary mt-0.5">
               {language === "en"
                 ? "You can edit 0.5 B (m) values in the table below. Subtotals per zone (AP, P1, PMB, P2, FP) and total sigma will recalculate instantly."
                 : "Anda dapat mengedit nilai 0.5 B (m) pada tabel di bawah. Subtotal per area (AP, P1, PMB, P2, FP) dan total sigma akan terhitung otomatis seketika."}
@@ -3142,10 +3144,10 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           <button
             type="button"
             onClick={() => setShowSimpsonTable(!showSimpsonTable)}
-            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shadow-sm transition-all cursor-pointer shrink-0"
+            className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md text-sm font-semibold bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
             title={showSimpsonTable ? (language === "en" ? "Hide 36-station table" : "Sembunyikan tabel 36 gading") : (language === "en" ? "Show 36-station table" : "Tampilkan tabel 36 gading")}
-          >
-            {showSimpsonTable ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+           aria-pressed={showSimpsonTable} aria-label={showSimpsonTable ? (language === "en" ? "Hide 36-station table" : "Sembunyikan tabel 36 gading") : (language === "en" ? "Show 36-station table" : "Tampilkan tabel 36 gading")}>
+            {showSimpsonTable ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
             <span>{showSimpsonTable ? (language === "en" ? "Hide Table" : "Sembunyikan Tabel") : (language === "en" ? "Show Table (36 St)" : "Tampilkan Tabel (36 St)")}</span>
           </button>
         </div>
@@ -3161,35 +3163,35 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               <div
                 key={zone.id}
                 onClick={() => setActiveZone(activeZone === zone.id ? null : zone.id)}
-                className={`p-3 rounded-xl border transition-all cursor-pointer shadow-md ${
+                className={`p-3 rounded-lg border transition-colors cursor-pointer ${
                   activeZone === zone.id 
-                    ? "bg-slate-100 dark:bg-slate-800/90 ring-2 ring-cyan-500 border-transparent" 
-                    : `${zone.badgeColor} hover:brightness-110`
-                }`}
+                    ? "bg-surface-secondary ring-2 ring-focus-ring border-transparent"
+                    : ` ${zone.badgeColor} hover:brightness-110`
+                } `}
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center space-x-1.5">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: zone.bgFill.replace(/0\.\d+/, '1') }} />
-                    <span className="text-[11px] font-bold uppercase">{zone.code}</span>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: engineeringColor(zone.bgFill.replace(/0\.\d+/, '1')) }} />
+                    <span className="text-xs font-semibold">{zone.code}</span>
                   </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/20 dark:bg-black/40 font-mono">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-overlay font-mono">
                     {data.stations.length} St
                   </span>
                 </div>
-                <div className="space-y-0.5 text-[10px] font-mono">
-                  <div className="flex justify-between text-cyan-600 dark:text-cyan-300">
+                <div className="space-y-0.5 text-xs font-mono">
+                  <div className="flex justify-between text-accent-primary">
                     <span className="opacity-75">&Sigma;1:</span>
-                    <span className="font-bold">{data.sum1.toFixed(3)}</span>
+                    <span className="font-semibold">{data.sum1.toFixed(3)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                  <div className="flex justify-between text-text-secondary">
                     <span className="opacity-75">&Sigma;2:</span>
                     <span className="font-semibold">{data.sum2.toFixed(3)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                  <div className="flex justify-between text-text-secondary">
                     <span className="opacity-75">&Sigma;3:</span>
                     <span className="font-semibold">{data.sum3.toFixed(3)}</span>
                   </div>
-                  <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                  <div className="flex justify-between text-text-secondary">
                     <span className="opacity-75">&Sigma;4:</span>
                     <span className="font-semibold">{data.sum4.toFixed(3)}</span>
                   </div>
@@ -3200,37 +3202,37 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
 
         {/* Responsive Fixed Table Container with Sticky Header */}
-        <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
-          <table className="w-full text-left text-xs font-mono border-collapse table-fixed min-w-[780px]">
-            <thead className="sticky top-0 z-20 shadow-md">
-              <tr className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                <th className="py-3 px-2 font-bold text-center border-r border-slate-200 dark:border-slate-800/60 w-[12%] text-slate-600 dark:text-slate-400">
+        <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-lg border border-border-default">
+          <table className="w-full text-left text-sm font-mono border-collapse table-fixed min-w-[780px]">
+            <thead className="sticky top-0 z-20">
+              <tr className="bg-surface-secondary text-text-primary border-b border-border-default text-xs">
+                <th className="py-3 px-2 font-semibold text-center border-r border-border-default w-[12%] text-text-secondary">
                   (1)<br />NO. SECT
                 </th>
-                <th className="py-3 px-2 font-bold text-cyan-600 dark:text-cyan-400 border-r border-slate-200 dark:border-slate-800/60 w-[14%]">
+                <th className="py-3 px-2 font-semibold text-accent-primary border-r border-border-default w-[14%]">
                   (2)<br />0.5 B (m)
                 </th>
-                <th className="py-3 px-2 font-semibold text-slate-500 dark:text-slate-400 text-center border-r border-slate-200 dark:border-slate-800/60 w-[8%]">
+                <th className="py-3 px-2 font-semibold text-text-secondary text-center border-r border-border-default w-[8%]">
                   (3)<br />MS
                 </th>
-                <th className="py-3 px-2 font-bold text-slate-700 dark:text-slate-200 text-right border-r border-slate-200 dark:border-slate-800/60 w-[13%]">
+                <th className="py-3 px-2 font-semibold text-text-primary text-right border-r border-border-default w-[13%]">
                   (4) = (2)&times;(3)<br />0.5B &middot; MS
                 </th>
-                <th className="py-3 px-2 font-semibold text-slate-500 dark:text-slate-400 text-center border-r border-slate-200 dark:border-slate-800/60 w-[9%]">
+                <th className="py-3 px-2 font-semibold text-text-secondary text-center border-r border-border-default w-[9%]">
                   (5)<br />FM
                 </th>
-                <th className="py-3 px-2 font-bold text-slate-700 dark:text-slate-200 text-right border-r border-slate-200 dark:border-slate-800/60 w-[14%]">
+                <th className="py-3 px-2 font-semibold text-text-primary text-right border-r border-border-default w-[14%]">
                   (6) = (4)&times;(5)<br />SMA
                 </th>
-                <th className="py-3 px-2 font-bold text-slate-700 dark:text-slate-200 text-right border-r border-slate-200 dark:border-slate-800/60 w-[15%]">
+                <th className="py-3 px-2 font-semibold text-text-primary text-right border-r border-border-default w-[15%]">
                   (7) = (2)&sup3;&times;(3)<br />(0.5B)&sup3; &middot; MS
                 </th>
-                <th className="py-3 px-2 font-bold text-slate-700 dark:text-slate-200 text-right w-[15%]">
+                <th className="py-3 px-2 font-semibold text-text-primary text-right w-[15%]">
                   (8) = (4)&times;(5)&sup2;<br />0.5B &middot; MS &middot; FM&sup2;
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50 bg-white dark:bg-slate-950/40">
+            <tbody className="divide-y divide-border-default bg-surface-primary">
               {calculatedRows.map((r, idx) => {
                 const isMid = r.station === 10.0;
                 const isAp = r.station === 0.0;
@@ -3244,35 +3246,35 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 return (
                   <React.Fragment key={idx}>
                     <tr
-                      className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${
+                      className={`hover:bg-surface-canvas transition-colors ${
                         isZoneActive 
-                          ? "bg-slate-100 dark:bg-slate-800/60 ring-1 ring-cyan-500/30" 
+                          ? "bg-surface-secondary ring-1 ring-focus-ring"
                           : isHighlighted 
-                          ? "bg-slate-50/80 dark:bg-slate-900/60 font-semibold" 
+                          ? "bg-surface-canvas font-semibold"
                           : ""
-                      }`}
+                      } `}
                     >
                       {/* (1) NO. SECT with Area Zone Badge */}
-                      <td className="py-2 px-2.5 text-center border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-2.5 text-center border-r border-border-default">
                         <div className="flex items-center justify-center space-x-1.5">
                           <span
-                            className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            className={`inline-block px-1.5 py-0.5 rounded text-xs font-semibold ${
                               stationZone.code === 'PMB'
-                                ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/50'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700'
-                            }`}
+                                ? 'bg-surface-selected text-accent-primary border border-border-default'
+                                : 'bg-surface-secondary text-text-primary border border-border-default'
+                            } `}
                             title={stationZone.description}
                           >
                             {stationZone.code}
                           </span>
                           <span
-                            className={`inline-block px-1.5 py-0.5 rounded text-[11px] ${
+                            className={`inline-block px-1.5 py-0.5 rounded text-xs ${
                               isMid
-                                ? "bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 font-bold border border-cyan-500/30"
+                                ? "bg-surface-selected text-accent-primary font-semibold border border-border-default"
                                 : isAp || isFp
-                                ? "bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold"
-                                : "text-slate-700 dark:text-slate-300"
-                            }`}
+                                ? "bg-status-warning-subtle text-status-warning font-semibold"
+                                : "text-text-primary"
+                            } `}
                           >
                             {r.label}
                           </span>
@@ -3280,53 +3282,53 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       </td>
 
                       {/* (2) 0.5 B (m) - Editable */}
-                      <td className="py-1 px-2 border-r border-slate-200 dark:border-slate-800/60">
-                        <input
+                      <td className="py-1 px-2 border-r border-border-default">
+                        <input aria-label="station"
                           type="number"
                           step="0.001"
                           min="0"
                           max={BWL}
                           value={halfBreadths[r.station] ?? 0}
                           onChange={(e) => handleCellChange(r.station, e.target.value)}
-                          className="w-full bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/80 rounded-lg py-1 px-2 text-cyan-700 dark:text-cyan-300 font-bold font-mono text-xs focus:border-cyan-500 focus:outline-none text-right transition-all"
+                          className="w-full bg-surface-primary border border-border-default rounded-md py-1 px-2 text-accent-primary font-semibold font-mono text-sm focus:border-border-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring text-right transition-colors min-h-10"
                         />
                       </td>
 
                       {/* (3) MS */}
-                      <td className="py-2 px-3 text-center text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-center text-text-secondary border-r border-border-default">
                         {r.ms.toFixed(2)}
                       </td>
 
                       {/* (4) 0.5B . MS */}
-                      <td className="py-2 px-3 text-right text-slate-800 dark:text-slate-200 font-medium border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-right text-text-primary font-medium border-r border-border-default">
                         {r.col4.toFixed(3)}
                       </td>
 
                       {/* (5) FM */}
                       <td
-                        className={`py-2 px-3 text-center border-r border-slate-200 dark:border-slate-800/60 ${
-                          r.fm < 0 ? "text-amber-600 dark:text-amber-400/90" : r.fm > 0 ? "text-cyan-600 dark:text-cyan-400/90" : "text-slate-900 dark:text-white font-bold"
-                        }`}
+                        className={`py-2 px-3 text-center border-r border-border-default ${
+                          r.fm < 0 ? "text-status-warning" : r.fm > 0 ? "text-accent-primary" : "text-text-primary font-semibold"
+                        } `}
                       >
                         {r.fm > 0 ? `+${r.fm.toFixed(2)}` : r.fm.toFixed(2)}
                       </td>
 
                       {/* (6) SMA */}
                       <td
-                        className={`py-2 px-3 text-right font-medium border-r border-slate-200 dark:border-slate-800/60 ${
-                          r.col6 < 0 ? "text-amber-600 dark:text-amber-300" : r.col6 > 0 ? "text-cyan-600 dark:text-cyan-300" : "text-slate-400"
-                        }`}
+                        className={`py-2 px-3 text-right font-medium border-r border-border-default ${
+                          r.col6 < 0 ? "text-status-warning" : r.col6 > 0 ? "text-accent-primary" : "text-text-secondary"
+                        } `}
                       >
                         {r.col6.toFixed(3)}
                       </td>
 
                       {/* (7) (0.5B)^3 . MS */}
-                      <td className="py-2 px-3 text-right text-slate-800 dark:text-slate-200 font-medium border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-right text-text-primary font-medium border-r border-border-default">
                         {r.col7.toFixed(3)}
                       </td>
 
                       {/* (8) 0.5B . MS . FM^2 */}
-                      <td className="py-2 px-3 text-right text-slate-800 dark:text-slate-200 font-medium">
+                      <td className="py-2 px-3 text-right text-text-primary font-medium">
                         {r.col8.toFixed(3)}
                       </td>
                     </tr>
@@ -3334,44 +3336,44 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     {/* SUB-TOTAL ROW FOR THIS AREA ZONE */}
                     {isLastInZone && zoneData && (
                       <tr 
-                        className="bg-slate-100 dark:bg-slate-900/90 border-y border-slate-300 dark:border-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200"
+                        className="bg-surface-secondary border-y border-border-default font-semibold text-sm text-text-primary"
                       >
-                        <td colSpan={3} className="py-2.5 px-3 text-right uppercase tracking-wider border-r border-slate-200 dark:border-slate-800/80">
+                        <td colSpan={3} className="py-2.5 px-3 text-right tracking-normal border-r border-border-default">
                           <div className="flex items-center justify-end space-x-2">
                             <span 
-                              className={`px-2 py-0.5 rounded text-[10px] font-black border ${
+                              className={`px-2 py-0.5 rounded text-xs font-semibold border ${
                                 stationZone.code === 'PMB'
-                                  ? 'bg-cyan-950 text-cyan-300 border-cyan-600/50'
-                                  : 'bg-slate-800 text-slate-300 border-slate-700'
-                              }`}
+                                  ? 'bg-accent-primary text-accent-primary border-border-default'
+                                  : 'bg-surface-secondary text-text-primary border-border-default'
+                              } `}
                             >
                               {stationZone.code}
                             </span>
-                            <span className="font-bold text-[11px]">
+                            <span className="font-semibold text-xs">
                               {`Subtotal Σ Area ${stationZone.name} (${zoneData.stations.length} St):`}
                             </span>
                           </div>
                         </td>
                         {/* Subtotal Sigma 1 */}
-                        <td className="py-2 px-3 text-right text-cyan-700 dark:text-cyan-300 border-r border-slate-200 dark:border-slate-800/80">
-                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;1_{stationZone.code} =</div>
-                          <div className="text-xs font-bold font-mono">{zoneData.sum1.toFixed(3)}</div>
+                        <td className="py-2 px-3 text-right text-accent-primary border-r border-border-default">
+                          <div className="text-xs opacity-75 font-mono">&Sigma;1_{stationZone.code} =</div>
+                          <div className="text-sm font-semibold font-mono">{zoneData.sum1.toFixed(3)}</div>
                         </td>
-                        <td className="py-2 px-3 text-center text-slate-400 dark:text-slate-500 border-r border-slate-200 dark:border-slate-800/80">-</td>
+                        <td className="py-2 px-3 text-center text-text-secondary border-r border-border-default">-</td>
                         {/* Subtotal Sigma 2 */}
-                        <td className="py-2 px-3 text-right text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-800/80">
-                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;2_{stationZone.code} =</div>
-                          <div className="text-xs font-bold font-mono">{zoneData.sum2.toFixed(3)}</div>
+                        <td className="py-2 px-3 text-right text-text-primary border-r border-border-default">
+                          <div className="text-xs opacity-75 font-mono">&Sigma;2_{stationZone.code} =</div>
+                          <div className="text-sm font-semibold font-mono">{zoneData.sum2.toFixed(3)}</div>
                         </td>
                         {/* Subtotal Sigma 3 */}
-                        <td className="py-2 px-3 text-right text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-800/80">
-                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;3_{stationZone.code} =</div>
-                          <div className="text-xs font-bold font-mono">{zoneData.sum3.toFixed(3)}</div>
+                        <td className="py-2 px-3 text-right text-text-primary border-r border-border-default">
+                          <div className="text-xs opacity-75 font-mono">&Sigma;3_{stationZone.code} =</div>
+                          <div className="text-sm font-semibold font-mono">{zoneData.sum3.toFixed(3)}</div>
                         </td>
                         {/* Subtotal Sigma 4 */}
-                        <td className="py-2 px-3 text-right text-slate-800 dark:text-slate-200">
-                          <div className="text-[9px] opacity-75 font-mono uppercase">&Sigma;4_{stationZone.code} =</div>
-                          <div className="text-xs font-bold font-mono">{zoneData.sum4.toFixed(3)}</div>
+                        <td className="py-2 px-3 text-right text-text-primary">
+                          <div className="text-xs opacity-75 font-mono">&Sigma;4_{stationZone.code} =</div>
+                          <div className="text-sm font-semibold font-mono">{zoneData.sum4.toFixed(3)}</div>
                         </td>
                       </tr>
                     )}
@@ -3380,31 +3382,31 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               })}
 
               {/* GRAND TOTAL SIGMA SUMMARY ROW */}
-              <tr className="bg-slate-200/90 dark:bg-slate-950 border-t-2 border-cyan-500 font-bold text-xs text-slate-900 dark:text-white shadow-2xl">
-                <td colSpan={3} className="py-3.5 px-4 text-right uppercase tracking-wider text-cyan-700 dark:text-cyan-300 border-r border-slate-200 dark:border-slate-800 text-xs">
-                  <div className="font-extrabold text-slate-900 dark:text-white">{language === "en" ? "TOTAL OVERALL SIGMA (Σ1 to Σ4):" : "TOTAL SIGMA KESELURUHAN (Σ1 s.d Σ4):"}</div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal mt-0.5">{language === "en" ? "Sum of Complete 36 Stations" : "Penjumlahan 36 Stasiun Lengkap"}</div>
+              <tr className="bg-surface-secondary border-t-2 border-border-default font-semibold text-sm text-text-primary">
+                <td colSpan={3} className="py-3.5 px-4 text-right tracking-normal text-accent-primary border-r border-border-default text-sm">
+                  <div className="font-semibold text-text-primary">{language === "en" ? "TOTAL OVERALL SIGMA (Σ1 to Σ4):" : "TOTAL SIGMA KESELURUHAN (Σ1 s.d Σ4):"}</div>
+                  <div className="text-xs text-text-secondary font-normal mt-0.5">{language === "en" ? "Sum of Complete 36 Stations" : "Penjumlahan 36 Stasiun Lengkap"}</div>
                 </td>
                 {/* Sigma 1 */}
-                <td className="py-3 px-3 text-right text-cyan-600 dark:text-cyan-400 border-r border-slate-200 dark:border-slate-800 text-sm">
-                  <div className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-mono">&Sigma;1 =</div>
-                  <div className="text-base font-black font-mono">{sum1.toFixed(3)}</div>
+                <td className="py-3 px-3 text-right text-accent-primary border-r border-border-default text-sm">
+                  <div className="text-xs text-text-secondary font-mono">&Sigma;1 =</div>
+                  <div className="text-base font-semibold font-mono">{sum1.toFixed(3)}</div>
                 </td>
-                <td className="py-3 px-3 text-center text-slate-400 dark:text-slate-500 border-r border-slate-200 dark:border-slate-800">-</td>
+                <td className="py-3 px-3 text-center text-text-secondary border-r border-border-default">-</td>
                 {/* Sigma 2 */}
-                <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 text-sm">
-                  <div className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-mono">&Sigma;2 =</div>
-                  <div className="text-base font-black font-mono">{sum2.toFixed(3)}</div>
+                <td className="py-3 px-3 text-right text-text-primary border-r border-border-default text-sm">
+                  <div className="text-xs text-text-secondary font-mono">&Sigma;2 =</div>
+                  <div className="text-base font-semibold font-mono">{sum2.toFixed(3)}</div>
                 </td>
                 {/* Sigma 3 */}
-                <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-800 text-sm">
-                  <div className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-mono">&Sigma;3 =</div>
-                  <div className="text-base font-black font-mono">{sum3.toFixed(3)}</div>
+                <td className="py-3 px-3 text-right text-text-primary border-r border-border-default text-sm">
+                  <div className="text-xs text-text-secondary font-mono">&Sigma;3 =</div>
+                  <div className="text-base font-semibold font-mono">{sum3.toFixed(3)}</div>
                 </td>
                 {/* Sigma 4 */}
-                <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 text-sm">
-                  <div className="text-[9px] text-slate-500 dark:text-slate-400 uppercase font-mono">&Sigma;4 =</div>
-                  <div className="text-base font-black font-mono">{sum4.toFixed(3)}</div>
+                <td className="py-3 px-3 text-right text-text-primary text-sm">
+                  <div className="text-xs text-text-secondary font-mono">&Sigma;4 =</div>
+                  <div className="text-base font-semibold font-mono">{sum4.toFixed(3)}</div>
                 </td>
               </tr>
             </tbody>
@@ -3412,30 +3414,30 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
       </>
     ) : (
-      <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center space-x-3 text-slate-600 dark:text-slate-400">
-          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-500 border border-cyan-500/20">
+      <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+        <div className="flex items-center space-x-3 text-text-secondary">
+          <div className="text-text-secondary shrink-0">
             <TableIcon size={18} />
           </div>
           <div>
-            <span className="font-bold text-slate-800 dark:text-slate-200">
+            <span className="font-semibold text-text-primary">
               {language === "en" ? "Simpson 36-Station Integration Table is Hidden" : "Tabel Integrasi Simpson (36 Gading) Disembunyikan"}
             </span>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 flex flex-wrap items-center gap-2">
-              <span>AWL: <strong className="text-cyan-600 dark:text-cyan-400">{AWL.toFixed(2)} m²</strong></span>
+            <div className="text-xs text-text-secondary font-mono mt-0.5 flex flex-wrap items-center gap-2">
+              <span>AWL: <strong className="text-accent-primary">{AWL.toFixed(2)} m²</strong></span>
               <span>•</span>
-              <span>LCF: <strong className="text-amber-600 dark:text-amber-400">{LCF.toFixed(2)} m</strong></span>
+              <span>LCF: <strong className="text-status-warning">{LCF.toFixed(2)} m</strong></span>
               <span>•</span>
-              <span>Cw: <strong className="text-slate-700 dark:text-slate-300">{calculatedCw.toFixed(3)}</strong></span>
+              <span>Cw: <strong className="text-text-primary">{calculatedCw.toFixed(3)}</strong></span>
               <span>•</span>
-              <span>&Sigma;1: <strong className="text-emerald-600 dark:text-emerald-400">{effectiveSum1.toFixed(3)}</strong></span>
+              <span>&Sigma;1: <strong className="text-status-success">{effectiveSum1.toFixed(3)}</strong></span>
             </div>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setShowSimpsonTable(true)}
-          className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-300 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+          className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-surface-selected hover:bg-surface-selected text-accent-primary text-sm font-semibold border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
         >
           <Eye size={14} />
           <span>{language === "en" ? "Show Table (36 St)" : "Buka Tabel (36 Gading)"}</span>
@@ -3445,26 +3447,26 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   </div>
 
       {/* SUMMARY RESULT CARDS & VERIFICATION FORMULAS */}
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-3">
           <div className="flex items-center space-x-2">
-            <Sparkles size={18} className="text-cyan-500 dark:text-cyan-400" />
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            <Sparkles size={18} className="text-accent-primary" />
+            <h3 className="text-sm font-semibold text-text-primary">
               {language === "en" ? "Hydrostatic Integration Results & Waterline Verification" : "Hasil Integrasi Hidrostatik & Koreksi Garis Air (Waterline Verification)"}
             </h3>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="text-xs font-mono hidden md:block">
-              <span className="text-slate-500 dark:text-slate-400">{language === "en" ? "Max Deviation Target: " : "Target Deviasi Maksimal: "}</span>
-              <strong className="text-emerald-600 dark:text-emerald-400">&le; &plusmn;0.05%</strong>
+            <div className="text-sm font-mono hidden md:block">
+              <span className="text-text-secondary">{language === "en" ? "Max Deviation Target: " : "Target Deviasi Maksimal: "}</span>
+              <strong className="text-status-success">&le; &plusmn;0.05%</strong>
             </div>
             <button
               type="button"
               onClick={() => setShowHydrostaticResults(!showHydrostaticResults)}
-              className="py-1.5 px-3 bg-cyan-600/15 hover:bg-cyan-600/25 text-cyan-700 dark:text-cyan-300 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer border border-cyan-500/30 shadow-sm"
+              className="py-1.5 px-3 bg-surface-selected hover:bg-surface-selected text-accent-primary rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer border border-border-default min-h-9"
               title={showHydrostaticResults ? "Sembunyikan hasil perhitungan & rumus" : "Tampilkan hasil perhitungan & rumus"}
-            >
-              {showHydrostaticResults ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+             aria-pressed={showHydrostaticResults} aria-label={showHydrostaticResults ? "Sembunyikan hasil perhitungan & rumus" : "Tampilkan hasil perhitungan & rumus"}>
+              {showHydrostaticResults ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
               <span>{showHydrostaticResults ? (language === "en" ? "Hide Results & Formulas" : "Sembunyikan Hasil & Rumus") : (language === "en" ? "Show Results & Formulas" : "Tampilkan Hasil & Rumus")}</span>
             </button>
           </div>
@@ -3475,29 +3477,29 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Card 1: AWL */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                <div className="flex items-center justify-between text-sm text-text-secondary">
                   <span>{language === "en" ? "Waterplane Area (AWL)" : "Luas Garis Air (AWL)"}</span>
-                  <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">AWL = (2/3) &middot; l &middot; &Sigma;1_efektif</span>
+                  <span className="text-xs font-mono text-accent-primary">AWL = (2/3) &middot; l &middot; &Sigma;1_efektif</span>
                 </div>
-                <div className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
-                  {AWL.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup2;</span>
+                <div className="text-2xl font-semibold font-mono text-accent-primary">
+                  {AWL.toFixed(3)} <span className="text-sm font-normal text-text-secondary">m&sup2;</span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-text-secondary font-mono">
                   = (2/3) &times; {l.toFixed(3)} &times; {effectiveSum1.toFixed(3)}
                 </div>
               </div>
 
               {/* Card 2: LCF */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                <div className="flex items-center justify-between text-sm text-text-secondary">
                   <span>{language === "en" ? "Longitudinal Center of Flotation (LCF)" : "Titik Apung Memanjang (LCF)"}</span>
-                  <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">LCF = l &middot; &Sigma;2 / &Sigma;1</span>
+                  <span className="text-xs font-mono text-status-warning">LCF = l &middot; &Sigma;2 / &Sigma;1</span>
                 </div>
-                <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400">
-                  {LCF.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m</span>
+                <div className="text-2xl font-semibold font-mono text-status-warning">
+                  {LCF.toFixed(3)} <span className="text-sm font-normal text-text-secondary">m</span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-text-secondary font-mono">
                   {LCF < 0
                     ? (language === "en" ? `${Math.abs(LCF).toFixed(3)} m aft of Midship (10)` : `${Math.abs(LCF).toFixed(3)} m di belakang Midship (10)`)
                     : (language === "en" ? `${LCF.toFixed(3)} m forward of Midship (10)` : `${LCF.toFixed(3)} m di depan Midship (10)`)}
@@ -3505,70 +3507,70 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               </div>
 
               {/* Card 3: IT (Transverse Inertia) */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                <div className="flex items-center justify-between text-sm text-text-secondary">
                   <span>{language === "en" ? "Transverse Inertia (IT)" : "Inersia Melintang (IT)"}</span>
-                  <span className="text-[10px] font-mono text-slate-500">IT = (2/9)&middot;l&middot;&Sigma;3_efektif</span>
+                  <span className="text-xs font-mono text-text-secondary">IT = (2/9)&middot;l&middot;&Sigma;3_efektif</span>
                 </div>
-                <div className="text-2xl font-black font-mono text-slate-800 dark:text-slate-100">
-                  {IT.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup4;</span>
+                <div className="text-2xl font-semibold font-mono text-text-primary">
+                  {IT.toFixed(3)} <span className="text-sm font-normal text-text-secondary">m&sup4;</span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-text-secondary font-mono">
                   {language === "en" ? "Moment of inertia about longitudinal axis" : "Momen inersia terhadap sumbu longitudinal"}
                 </div>
               </div>
 
               {/* Card 4: Iy & IL */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                <div className="flex items-center justify-between text-sm text-text-secondary">
                   <span>{language === "en" ? "Longitudinal Inertia (IL)" : "Inersia Memanjang (IL)"}</span>
-                  <span className="text-[10px] font-mono text-slate-500">IL = Iy - (AWL &middot; LCF&sup2;)</span>
+                  <span className="text-xs font-mono text-text-secondary">IL = Iy - (AWL &middot; LCF&sup2;)</span>
                 </div>
-                <div className="text-2xl font-black font-mono text-slate-800 dark:text-slate-100">
-                  {IL.toFixed(3)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">m&sup4;</span>
+                <div className="text-2xl font-semibold font-mono text-text-primary">
+                  {IL.toFixed(3)} <span className="text-sm font-normal text-text-secondary">m&sup4;</span>
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-text-secondary font-mono">
                   {language === "en" ? `Iy = ${Iy.toFixed(2)} m⁴ | LCF Correction = ${(AWL * Math.pow(LCF, 2)).toFixed(2)} m⁴` : `Iy = ${Iy.toFixed(2)} m⁴ | Koreksi LCF = ${(AWL * Math.pow(LCF, 2)).toFixed(2)} m⁴`}
                 </div>
               </div>
 
               {/* Card 5: CW (Waterplane Coefficient) */}
-              <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                <div className="flex items-center justify-between text-sm text-text-secondary">
                   <span>{language === "en" ? "Waterplane Coefficient (Cw)" : "Koefisien Garis Air (Cw)"}</span>
-                  <span className="text-[10px] font-mono text-cyan-600 dark:text-cyan-400">CW = AWL / (LWL &middot; BWL)</span>
+                  <span className="text-xs font-mono text-accent-primary">CW = AWL / (LWL &middot; BWL)</span>
                 </div>
-                <div className="text-2xl font-black font-mono text-cyan-600 dark:text-cyan-400">
+                <div className="text-2xl font-semibold font-mono text-accent-primary">
                   {calculatedCw.toFixed(4)}
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-text-secondary font-mono">
                   {language === "en" ? "Design Target = " : "Target Rancangan = "}{targetCw.toFixed(2)}
                 </div>
               </div>
 
               {/* Card 6: Koreksi Garis Air dengan Batas Toleransi Minimal <= +/- 0.05% */}
               <div
-                className={`p-4 rounded-xl border space-y-1.5 shadow-sm backdrop-blur-md transition-all ${
+                className={`p-4 rounded-lg border space-y-1.5 transition-colors ${
                   isCorrectionValid
-                    ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
-                    : "bg-rose-50 dark:bg-rose-950/30 border-rose-500/40 text-rose-800 dark:text-rose-300"
-                }`}
+                    ? "bg-status-success-subtle border-status-success-border text-status-success"
+                    : "bg-status-danger-subtle border-status-danger-border text-status-danger"
+                } `}
               >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold flex items-center space-x-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold flex items-center space-x-1.5">
                     {isCorrectionValid ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
                     <span>{language === "en" ? "Water Line Correction" : "Koreksi Water Line"}</span>
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default">
                     {language === "en" ? "Requirement: ≤ ±0.05%" : "Syarat: ≤ ±0.05%"}
                   </span>
                 </div>
-                <div className="text-2xl font-black font-mono">
+                <div className="text-2xl font-semibold font-mono">
                   {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
                 </div>
-                <div className="text-[11px] opacity-90 font-mono flex items-center justify-between">
+                <div className="text-xs opacity-90 font-mono flex items-center justify-between">
                   <span>AWL Target = {activeTargetAWL.toFixed(2)} m&sup2;</span>
-                  <span className={`font-bold ${isCorrectionValid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                  <span className={`font-semibold ${isCorrectionValid ? "text-status-success" : "text-status-danger"} `}>
                     {isCorrectionValid ? "MEETS REQUIREMENT" : "DEVIATION EXCEEDS 0.05%"}
                   </span>
                 </div>
@@ -3576,62 +3578,62 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </div>
 
             {/* DETAILED PLAIN-TEXT MATHEMATICAL EXPLANATION BOX */}
-            {false && <div className="bg-slate-50 dark:bg-slate-950/90 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-2 text-slate-700 dark:text-slate-300 font-mono leading-relaxed">
-              <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800/80">
-                <div className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center space-x-2">
-                  <HelpCircle size={14} className="text-cyan-500 dark:text-cyan-400" />
+            {false && <div className="bg-surface-canvas p-4 rounded-lg border border-border-default text-sm space-y-2 text-text-primary font-mono leading-relaxed">
+              <div className="flex items-center justify-between pb-1 border-b border-border-default">
+                <div className="text-xs font-semibold text-text-primary tracking-normal flex items-center space-x-2">
+                  <HelpCircle size={14} className="text-accent-primary" />
                   <span>{language === "en" ? "Waterplane Hydrostatic Formulas (Plain-Text Reference):" : "Rumus Hidrostatik Garis Air (Plain-Text Reference):"}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowFormulasBox(!showFormulasBox)}
-                  className="text-xs text-cyan-600 dark:text-cyan-400 font-semibold hover:underline flex items-center space-x-1 cursor-pointer"
-                >
+                  className="text-sm text-accent-primary font-semibold hover:underline flex items-center space-x-1 cursor-pointer min-h-9"
+                 aria-pressed={showFormulasBox}>
                   {showFormulasBox ? <EyeOff size={13} /> : <Eye size={13} />}
                   <span>{showFormulasBox ? (language === "en" ? "Hide Formulas" : "Sembunyikan Rumus") : (language === "en" ? "Show Formulas" : "Tampilkan Rumus")}</span>
                 </button>
               </div>
               {showFormulasBox && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-[11px]">
-                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "1. Waterplane Area (AWL):" : "1. Luas Garis Air (AWL):"}</p>
-                    <p className="text-slate-600 dark:text-slate-400">AWL = (2 / 3) * l * Total_Sigma_1_efektif</p>
-                    <p className="text-slate-600 dark:text-slate-400">AWL = (2 / 3) * {l.toFixed(4)} * {effectiveSum1.toFixed(3)} = <strong className="text-emerald-600 dark:text-emerald-400">{AWL.toFixed(3)} m&sup2;</strong></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs">
+                  <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                    <p className="text-accent-primary font-semibold">{language === "en" ? "1. Waterplane Area (AWL):" : "1. Luas Garis Air (AWL):"}</p>
+                    <p className="text-text-secondary">AWL = (2 / 3) * l * Total_Sigma_1_efektif</p>
+                    <p className="text-text-secondary">AWL = (2 / 3) * {l.toFixed(4)} * {effectiveSum1.toFixed(3)} = <strong className="text-status-success">{AWL.toFixed(3)} m&sup2;</strong></p>
                   </div>
-                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "2. Longitudinal Center of Flotation (LCF):" : "2. Titik Apung Memanjang (LCF):"}</p>
-                    <p className="text-slate-600 dark:text-slate-400">LCF = (l * Total_Sigma_2_efektif) / Total_Sigma_1_efektif</p>
-                    <p className="text-slate-600 dark:text-slate-400">LCF = ({l.toFixed(4)} * {effectiveSum2.toFixed(3)}) / {effectiveSum1.toFixed(3)} = <strong className="text-cyan-700 dark:text-cyan-300">{LCF.toFixed(3)} m</strong></p>
+                  <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                    <p className="text-accent-primary font-semibold">{language === "en" ? "2. Longitudinal Center of Flotation (LCF):" : "2. Titik Apung Memanjang (LCF):"}</p>
+                    <p className="text-text-secondary">LCF = (l * Total_Sigma_2_efektif) / Total_Sigma_1_efektif</p>
+                    <p className="text-text-secondary">LCF = ({l.toFixed(4)} * {effectiveSum2.toFixed(3)}) / {effectiveSum1.toFixed(3)} = <strong className="text-accent-primary">{LCF.toFixed(3)} m</strong></p>
                   </div>
-                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "3. Transverse Moment of Inertia (IT):" : "3. Momen Inersia Melintang (IT):"}</p>
-                    <p className="text-slate-600 dark:text-slate-400">IT = (2 / 9) * l * Total_Sigma_3_efektif</p>
-                    <p className="text-slate-600 dark:text-slate-400">IT = (2 / 9) * {l.toFixed(4)} * {effectiveSum3.toFixed(3)} = <strong className="text-purple-700 dark:text-purple-300">{IT.toFixed(3)} m&sup4;</strong></p>
+                  <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                    <p className="text-accent-primary font-semibold">{language === "en" ? "3. Transverse Moment of Inertia (IT):" : "3. Momen Inersia Melintang (IT):"}</p>
+                    <p className="text-text-secondary">IT = (2 / 9) * l * Total_Sigma_3_efektif</p>
+                    <p className="text-text-secondary">IT = (2 / 9) * {l.toFixed(4)} * {effectiveSum3.toFixed(3)} = <strong className="text-accent-primary">{IT.toFixed(3)} m&sup4;</strong></p>
                   </div>
-                  <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-sm">
-                    <p className="text-cyan-700 dark:text-cyan-300 font-bold">{language === "en" ? "4. Water Line Correction Percentage (Required ≤ ±0.05%):" : "4. Persentase Koreksi Garis Air (Wajib ≤ ±0.05%):"}</p>
-                    <p className="text-slate-600 dark:text-slate-400">{language === "en" ? "Correction = ((AWL - AWL_design) / AWL) * 100%" : "Koreksi = ((AWL - AWL_rancangan) / AWL) * 100%"}</p>
-                    <p className="text-slate-600 dark:text-slate-400">{language === "en" ? "Correction" : "Koreksi"} = (({AWL.toFixed(2)} - {activeTargetAWL.toFixed(2)}) / {AWL.toFixed(2)}) * 100% = <strong className={isCorrectionValid ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}>{correctionPercent.toFixed(3)}%</strong></p>
+                  <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                    <p className="text-accent-primary font-semibold">{language === "en" ? "4. Water Line Correction Percentage (Required ≤ ±0.05%):" : "4. Persentase Koreksi Garis Air (Wajib ≤ ±0.05%):"}</p>
+                    <p className="text-text-secondary">{language === "en" ? "Correction = ((AWL - AWL_design) / AWL) * 100%" : "Koreksi = ((AWL - AWL_rancangan) / AWL) * 100%"}</p>
+                    <p className="text-text-secondary">{language === "en" ? "Correction" : "Koreksi"} = (({AWL.toFixed(2)} - {activeTargetAWL.toFixed(2)}) / {AWL.toFixed(2)}) * 100% = <strong className={isCorrectionValid ? "text-status-success" : "text-status-danger"}>{correctionPercent.toFixed(3)}%</strong></p>
                   </div>
                 </div>
               )}
             </div>}
           </>
         ) : (
-          <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex flex-wrap items-center gap-3 text-slate-500 font-mono">
-              <span>AWL: <strong className="text-cyan-600 dark:text-cyan-400">{AWL.toFixed(3)} m²</strong></span>
+          <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-3 text-text-secondary font-mono">
+              <span>AWL: <strong className="text-accent-primary">{AWL.toFixed(3)} m²</strong></span>
               <span>•</span>
-              <span>LCF: <strong className="text-amber-600 dark:text-amber-400">{LCF.toFixed(3)} m</strong></span>
+              <span>LCF: <strong className="text-status-warning">{LCF.toFixed(3)} m</strong></span>
               <span>•</span>
-              <span>Cw: <strong className="text-cyan-600 dark:text-cyan-400">{calculatedCw.toFixed(4)}</strong></span>
+              <span>Cw: <strong className="text-accent-primary">{calculatedCw.toFixed(4)}</strong></span>
               <span>•</span>
-              <span>Status: <strong className={isCorrectionValid ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-rose-600 dark:text-rose-400 font-bold"}>{isCorrectionValid ? "MEMENUHI SYARAT (≤ ±0.05%)" : `DEVIASI (${correctionPercent.toFixed(3)}%)`}</strong></span>
+              <span>Status: <strong className={isCorrectionValid ? "text-status-success font-semibold" : "text-status-danger font-semibold"}>{isCorrectionValid ? "MEMENUHI SYARAT (≤ ±0.05%)" : `DEVIASI (${correctionPercent.toFixed(3)}%)`}</strong></span>
             </div>
             <button
               type="button"
               onClick={() => setShowHydrostaticResults(true)}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-600 dark:text-cyan-400 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md bg-surface-selected hover:bg-surface-selected text-accent-primary text-sm font-semibold border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
             >
               <Eye size={13} />
               <span>{language === "en" ? "Show Results & Formulas" : "Buka Hasil & Rumus"}</span>
@@ -3641,17 +3643,17 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       </div>
 
       {/* MASTER HYDROSTATIC SUMMARY TABLE (ALL WATERLINES WL 0 TO WL 6) */}
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-3">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-cyan-600/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+            <div className="text-text-secondary shrink-0">
               <Layers size={18} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-text-primary tracking-normal">
                 {language === "en" ? "Master Waterlines Hydrostatic Summary (WL 0 to WL 6)" : "Tabel Rangkuman Hidrostatis Seluruh Garis Air (WL 0 s.d. WL 6)"}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-text-secondary">
                 {language === "en"
                   ? "Compilation of waterplane area (AWL), LCF position, transverse/longitudinal inertia (IT & IL), and Cw from keel to design draft."
                   : "Kompilasi luas garis air (AWL), posisi LCF, momen inersia (IT & IL), dan koefisien Cw dari lunas kapal hingga sarat penuh."}
@@ -3663,17 +3665,17 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             <button
               type="button"
               onClick={() => setShowMasterSummaryTable(!showMasterSummaryTable)}
-              className="py-2 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+              className="py-2 px-3 bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer min-h-9"
               title={showMasterSummaryTable ? (language === "en" ? "Hide summary table" : "Sembunyikan tabel rangkuman") : (language === "en" ? "Show summary table" : "Tampilkan tabel rangkuman")}
-            >
-              {showMasterSummaryTable ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+             aria-pressed={showMasterSummaryTable} aria-label={showMasterSummaryTable ? (language === "en" ? "Hide summary table" : "Sembunyikan tabel rangkuman") : (language === "en" ? "Show summary table" : "Tampilkan tabel rangkuman")}>
+              {showMasterSummaryTable ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
               <span>{showMasterSummaryTable ? (language === "en" ? "Hide Table" : "Sembunyikan") : (language === "en" ? "Show Table" : "Tampilkan")}</span>
             </button>
             <button
               onClick={handleExportAllCSV}
-              className="py-2 px-3.5 bg-cyan-50 dark:bg-cyan-600/20 hover:bg-cyan-100 dark:hover:bg-cyan-600/30 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-sm"
+              className="py-2 px-3.5 bg-surface-selected hover:bg-surface-selected text-accent-primary border border-border-default rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer min-h-9"
               title="Unduh kompilasi seluruh data Waterline 0 s.d 6 dalam format CSV"
-            >
+             aria-label="Unduh kompilasi seluruh data Waterline 0 s.d 6 dalam format CSV">
               <Download size={14} />
               <span>Export Semua WL (CSV)</span>
             </button>
@@ -3681,9 +3683,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
 
         {showMasterSummaryTable ? (
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-            <table className="w-full text-xs font-mono text-left">
-              <thead className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
+          <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default">
+            <table className="w-full text-sm font-mono text-left">
+              <thead className="bg-surface-secondary text-text-primary text-xs tracking-normal border-b border-border-default">
                 <tr>
                   <th className="py-2.5 px-3">Waterline</th>
                   <th className="py-2.5 px-3">Sarat (Z)</th>
@@ -3698,7 +3700,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   <th className="py-2.5 px-3 text-center">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-border-default">
                 {masterSummary.map((s) => {
                   const isCurrentActive = s.id === activeWlId;
                   return (
@@ -3706,38 +3708,38 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       key={`summary-${s.id}`}
                       className={`transition-colors ${
                         isCurrentActive
-                          ? "bg-cyan-500/10 dark:bg-cyan-500/15 font-bold"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                      }`}
+                          ? "bg-surface-selected font-semibold"
+                          : "hover:bg-surface-canvas"
+                      } `}
                     >
                       <td className="py-2.5 px-3 flex items-center space-x-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                        <span className={isCurrentActive ? "text-cyan-600 dark:text-cyan-300 font-extrabold" : "text-slate-800 dark:text-slate-200"}>
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: engineeringColor(s.color) }} />
+                        <span className={isCurrentActive ? "text-accent-primary font-semibold" : "text-text-primary"}>
                           {s.name}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">{s.draftZ.toFixed(2)} m</td>
-                      <td className="py-2.5 px-3 text-slate-500 dark:text-slate-400">{s.targetAwl.toFixed(2)} m²</td>
-                      <td className="py-2.5 px-3 text-cyan-600 dark:text-cyan-400 font-bold">{s.awl.toFixed(2)} m²</td>
-                      <td className="py-2.5 px-3 text-amber-600 dark:text-amber-400">{s.lcf.toFixed(3)} m</td>
-                      <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300">{s.cw.toFixed(4)}</td>
-                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.it.toFixed(2)}</td>
-                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{s.il.toFixed(2)}</td>
-                      <td className={`py-2.5 px-3 font-bold ${s.isValid ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                      <td className="py-2.5 px-3 text-text-secondary">{s.draftZ.toFixed(2)} m</td>
+                      <td className="py-2.5 px-3 text-text-secondary">{s.targetAwl.toFixed(2)} m²</td>
+                      <td className="py-2.5 px-3 text-accent-primary font-semibold">{s.awl.toFixed(2)} m²</td>
+                      <td className="py-2.5 px-3 text-status-warning">{s.lcf.toFixed(3)} m</td>
+                      <td className="py-2.5 px-3 text-text-primary">{s.cw.toFixed(4)}</td>
+                      <td className="py-2.5 px-3 text-text-secondary">{s.it.toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-text-secondary">{s.il.toFixed(2)}</td>
+                      <td className={`py-2.5 px-3 font-semibold ${s.isValid ? "text-status-success" : "text-status-danger"} `}>
                         {s.correction > 0 ? `+${s.correction.toFixed(3)}%` : `${s.correction.toFixed(3)}%`}
                       </td>
                       <td className="py-2.5 px-3 text-center">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${
                           s.isValid
-                            ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
-                            : "bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border-rose-500/40"
-                        }`}>
+                            ? "bg-status-success-subtle text-status-success border-status-success-border"
+                            : "bg-status-danger-subtle text-status-danger border-status-danger-border"
+                        } `}>
                           {s.isValid ? "MEMENUHI" : "DEVIASI"}
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         {isCurrentActive ? (
-                          <span className="text-[11px] text-cyan-500 font-bold px-2.5 py-1 bg-cyan-500/10 rounded-lg">
+                          <span className="text-xs text-accent-primary font-semibold px-2.5 py-1 bg-surface-selected rounded-lg">
                             Aktif
                           </span>
                         ) : (
@@ -3746,7 +3748,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                               setActiveWlId(s.id);
                               window.scrollTo({ top: 350, behavior: "smooth" });
                             }}
-                            className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-cyan-600 hover:text-white dark:hover:bg-cyan-600 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition-all cursor-pointer shadow-sm border border-slate-300 dark:border-slate-700"
+                            className="px-2.5 py-1 bg-surface-secondary hover:bg-accent-hover hover:text-text-primary text-text-primary rounded-md text-sm font-semibold transition-colors cursor-pointer border border-border-default min-h-9"
                           >
                             Buka / Edit
                           </button>
@@ -3759,14 +3761,14 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </table>
           </div>
         ) : (
-          <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-3.5 flex items-center justify-between text-xs">
-            <span className="text-slate-500 dark:text-slate-400 font-mono">
+          <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-3.5 flex items-center justify-between text-sm">
+            <span className="text-text-secondary font-mono">
               {language === "en" ? `Summary Table Hidden (${masterSummary.length} Waterlines)` : `Tabel Rangkuman Disembunyikan (${masterSummary.length} Garis Air)`}
             </span>
             <button
               type="button"
               onClick={() => setShowMasterSummaryTable(true)}
-              className="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold text-xs flex items-center space-x-1"
+              className="text-accent-primary hover:underline font-semibold text-sm flex items-center space-x-1 min-h-9"
             >
               <Eye size={13} />
               <span>{language === "en" ? "Show Table" : "Buka Tabel"}</span>
@@ -3776,13 +3778,13 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       </div>
 
       {/* NEXT PAGE ACTION BANNER */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-600/15 via-blue-600/10 to-indigo-600/15 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+      <div className="p-5 rounded-lg border border-border-default flex flex-col sm:flex-row items-center justify-between gap-4 bg-accent-primary">
         <div className="space-y-1">
-          <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-            <Sparkles size={17} className="text-cyan-500" />
+          <h4 className="text-sm font-semibold text-text-primary flex items-center space-x-2">
+            <Sparkles size={17} className="text-accent-primary" />
             <span>{language === "en" ? "Next View: Single Waterline & Custom Station Table" : "Halaman Selanjutnya: Garis Air Tunggal & Tabel Kustom Gading"}</span>
           </h4>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-text-secondary">
             {language === "en"
               ? "Switch to a clean single-line view with interactive hover inspection and customizable frame station counts."
               : "Beralih ke tampilan garis tunggal minimalis dengan hover inspeksi (2) 0.5 B (m) dan pemilihan jumlah gading sesuai kebutuhan."}
@@ -3790,7 +3792,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
         </div>
         <button
           onClick={() => handleViewModeChange("cleanCustom")}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs flex items-center space-x-2 shadow-lg shadow-cyan-600/25 transition-all cursor-pointer shrink-0"
+          className="px-5 py-2.5 rounded-md text-on-accent font-semibold text-sm flex items-center space-x-2 transition-colors cursor-pointer shrink-0 bg-accent-primary min-h-9"
         >
           <span>{language === "en" ? "Open Custom Waterline Studio" : "Buka Studio Garis Air Kustom"}</span>
           <ArrowRight size={15} />
@@ -3807,38 +3809,38 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       {viewMode === "cleanCustom" && !visualOnly && (
         <div className="space-y-6">
           {/* WATERLINE LEVEL SELECTOR NAVIGATOR TABS */}
-          <div className="bg-slate-900/95 dark:bg-slate-950/95 border border-slate-800 rounded-2xl p-4 backdrop-blur-xl shadow-xl space-y-3 select-none">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-4 space-y-3 select-none">
             {/* Top Bar: Title & Active Parameters */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-border-default">
               <div className="flex items-center space-x-3 shrink-0">
-                <div className="p-2 rounded-xl bg-cyan-600/15 border border-cyan-500/30 text-cyan-400">
+                <div className="text-text-secondary shrink-0">
                   <Sliders size={17} />
                 </div>
                 <div className="flex items-center space-x-2.5">
-                  <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider whitespace-nowrap">
+                  <h4 className="text-sm font-semibold text-text-primary tracking-normal whitespace-nowrap">
                     {language === "en" ? "Waterline Navigator" : "Pilih Garis Air (Waterline)"}
                   </h4>
-                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 font-bold border border-cyan-500/30 whitespace-nowrap">
+                  <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-surface-selected text-accent-primary font-semibold border border-border-default whitespace-nowrap">
                     Aktif: {activeWlConfig.shortName}
                   </span>
                 </div>
               </div>
 
               {/* Unified Telemetry Parameter Strip */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-slate-950/80 border border-slate-800/90 rounded-xl px-3.5 py-1.5 font-mono text-xs shadow-inner">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-surface-inset border border-border-default rounded-lg px-3.5 py-1.5 font-mono text-sm">
                 <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-slate-400">Sarat</span>
-                  <strong className="text-cyan-400 font-bold">Z = {activeDraftZ.toFixed(2)} m</strong>
+                  <span className="text-text-secondary">Sarat</span>
+                  <strong className="text-accent-primary font-semibold">Z = {activeDraftZ.toFixed(2)} m</strong>
                 </div>
-                <span className="text-slate-700 hidden sm:inline">|</span>
+                <span className="text-text-primary hidden sm:inline">|</span>
                 <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-slate-400">Target AWL:</span>
-                  <strong className="text-cyan-400 font-bold">{activeTargetAWL.toFixed(2)} m&sup2;</strong>
+                  <span className="text-text-secondary">Target AWL:</span>
+                  <strong className="text-accent-primary font-semibold">{activeTargetAWL.toFixed(2)} m&sup2;</strong>
                 </div>
-                <span className="text-slate-700 hidden sm:inline">|</span>
+                <span className="text-text-primary hidden sm:inline">|</span>
                 <div className="flex items-center space-x-1.5 whitespace-nowrap">
-                  <span className="text-slate-400">Target Cw:</span>
-                  <strong className="text-amber-400 font-bold">{activeTargetCw.toFixed(3)}</strong>
+                  <span className="text-text-secondary">Target Cw:</span>
+                  <strong className="text-status-warning font-semibold">{activeTargetCw.toFixed(3)}</strong>
                 </div>
               </div>
             </div>
@@ -3855,25 +3857,25 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   <button
                     key={`page2-wl-${wl.id}`}
                     onClick={() => setActiveWlId(wl.id)}
-                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-xl font-mono transition-all cursor-pointer border relative group ${
+                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-md font-sans transition-colors cursor-pointer border relative group ${
                       isActive
-                        ? "bg-gradient-to-b from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-600/30 border-cyan-400 ring-2 ring-cyan-400/40 scale-[1.02]"
-                        : "bg-slate-800/80 hover:bg-slate-700/90 text-slate-300 hover:text-white border-slate-700/70"
-                    }`}
+                        ? "text-on-accent border-border-default ring-2 ring-focus-ring bg-accent-primary min-h-9"
+                        : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary border-border-default min-h-9"
+                    } `}
                     title={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)} m (${wl.badge})`}
-                  >
+                   aria-label={`${wl.name} - Sarat Z = ${wlDraftZ.toFixed(2)} m (${wl.badge})`}>
                     <div className="flex items-center space-x-1.5 mb-1 whitespace-nowrap">
-                      <span className="w-2 h-2 rounded-full shadow-sm shrink-0" style={{ backgroundColor: wl.color }} />
-                      <span className="text-xs font-bold">{wl.shortName}</span>
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: engineeringColor(wl.color) }} />
+                      <span className="text-sm font-semibold">{wl.shortName}</span>
                     </div>
-                    <div className="flex items-center space-x-1.5 text-[10px] whitespace-nowrap">
+                    <div className="flex items-center space-x-1.5 text-xs whitespace-nowrap">
                       <span className={`px-1.5 py-0.5 rounded font-mono font-medium ${
-                        isActive ? "bg-white/20 text-white" : "bg-slate-900/90 text-slate-400"
-                      }`}>
+                        isActive ? "bg-surface-primary text-text-primary" : "bg-surface-primary text-text-secondary"
+                      } `}>
                         Z={wlDraftZ.toFixed(2)}m
                       </span>
                       <span
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-emerald-400 shadow-sm shadow-emerald-400/50" : "bg-rose-400 shadow-sm shadow-rose-400/50"}`}
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${isWlValid ? "bg-status-success-subtle" : "bg-status-danger-subtle"} `}
                         title={isWlValid ? "Koreksi Memenuhi Syarat (≤ ±0.05%)" : "Deviasi Melebihi Toleransi"}
                       />
                     </div>
@@ -3884,18 +3886,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           </div>
 
           {/* 1. SINGLE WATERLINE MINIMALIST CANVAS */}
-          <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-3">
               <div className="space-y-0.5">
                 <div className="flex items-center space-x-2">
-                  <Compass size={18} className="text-cyan-500" />
-                  <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white">
+                  <Compass size={18} className="text-accent-primary" />
+                  <h3 className="text-sm md:text-base font-semibold text-text-primary">
                     {language === "en"
                       ? `Single Waterline ${activeWlConfig.name} Curve (Interactive Hover)`
                       : `Tampak Garis Air Tunggal ${activeWlConfig.name} (Inspeksi Interaktif)`}
                   </h3>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-text-secondary">
                   {language === "en"
                     ? `Sarat Z = ${activeDraftZ.toFixed(2)}m. Hover cursor anywhere along the waterline to inspect exact (2) 0.5 B (m) value and position.`
                     : `Sarat Z = ${activeDraftZ.toFixed(2)} m. Arahkan kursor pada garis air untuk melihat nilai (2) 0.5 B (m) dan posisi longitudinal secara langsung.`}
@@ -3913,16 +3915,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 };
 
                 return (
-                  <div className="flex items-center space-x-3 bg-cyan-500/10 dark:bg-cyan-950/80 border border-cyan-500/40 px-3.5 py-1.5 rounded-xl font-mono text-xs shadow">
-                    <span className="text-cyan-600 dark:text-cyan-400 font-bold">
-                      (2) 0.5 B = <strong className="text-cyan-700 dark:text-cyan-200 text-sm">{activeCleanDisplay.halfB.toFixed(3)} m</strong>
+                  <div className="flex items-center space-x-3 bg-surface-selected border border-border-default px-3.5 py-1.5 rounded-lg font-mono text-sm">
+                    <span className="text-accent-primary font-semibold">
+                      (2) 0.5 B = <strong className="text-accent-primary text-sm">{activeCleanDisplay.halfB.toFixed(3)} m</strong>
                     </span>
-                    <span className="text-slate-400">|</span>
-                    <span className="text-slate-600 dark:text-slate-300">
+                    <span className="text-text-secondary">|</span>
+                    <span className="text-text-secondary">
                       Pos X: <strong>{activeCleanDisplay.x_m.toFixed(2)} m</strong>
                     </span>
-                    <span className="text-slate-400">|</span>
-                    <span className="text-amber-600 dark:text-amber-400 font-bold">
+                    <span className="text-text-secondary">|</span>
+                    <span className="text-status-warning font-semibold">
                       St. {activeCleanDisplay.stationVal.toFixed(2)}
                     </span>
                   </div>
@@ -3931,18 +3933,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </div>
 
             {/* MINIMALIST SINGLE WATERLINE CANVAS (IDENTICAL NAVAL CURVE TO MODE 1) */}
-            <div className={`w-full bg-slate-900/95 dark:bg-slate-950/95 rounded-2xl relative overflow-hidden border border-slate-200 dark:border-slate-800 p-3 shadow-2xl flex flex-col items-center justify-center select-none transition-all duration-300 ${isFullPlanView ? "h-72 sm:h-88 md:h-[420px]" : "h-56 sm:h-68 md:h-80"}`}>
+            <div className={`w-full bg-surface-primary rounded-lg relative overflow-hidden border border-border-default p-3 flex flex-col items-center justify-center select-none transition-colors duration-300 ${isFullPlanView ? "h-72 sm:h-88 md:h-[420px]" : "h-56 sm:h-68 md:h-80"} `}>
               {/* Floating Control Buttons (Full Hull Mirror Toggle) */}
-              <div className="absolute top-3 right-3 z-20 flex items-center space-x-1.5 bg-slate-800/90 border border-slate-600/80 rounded-lg p-1 shadow-lg backdrop-blur-sm">
+              <div className="absolute top-3 right-3 z-20 flex items-center space-x-1.5 bg-surface-secondary border border-border-default rounded-lg p-1">
                 <button
                   onClick={() => setIsFullPlanView(!isFullPlanView)}
-                  className={`px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
+                  className={`px-2.5 py-1 rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 ${
                     isFullPlanView
-                      ? "bg-cyan-500 text-white shadow-sm"
-                      : "bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-cyan-300"
-                  }`}
+                      ? "bg-accent-primary text-on-accent min-h-9"
+                      : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-accent-primary min-h-9"
+                  } `}
                   title="Show full port and starboard symmetry"
-                >
+                 aria-pressed={isFullPlanView} aria-label="Show full port and starboard symmetry">
                   <Maximize2 size={13} />
                   <span>{isFullPlanView ? (language === "en" ? "Full Hull" : "Simetri Penuh") : (language === "en" ? "Half-Breadth" : "0.5 B")}</span>
                 </button>
@@ -3958,8 +3960,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               >
                 <defs>
                   <linearGradient id="cleanWaterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.22" />
-                    <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.02" />
+                    <stop offset="0%" stopColor={engineeringColor("#06b6d4")} stopOpacity="0.22" />
+                    <stop offset="100%" stopColor={engineeringColor("#06b6d4")} stopOpacity="0.02" />
                   </linearGradient>
                 </defs>
 
@@ -3967,7 +3969,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 <text 
                   x="-6" 
                   y="28" 
-                  fill="#94a3b8" 
+                  fill={engineeringColor("#94a3b8", "text")}
                   fontSize="2.8" 
                   fontFamily="monospace" 
                   transform="rotate(-90 -6 28)" 
@@ -3979,29 +3981,29 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                   const yPos = 48.0 - (tick / 8.0) * 38.0;
                   return (
                     <g key={`clean-ytick-${tick}`}>
-                      <text x="-1.5" y={yPos + 0.9} fill="#94a3b8" fontSize="2.4" fontFamily="monospace" textAnchor="end">
+                      <text x="-1.5" y={yPos + 0.9} fill={engineeringColor("#94a3b8", "text")} fontSize="2.4" fontFamily="monospace" textAnchor="end">
                         {tick}
                       </text>
-                      <line x1="2" y1={yPos} x2="204" y2={yPos} stroke="#1e293b" strokeWidth="0.18" strokeDasharray="1,1" />
+                      <line x1="2" y1={yPos} x2="204" y2={yPos} stroke={engineeringColor("#1e293b")} strokeWidth="0.18" strokeDasharray="1,1" />
                     </g>
                   );
                 })}
 
                 {/* Centerline / Baseline CL & Key Station Indicators */}
-                <line x1="4" y1="48" x2="206" y2="48" stroke="#475569" strokeWidth="0.4" strokeDasharray="1.5,1.5" />
-                <text x="2" y="51.5" fill="#64748b" fontSize="2.2" fontFamily="monospace" textAnchor="end">
+                <line x1="4" y1="48" x2="206" y2="48" stroke={engineeringColor("#475569")} strokeWidth="0.4" strokeDasharray="1.5,1.5" />
+                <text x="2" y="51.5" fill={engineeringColor("#64748b", "text")} fontSize="2.2" fontFamily="monospace" textAnchor="end">
                   CL
                 </text>
-                <text x="10.0" y="51.5" fill="#fde68a" fontSize="2.3" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                <text x="10.0" y="51.5" fill={engineeringColor("#fde68a", "text")} fontSize="2.3" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
                   B
                 </text>
-                <text x="26.0" y="51.5" fill="#fde68a" fontSize="2.3" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                <text x="26.0" y="51.5" fill={engineeringColor("#fde68a", "text")} fontSize="2.3" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
                   0 (AP)
                 </text>
-                <text x="106.0" y="51.5" fill="#06b6d4" fontSize="2.4" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                <text x="106.0" y="51.5" fill={engineeringColor("#06b6d4", "text")} fontSize="2.4" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
                   16 (MID)
                 </text>
-                <text x="186.0" y="51.5" fill="#fde68a" fontSize="2.3" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
+                <text x="186.0" y="51.5" fill={engineeringColor("#fde68a", "text")} fontSize="2.3" fontWeight="bold" fontFamily="monospace" textAnchor="middle">
                   31 (FP)
                 </text>
 
@@ -4015,7 +4017,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 <path
                   d={`M ${exactCurvePts[0].x},${exactCurvePts[0].y} ${exactSmoothPath}`}
                   fill="none"
-                  stroke="#38bdf8"
+                  stroke={engineeringColor("#38bdf8")}
                   strokeWidth="0.55"
                   strokeLinecap="round"
                 />
@@ -4033,12 +4035,12 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         <g>
                           <path
                             d={`M ${exactCurvePts[0].x},48 L ${exactCurvePts[0].x},${48 + (48 - exactCurvePts[0].y)} ${mirroredExactSmoothPath} L ${exactCurvePts[exactCurvePts.length - 1].x},48 Z`}
-                            fill="rgba(6, 182, 212, 0.08)"
+                            fill={engineeringColor("rgba(6, 182, 212, 0.08)")}
                           />
                           <path
                             d={`M ${exactCurvePts[0].x},${48 + (48 - exactCurvePts[0].y)} ${mirroredExactSmoothPath}`}
                             fill="none"
-                            stroke="#38bdf8"
+                            stroke={engineeringColor("#38bdf8")}
                             strokeWidth="0.55"
                             strokeLinecap="round"
                           />
@@ -4063,11 +4065,11 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         y1="48"
                         x2={svgX}
                         y2={svgY}
-                        stroke={isHovered ? "#facc15" : isMidship ? "#06b6d4" : "#38bdf8"}
+                        stroke={engineeringColor(isHovered ? "#facc15" : isMidship ? "#06b6d4" : "#38bdf8")}
                         strokeWidth={isHovered ? "0.6" : isMidship ? "0.5" : "0.36"}
                         strokeLinecap="round"
                         opacity={isHovered ? 1.0 : 0.85}
-                        className="transition-all"
+                        className="transition-colors"
                       >
                         <title>{`${stRow.label}: 0.5 B = ${stRow.halfBreadth.toFixed(3)} m (X = ${stRow.xPos_m.toFixed(2)} m)`}</title>
                       </line>
@@ -4079,7 +4081,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           y1="48"
                           x2={svgX}
                           y2={48 + (48 - svgY)}
-                          stroke={isHovered ? "#facc15" : isMidship ? "#06b6d4" : "#38bdf8"}
+                          stroke={engineeringColor(isHovered ? "#facc15" : isMidship ? "#06b6d4" : "#38bdf8")}
                           strokeWidth={isHovered ? "0.6" : isMidship ? "0.5" : "0.36"}
                           strokeLinecap="round"
                           opacity={isHovered ? 0.95 : 0.75}
@@ -4098,7 +4100,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       y1="6"
                       x2={cleanHover.svgX}
                       y2="48"
-                      stroke="#06b6d4"
+                      stroke={engineeringColor("#06b6d4")}
                       strokeWidth="0.3"
                       strokeDasharray="1.5,1"
                       opacity="0.9"
@@ -4110,7 +4112,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       cy={cleanHover.svgY}
                       r="2.0"
                       fill="none"
-                      stroke="#f59e0b"
+                      stroke={engineeringColor("#f59e0b")}
                       strokeWidth="0.25"
                       strokeDasharray="0.8,0.6"
                     />
@@ -4120,8 +4122,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       cx={cleanHover.svgX}
                       cy={cleanHover.svgY}
                       r="0.85"
-                      fill="#facc15"
-                      stroke="#ffffff"
+                      fill={engineeringColor("#facc15")}
+                      stroke={engineeringColor("#ffffff")}
                       strokeWidth="0.2"
                     />
 
@@ -4141,7 +4143,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                             y1={isAbove ? cleanHover.svgY - 2.0 : cleanHover.svgY + 2.0}
                             x2={cleanHover.svgX}
                             y2={isAbove ? badgeY + boxH : badgeY}
-                            stroke="#38bdf8"
+                            stroke={engineeringColor("#38bdf8")}
                             strokeWidth="0.2"
                             strokeDasharray="0.5,0.5"
                           />
@@ -4153,9 +4155,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                             width={boxW}
                             height={boxH}
                             rx="1.0"
-                            fill="#020617"
+                            fill={engineeringColor("#020617")}
                             fillOpacity="0.92"
-                            stroke="#06b6d4"
+                            stroke={engineeringColor("#06b6d4")}
                             strokeWidth="0.25"
                           />
 
@@ -4163,7 +4165,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                           <text
                             x={badgeX + boxW / 2}
                             y={badgeY + 3.6}
-                            fill="#22d3ee"
+                            fill={engineeringColor("#22d3ee", "text")}
                             fontSize="2.3"
                             fontWeight="bold"
                             fontFamily="monospace"
@@ -4181,16 +4183,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
           </div>
 
           {/* 2. CUSTOM STATIONS CONFIGURATION & CLEAN TABLE */}
-          <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-default pb-4">
               <div className="space-y-1">
                 <div className="flex items-center space-x-2">
-                  <Sliders size={18} className="text-cyan-500" />
-                  <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white">
+                  <Sliders size={18} className="text-accent-primary" />
+                  <h3 className="text-sm md:text-base font-semibold text-text-primary">
                     {language === "en" ? "Custom Station Ordinates Table" : "Tabel Khusus Ordinat (2) 0.5 B (m) Gading Pilihan"}
                   </h3>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-text-secondary">
                   {language === "en"
                     ? "Input your desired number of frame stations. Values in column (2) 0.5 B (m) automatically compute and can be edited."
                     : "Tentukan jumlah pembagian gading yang diinginkan. Nilai kolom (2) 0.5 B (m) akan terhitung otomatis sesuai kurva dan dapat diedit."}
@@ -4199,54 +4201,54 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
               {/* Station Count Selector & Inputs */}
               <div className="flex flex-wrap items-center gap-2.5">
-                <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                <div className="flex items-center space-x-2 bg-surface-secondary px-3 py-1.5 rounded-lg border border-border-default">
+                  <span className="text-sm font-semibold text-text-primary">
                     {language === "en" ? "Stations Count:" : "Jumlah Gading:"}
                   </span>
                   <input
                     type="number"
                     min="2"
                     max="101"
-                    value={customStationCount}
+                    aria-label="Station count" value={customStationCount}
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
                       if (!isNaN(val)) setCustomStationCount(val);
                     }}
-                    className="w-16 bg-white dark:bg-slate-900 border border-cyan-500 rounded-lg px-2 py-1 text-center font-bold text-sm text-cyan-600 dark:text-cyan-400 focus:outline-none"
+                    className="w-16 bg-surface-primary border border-border-default rounded-md px-2 py-1 text-center font-semibold text-sm text-accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring min-h-10"
                   />
                 </div>
 
                 {/* Quick Presets */}
-                <div className="flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-mono">
+                <div className="flex items-center space-x-1.5 bg-surface-secondary p-1 rounded-lg border border-border-default text-sm font-mono">
                   <button
                     onClick={() => setCustomStationCount(11)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      customStationCount === 11 ? "bg-cyan-600 text-white font-bold" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      customStationCount === 11 ? "bg-accent-primary text-on-accent font-semibold min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     11 St
                   </button>
                   <button
                     onClick={() => setCustomStationCount(21)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      customStationCount === 21 ? "bg-cyan-600 text-white font-bold" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      customStationCount === 21 ? "bg-accent-primary text-on-accent font-semibold min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     21 St (Std)
                   </button>
                   <button
                     onClick={() => setCustomStationCount(36)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      customStationCount === 36 ? "bg-cyan-600 text-white font-bold" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      customStationCount === 36 ? "bg-accent-primary text-on-accent font-semibold min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     36 St
                   </button>
                   <button
                     onClick={() => setCustomStationCount(41)}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-                      customStationCount === 41 ? "bg-cyan-600 text-white font-bold" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                    className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                      customStationCount === 41 ? "bg-accent-primary text-on-accent font-semibold min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     41 St
                   </button>
@@ -4255,36 +4257,36 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </div>
 
             {/* Quick Action Bar for Table */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                <span>LBP: <strong className="text-slate-900 dark:text-white">{LBP.toFixed(2)} m</strong></span>
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+              <div className="flex items-center space-x-2 text-text-secondary font-mono text-xs">
+                <span>LBP: <strong className="text-text-primary">{LBP.toFixed(2)} m</strong></span>
                 <span>•</span>
-                <span>BWL: <strong className="text-slate-900 dark:text-white">{BWL.toFixed(2)} m</strong></span>
+                <span>BWL: <strong className="text-text-primary">{BWL.toFixed(2)} m</strong></span>
                 <span>•</span>
-                <span>{language === "en" ? "Frame Spacing (dx):" : "Jarak Antar Gading (dx):"} <strong className="text-cyan-600 dark:text-cyan-400">{(LBP / (Math.max(1, customStationCount - 1))).toFixed(4)} m</strong></span>
+                <span>{language === "en" ? "Frame Spacing (dx):" : "Jarak Antar Gading (dx):"} <strong className="text-accent-primary">{(LBP / (Math.max(1, customStationCount - 1))).toFixed(4)} m</strong></span>
               </div>
 
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
                   onClick={() => setShowCustomTable(!showCustomTable)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold flex items-center space-x-1.5 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer text-xs shadow-sm"
+                  className="px-3 py-1.5 rounded-md bg-surface-secondary hover:bg-surface-secondary text-text-primary font-semibold flex items-center space-x-1.5 border border-border-default transition-colors cursor-pointer text-sm min-h-9"
                   title={showCustomTable ? (language === "en" ? "Hide table" : "Sembunyikan tabel") : (language === "en" ? "Show table" : "Tampilkan tabel")}
-                >
-                  {showCustomTable ? <EyeOff size={14} className="text-cyan-500" /> : <Eye size={14} className="text-cyan-500" />}
+                 aria-pressed={showCustomTable} aria-label={showCustomTable ? (language === "en" ? "Hide table" : "Sembunyikan tabel") : (language === "en" ? "Show table" : "Tampilkan tabel")}>
+                  {showCustomTable ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                   <span>{showCustomTable ? (language === "en" ? "Hide Table" : "Sembunyikan") : (language === "en" ? "Show Table" : "Tampilkan")}</span>
                 </button>
                 <button
                   onClick={handleCopyCustomTable}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold flex items-center space-x-1.5 transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-sm"
+                  className="px-3 py-1.5 rounded-md bg-surface-secondary hover:bg-surface-secondary text-text-primary font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer border border-border-default min-h-9"
                   title="Salin seluruh isi tabel ke clipboard"
-                >
-                  {copiedCustomTable ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                 aria-label="Salin seluruh isi tabel ke clipboard">
+                  {copiedCustomTable ? <Check size={14} className="text-status-success" /> : <Copy size={14} />}
                   <span>{copiedCustomTable ? (language === "en" ? "Copied!" : "Tersalin!") : (language === "en" ? "Copy Table" : "Salin Tabel")}</span>
                 </button>
                 <button
                   onClick={handleExportCustomCSV}
-                  className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold flex items-center space-x-1.5 transition-all cursor-pointer shadow-md shadow-cyan-600/20"
+                  className="px-3 py-1.5 rounded-md bg-accent-primary hover:bg-accent-hover text-on-accent font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer min-h-9"
                 >
                   <Download size={14} />
                   <span>Export CSV</span>
@@ -4292,7 +4294,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 {Object.keys(customOverrides).length > 0 && (
                   <button
                     onClick={handleResetCustomOverrides}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-1.5 border border-amber-500/40 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-md bg-status-warning-subtle hover:bg-status-warning-subtle text-status-warning font-semibold flex items-center space-x-1.5 border border-status-warning-border transition-colors cursor-pointer min-h-9"
                   >
                     <RotateCcw size={14} />
                     <span>{language === "en" ? "Reset Edits" : "Reset Edit"}</span>
@@ -4303,22 +4305,22 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
             {/* ONLY 3-COLUMN TABLE (GADING, POSISI X, 0.5 B) */}
             {showCustomTable ? (
-              <div className="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
-                <table className="w-full text-left text-xs font-mono border-collapse table-fixed min-w-[500px]">
-                <thead className="sticky top-0 z-20 shadow-md">
-                  <tr className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                    <th className="py-3 px-4 font-bold text-center border-r border-slate-200 dark:border-slate-800/60 w-[30%]">
+              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto overflow-y-auto max-h-[520px] rounded-lg border border-border-default">
+                <table className="w-full text-left text-sm font-mono border-collapse table-fixed min-w-[500px]">
+                <thead className="sticky top-0 z-20">
+                  <tr className="bg-surface-secondary text-text-primary border-b border-border-default text-xs">
+                    <th className="py-3 px-4 font-semibold text-center border-r border-border-default w-[30%]">
                       (1) NO. GADING
                     </th>
-                    <th className="py-3 px-4 font-semibold text-slate-600 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800/60 text-center w-[35%]">
+                    <th className="py-3 px-4 font-semibold text-text-secondary border-r border-border-default text-center w-[35%]">
                       POSISI X (m)
                     </th>
-                    <th className="py-3 px-4 font-bold text-cyan-600 dark:text-cyan-300 text-right w-[35%]">
+                    <th className="py-3 px-4 font-semibold text-accent-primary text-right w-[35%]">
                       (2) 0.5 B (m)
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50 bg-white dark:bg-slate-950/40">
+                <tbody className="divide-y divide-border-default bg-surface-primary">
                   {customStationRows.map((row) => {
                     const isMid = row.label.includes("MID");
                     const isAp = row.label.includes("AP");
@@ -4329,27 +4331,27 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     return (
                       <tr
                         key={`cust-row-${row.index}`}
-                        className={`hover:bg-cyan-50/50 dark:hover:bg-slate-800/40 transition-colors ${
-                          isHighlighted ? "bg-slate-50 dark:bg-slate-900/60 font-semibold" : ""
-                        }`}
+                        className={`hover:bg-surface-selected transition-colors ${
+                          isHighlighted ? "bg-surface-canvas font-semibold" : ""
+                        } `}
                       >
                         {/* (1) Gading */}
-                        <td className="py-2.5 px-4 text-center border-r border-slate-200 dark:border-slate-800/60">
+                        <td className="py-2.5 px-4 text-center border-r border-border-default">
                           <span
-                            className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold ${
+                            className={`inline-block px-2.5 py-1 rounded-lg text-sm font-semibold ${
                               isMid
-                                ? "bg-cyan-100 dark:bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-500/30"
+                                ? "bg-surface-selected text-accent-primary border border-border-default"
                                 : isAp || isFp
-                                ? "bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30"
-                                : "text-slate-800 dark:text-slate-200"
-                            }`}
+                                ? "bg-status-warning-subtle text-status-warning border border-status-warning-border"
+                                : "text-text-primary"
+                            } `}
                           >
                             {row.label}
                           </span>
                         </td>
 
                         {/* Posisi X (m) */}
-                        <td className="py-2.5 px-4 text-center text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60 font-mono">
+                        <td className="py-2.5 px-4 text-center text-text-secondary border-r border-border-default font-mono">
                           {row.xPos_m.toFixed(3)} m
                         </td>
 
@@ -4357,18 +4359,18 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         <td className="py-1 px-3 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             {isModified && (
-                              <span className="text-[10px] text-amber-500 font-bold" title="Telah diedit manual">
+                              <span className="text-xs text-status-warning font-semibold" title="Telah diedit manual">
                                 •
                               </span>
                             )}
-                            <input
+                            <input aria-label="half Breadth"
                               type="number"
                               step="0.001"
                               min="0"
                               max={BWL / 2}
                               value={row.halfBreadth}
                               onChange={(e) => handleCustomCellChange(row.index, e.target.value)}
-                              className="w-32 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/80 rounded-lg py-1 px-2.5 text-cyan-700 dark:text-cyan-300 font-bold font-mono text-xs focus:border-cyan-500 focus:outline-none text-right transition-all"
+                              className="w-32 bg-surface-primary border border-border-default rounded-md py-1 px-2.5 text-accent-primary font-semibold font-mono text-sm focus:border-border-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring text-right transition-colors min-h-10"
                             />
                           </div>
                         </td>
@@ -4379,14 +4381,14 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               </table>
             </div>
           ) : (
-            <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-3.5 flex items-center justify-between text-xs">
-              <span className="text-slate-500 dark:text-slate-400 font-mono">
+            <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-3.5 flex items-center justify-between text-sm">
+              <span className="text-text-secondary font-mono">
                 {language === "en" ? `Custom Station Table Hidden (${customStationRows.length} Stations)` : `Tabel Gading Kustom Disembunyikan (${customStationRows.length} Gading)`}
               </span>
               <button
                 type="button"
                 onClick={() => setShowCustomTable(true)}
-                className="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold text-xs flex items-center space-x-1"
+                className="text-accent-primary hover:underline font-semibold text-sm flex items-center space-x-1 min-h-9"
               >
                 <Eye size={13} />
                 <span>{language === "en" ? "Show Table" : "Buka Tabel"}</span>
@@ -4402,46 +4404,46 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
       {/* ========================================================================= */}
       {isWlManagerOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-surface-inset flex items-center justify-center p-3 sm:p-4 duration-150"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsWlManagerOpen(false);
           }}
         >
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-150 overflow-hidden">
+          <div className="bg-surface-primary border border-border-default rounded-lg max-w-2xl w-full max-h-[88vh] flex flex-col zoom-in-95 duration-150 overflow-hidden">
             {/* STICKY HEADER */}
-            <div className="flex items-center justify-between border-b border-slate-800 p-4 sm:p-5 shrink-0 bg-slate-900/95 backdrop-blur-sm">
+            <div className="flex items-center justify-between border-b border-border-default p-4 sm:p-5 shrink-0 bg-surface-primary">
               <div className="flex items-center space-x-2.5">
-                <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                <div className="text-text-secondary shrink-0">
                   <SlidersHorizontal size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Manage & Customize Waterlines</h3>
-                  <p className="text-xs text-slate-400">Tentukan jumlah garis air, pilih preset standar, atau tambahkan garis air khusus.</p>
+                  <h3 className="text-base font-semibold text-text-primary">Manage & Customize Waterlines</h3>
+                  <p className="text-sm text-text-secondary">Tentukan jumlah garis air, pilih preset standar, atau tambahkan garis air khusus.</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsWlManagerOpen(false)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 border border-slate-700 hover:border-rose-500/40 text-slate-400 hover:text-rose-300 transition-all cursor-pointer flex items-center space-x-1"
+                className="p-2 rounded-md bg-surface-secondary hover:bg-status-danger-subtle border border-border-default hover:border-status-danger-border text-text-secondary hover:text-status-danger transition-colors cursor-pointer flex items-center space-x-1 min-h-9"
                 title="Tutup Modal (Esc)"
-              >
+               aria-label="Tutup Modal (Esc)">
                 <X size={18} />
-                <span className="text-xs font-mono font-bold hidden sm:inline">Tutup</span>
+                <span className="text-sm font-mono font-semibold hidden sm:inline">Tutup</span>
               </button>
             </div>
 
             {/* SCROLLABLE CONTENT BODY */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 pr-3 no-scrollbar">
+            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 pr-3">
               {/* 1. AUTO-GENERATE BY COUNT (BERAPA WL OTOMATIS DIBUATKAN) */}
-              <div className="bg-gradient-to-br from-cyan-950/40 via-slate-900 to-slate-900 border border-cyan-500/30 rounded-2xl p-4 space-y-3.5 shadow-lg">
+              <div className="border border-border-default rounded-lg p-4 space-y-3.5 bg-accent-primary">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Sparkles size={16} className="text-cyan-400 animate-pulse" />
-                    <label className="text-xs font-bold text-white uppercase tracking-wider">
+                    <Sparkles size={16} className="text-accent-primary animate-pulse" />
+                    <label className="text-sm font-semibold text-text-primary tracking-normal">
                       Generator Otomatis Jumlah Garis Air
                     </label>
                   </div>
-                  <span className="text-[11px] font-mono text-cyan-300 font-semibold bg-cyan-950/80 px-2.5 py-0.5 rounded-full border border-cyan-800/60">
+                  <span className="text-xs font-mono text-accent-primary font-semibold bg-surface-selected px-2.5 py-0.5 rounded-full border border-border-default">
                     Target: {desiredWlCount} Level WL
                   </span>
                 </div>
@@ -4449,11 +4451,11 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 {/* Stepper + Slider + Action Button */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                   {/* Stepper Input */}
-                  <div className="sm:col-span-5 flex items-center space-x-2 bg-slate-950/80 border border-slate-700/80 rounded-xl p-1.5 shadow-inner">
+                  <div className="sm:col-span-5 flex items-center space-x-2 bg-surface-inset border border-border-default rounded-lg p-1.5">
                     <button
                       type="button"
                       onClick={() => setDesiredWlCount((prev) => Math.max(3, prev - 1))}
-                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-sm flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                      className="min-h-9 rounded-md bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm flex items-center justify-center transition-colors cursor-pointer min-w-9"
                     >
                       -
                     </button>
@@ -4462,19 +4464,19 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         type="number"
                         min={3}
                         max={25}
-                        value={desiredWlCount}
+                        aria-label="Waterline count" value={desiredWlCount}
                         onChange={(e) => {
                           const v = parseInt(e.target.value, 10);
                           if (!isNaN(v)) setDesiredWlCount(Math.max(3, Math.min(25, v)));
                         }}
-                        className="w-16 text-center font-mono font-black text-base text-cyan-400 bg-transparent focus:outline-none"
+                        className="w-16 text-center font-mono font-semibold text-base text-accent-primary bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring min-h-10"
                       />
-                      <span className="text-[9px] text-slate-400 -mt-1 font-mono uppercase">Garis Air</span>
+                      <span className="text-xs text-text-secondary -mt-1 font-mono">Garis Air</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setDesiredWlCount((prev) => Math.min(25, prev + 1))}
-                      className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-sm flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                      className="min-h-9 rounded-md bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm flex items-center justify-center transition-colors cursor-pointer min-w-9"
                     >
                       +
                     </button>
@@ -4482,9 +4484,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
                   {/* Range Slider */}
                   <div className="sm:col-span-4 flex flex-col justify-center px-1">
-                    <div className="flex justify-between text-[10px] text-slate-400 font-mono mb-1">
+                    <div className="flex justify-between text-xs text-text-secondary font-mono mb-1">
                       <span>3 WL</span>
-                      <span className="text-cyan-400 font-bold">{desiredWlCount} WL</span>
+                      <span className="text-accent-primary font-semibold">{desiredWlCount} WL</span>
                       <span>21 WL</span>
                     </div>
                     <input
@@ -4492,9 +4494,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       min={3}
                       max={21}
                       step={1}
-                      value={desiredWlCount}
+                      aria-label="Waterline count" value={desiredWlCount}
                       onChange={(e) => setDesiredWlCount(parseInt(e.target.value, 10))}
-                      className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                      className="w-full h-1.5 bg-surface-secondary rounded-md appearance-none cursor-pointer accent-accent-primary"
                     />
                   </div>
 
@@ -4503,7 +4505,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                     <button
                       type="button"
                       onClick={() => handleApplyPreset(desiredWlCount)}
-                      className="w-full py-2.5 px-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold font-mono transition-all cursor-pointer shadow-md shadow-cyan-600/30 flex items-center justify-center space-x-1.5 active:scale-95"
+                      className="w-full py-2.5 px-3 text-on-accent rounded-md text-sm font-semibold font-sans transition-colors cursor-pointer flex items-center justify-center space-x-1.5 bg-accent-primary min-h-9"
                     >
                       <Sparkles size={14} />
                       <span>Buat {desiredWlCount} WL</span>
@@ -4512,8 +4514,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 </div>
 
                 {/* Informative Explanation Helper Box */}
-                <div className="text-[11px] text-slate-400 font-mono bg-slate-950/50 p-2 rounded-xl border border-slate-800/80 flex items-start space-x-2">
-                  <Info size={13} className="text-cyan-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-text-secondary font-mono bg-surface-inset p-2 rounded-lg border border-border-default flex items-start space-x-2">
+                  <Info size={13} className="text-accent-primary shrink-0 mt-0.5" />
                   <div>
                     Membagi sarat penuh <strong>T = {T.toFixed(2)} m</strong> menjadi <strong>{desiredWlCount} level garis air</strong> berjarak seragam <strong>&Delta;Z = {(T / Math.max(1, desiredWlCount - 1)).toFixed(3)} m</strong> (dari WL 0 Lunas s.d. WL {desiredWlCount - 1} DWL). Kurva lambung dan luas AWL otomatis dihitung presisi.
                   </div>
@@ -4521,7 +4523,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
                 {/* Quick Preset Shortcut Pills */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] font-mono text-slate-400 uppercase mr-1">Pilihan Cepat:</span>
+                  <span className="text-xs font-mono text-text-secondary mr-1">Pilihan Cepat:</span>
                   {[
                     { count: 5, label: "5 WL" },
                     { count: 7, label: "7 WL (BKI Standar)" },
@@ -4538,11 +4540,11 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         setDesiredWlCount(chip.count);
                         handleApplyPreset(chip.count);
                       }}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-mono transition-all cursor-pointer border ${
+                      className={`px-2.5 py-1 rounded-md text-sm font-sans transition-colors cursor-pointer border ${
                         waterlineLevels.length === chip.count
-                          ? "bg-cyan-600/30 border-cyan-400 text-cyan-300 font-bold shadow-sm ring-1 ring-cyan-400/40"
-                          : "bg-slate-800/70 border-slate-700 hover:bg-slate-800 hover:border-slate-600 text-slate-300"
-                      }`}
+                          ? "bg-surface-selected border-border-default text-accent-primary font-semibold ring-1 ring-focus-ring min-h-9"
+                          : "bg-surface-secondary border-border-default hover:bg-surface-secondary hover:border-border-default text-text-primary min-h-9"
+                      } `}
                     >
                       {chip.label}
                     </button>
@@ -4551,14 +4553,14 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               </div>
 
               {/* 2. Add Custom Waterline */}
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
-                <label className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
-                  <Plus size={14} className="text-cyan-400" />
+              <div className="bg-surface-inset border border-border-default rounded-lg p-3.5 space-y-2.5">
+                <label className="text-sm font-semibold text-text-primary flex items-center space-x-1.5">
+                  <Plus size={14} className="text-accent-primary" />
                       <span>Add New Waterline:</span>
                 </label>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex-1 min-w-[140px]">
-                    <input
+                    <input aria-label={`Tinggi Sarat Z (0 - ${T.toFixed(2)} m)`}
                       type="number"
                       step="0.01"
                       min="0"
@@ -4566,16 +4568,16 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       placeholder={`Tinggi Sarat Z (0 - ${T.toFixed(2)} m)`}
                       value={newWlZInput}
                       onChange={(e) => setNewWlZInput(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 font-mono focus:border-cyan-400 focus:outline-none"
+                      className="w-full bg-surface-primary border border-border-default rounded-md px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary font-mono focus:border-border-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring min-h-10"
                     />
                   </div>
                   <div className="flex-1 min-w-[140px]">
-                    <input
+                    <input aria-label="Nama (opsional, misal: WL 0.5)"
                       type="text"
                       placeholder="Nama (opsional, misal: WL 0.5)"
                       value={newWlNameInput}
                       onChange={(e) => setNewWlNameInput(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 font-mono focus:border-cyan-400 focus:outline-none"
+                      className="w-full bg-surface-primary border border-border-default rounded-md px-3 py-1.5 text-sm text-text-primary placeholder:text-text-secondary font-mono focus:border-border-default focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring min-h-10"
                     />
                   </div>
                   <button
@@ -4586,7 +4588,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                       }
                     }}
                     disabled={!newWlZInput || isNaN(parseFloat(newWlZInput))}
-                    className="px-3 py-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center space-x-1 shadow"
+                    className="px-3 py-1.5 disabled:opacity-50 text-on-accent rounded-md text-sm font-semibold transition-colors cursor-pointer flex items-center space-x-1 bg-accent-primary min-h-9"
                   >
                     <Plus size={13} />
                       <span>Add WL</span>
@@ -4597,32 +4599,32 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               {/* 3. List of Current Waterlines */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  <label className="text-sm font-semibold tracking-normal text-text-primary">
                     Active Waterlines ({waterlineLevels.length} Levels):
                   </label>
-                  <span className="text-[11px] text-slate-400 font-mono">Sarat Penuh T = {T.toFixed(2)} m</span>
+                  <span className="text-xs text-text-secondary font-mono">Sarat Penuh T = {T.toFixed(2)} m</span>
                 </div>
-                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 no-scrollbar border border-slate-800 rounded-xl p-2 bg-slate-950/40">
+                <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="max-h-56 overflow-y-auto space-y-1.5 pr-1 border border-border-default rounded-lg p-2 bg-surface-inset">
                   {waterlineLevels.map((wl) => {
                     const zMeters = wl.draftFraction * T;
                     return (
                       <div
                         key={wl.id}
-                        className="flex items-center justify-between bg-slate-900/80 border border-slate-800 px-3 py-2 rounded-lg text-xs font-mono hover:border-slate-700 transition-colors"
+                        className="flex items-center justify-between bg-surface-primary border border-border-default px-3 py-2 rounded-lg text-sm font-mono hover:border-border-default transition-colors"
                       >
                         <div className="flex items-center space-x-2.5">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: wl.color }} />
-                          <span className="font-bold text-white">{wl.name}</span>
-                          <span className="text-slate-400">({wl.badge})</span>
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: engineeringColor(wl.color) }} />
+                          <span className="font-semibold text-text-primary">{wl.name}</span>
+                          <span className="text-text-secondary">({wl.badge})</span>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <span className="text-cyan-400 font-semibold">Z = {zMeters.toFixed(2)} m</span>
-                          <span className="text-slate-400 text-[11px]">{(wl.draftFraction * 100).toFixed(1)}% T</span>
+                          <span className="text-accent-primary font-semibold">Z = {zMeters.toFixed(2)} m</span>
+                          <span className="text-text-secondary text-xs">{(wl.draftFraction * 100).toFixed(1)}% T</span>
                           <button
                             onClick={() => handleDeleteWaterline(wl.id)}
-                            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-all cursor-pointer"
+                            className="p-1 text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle rounded transition-colors cursor-pointer min-h-9"
                             title="Delete this waterline"
-                          >
+                           aria-label="Delete this waterline">
                             <Trash2 size={13} />
                           </button>
                         </div>
@@ -4634,22 +4636,22 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
             </div>
 
             {/* STICKY FOOTER */}
-            <div className="flex items-center justify-between p-3.5 sm:p-4 border-t border-slate-800 bg-slate-950/90 shrink-0">
-              <span className="text-xs text-slate-400 font-mono">
-                Total: <strong className="text-cyan-400">{waterlineLevels.length} Waterline Levels</strong> (Draft T = {T.toFixed(2)}m)
+            <div className="flex items-center justify-between p-3.5 sm:p-4 border-t border-border-default bg-surface-inset shrink-0">
+              <span className="text-sm text-text-secondary font-mono">
+                Total: <strong className="text-accent-primary">{waterlineLevels.length} Waterline Levels</strong> (Draft T = {T.toFixed(2)}m)
               </span>
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
                   onClick={() => setIsWlManagerOpen(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold font-mono transition-all cursor-pointer"
+                  className="px-4 py-2 bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary rounded-md text-sm font-semibold font-sans transition-colors cursor-pointer min-h-9"
                 >
                   Tutup
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsWlManagerOpen(false)}
-                  className="px-5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold font-mono transition-all cursor-pointer shadow-md shadow-cyan-600/30 flex items-center space-x-1.5 active:scale-95"
+                  className="px-5 py-2 text-on-accent rounded-md text-sm font-semibold font-sans transition-colors cursor-pointer flex items-center space-x-1.5 bg-accent-primary min-h-9"
                 >
                   <Check size={14} />
                   <span>Selesai &amp; Terapkan</span>

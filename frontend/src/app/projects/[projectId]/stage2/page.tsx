@@ -1,5 +1,7 @@
 "use client";
 
+import { engineeringColor } from "../../../../components/design/EngineeringPalette";
+
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -1192,10 +1194,10 @@ export default function Stage2PreliminaryDesign() {
 
   if (loading && !history2) {
     return (
-      <div className="flex h-full items-center justify-center bg-slate-950 text-slate-400">
+      <div className="flex h-full items-center justify-center bg-surface-inset text-text-secondary">
         <div className="flex flex-col items-center space-y-4">
-          <RefreshCw className="animate-spin text-blue-500" size={36} />
-          <p className="text-sm font-medium tracking-wide">Memuat modul Pra-Rancangan Kapal...</p>
+          <RefreshCw className="animate-spin text-accent-primary" size={36} />
+          <p className="text-sm font-medium tracking-normal">Memuat modul Pra-Rancangan Kapal...</p>
         </div>
       </div>
     );
@@ -1203,14 +1205,14 @@ export default function Stage2PreliminaryDesign() {
 
   if (error && !history2) {
     return (
-      <div className="flex h-full items-center justify-center bg-slate-950 p-6">
-        <div className="max-w-md w-full bg-slate-900 border border-red-500/20 rounded-xl p-6 text-center space-y-4 shadow-xl">
-          <AlertCircle size={44} className="text-red-500 mx-auto" />
-          <h2 className="text-lg font-bold text-white">Terjadi Kendala Memuat Data</h2>
-          <p className="text-sm text-slate-400">{error}</p>
+      <div className="flex h-full items-center justify-center bg-surface-inset p-6">
+        <div className="max-w-md w-full bg-surface-primary border border-status-danger-border rounded-lg p-6 text-center space-y-4">
+          <AlertCircle size={44} className="text-status-danger mx-auto" />
+          <h2 className="text-lg font-semibold text-text-primary">Terjadi Kendala Memuat Data</h2>
+          <p className="text-sm text-text-secondary">{error}</p>
           <button
             onClick={loadStage2Data}
-            className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center space-x-2 text-sm border border-slate-700"
+            className="w-full py-2.5 px-4 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded-lg transition-colors font-medium flex items-center justify-center space-x-2 text-sm border border-border-default"
           >
             <RefreshCw size={14} />
             <span>Coba Lagi</span>
@@ -1225,10 +1227,10 @@ export default function Stage2PreliminaryDesign() {
   const baselineActive = history2?.baselines?.find((b: any) => b.active);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-[#070B12] text-slate-900 dark:text-slate-100 overflow-hidden">
+    <div className="flex flex-col h-full bg-surface-canvas  text-text-primary overflow-hidden">
       {/* Full-Width Sub-Navigation Tabs Bar */}
-      <div className="w-full bg-white dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800/80 px-3 sm:px-4 py-2 shadow-xs shrink-0">
-        <div className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
+      <div className="w-full bg-surface-primary border-b border-border-default px-4 sm:px-6 shrink-0">
+        <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-stretch gap-6 overflow-x-auto">
           {[
             { id: "comparable", label: language === "en" ? "Comparable Ships" : "Kapal Pembanding", icon: <Scale size={14} className="shrink-0" /> },
             { id: "dimensions", label: language === "en" ? "Dimensions & Coeffs" : "Ukuran & Koefisien", icon: <Compass size={14} className="shrink-0" /> },
@@ -1249,6 +1251,8 @@ export default function Stage2PreliminaryDesign() {
             return (
               <button
                 key={tab.id}
+                aria-current={activeTab === tab.id ? "page" : undefined}
+                aria-label={`${tab.label}${isLocked ? " — locked" : ""}`}
                 onClick={() => {
                   if (isLocked) {
                     showNotification("Module Locked", lockReason, "warning");
@@ -1256,17 +1260,17 @@ export default function Stage2PreliminaryDesign() {
                   }
                   setActiveTab(tab.id as any);
                 }}
-                className={`w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs rounded-xl transition-all duration-150 cursor-pointer text-center min-w-0 ${
+                className={`flex shrink-0 items-center justify-center gap-2 px-1 py-3 text-sm transition-colors duration-150 cursor-pointer text-center ${
                   activeTab === tab.id
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/25 font-bold border border-blue-600"
+                    ? "text-accent-primary font-semibold border-b-2 border-accent-primary"
                     : isLocked
-                    ? "bg-slate-100 text-slate-500 dark:bg-slate-900/60 dark:text-slate-400 border border-slate-300 dark:border-slate-800 cursor-not-allowed font-semibold"
-                    : "bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 hover:text-blue-600 border border-slate-300 dark:border-slate-700 font-bold shadow-2xs"
-                }`}
+                    ? "text-text-tertiary border-b-2 border-transparent cursor-not-allowed font-medium"
+                    : "text-text-secondary hover:text-accent-primary border-b-2 border-transparent font-medium"
+                } `}
               >
                 {tab.icon}
-                <span className={`truncate font-bold ${activeTab === tab.id ? "text-white" : ""}`}>{tab.label}</span>
-                {isLocked && <Lock size={12} className="text-amber-600 dark:text-amber-400 ml-1 shrink-0" />}
+                <span className={`truncate font-semibold ${activeTab === tab.id ? "text-accent-primary" : ""} `}>{tab.label}</span>
+                {isLocked && <Lock size={12} className="text-status-warning ml-1 shrink-0" />}
               </button>
             );
           })}
@@ -1278,23 +1282,23 @@ export default function Stage2PreliminaryDesign() {
         {/* Workspace Form / Tabs */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Active Tab Panel Content */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 no-scrollbar bg-slate-50 dark:bg-[#070B12]">
+          <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="min-h-0 flex-1 overflow-y-auto atelier-main-padding space-y-8 bg-surface-canvas ">
             {activeTab === "comparable" && (
               <div className="space-y-5 w-full">
                 {/* REFERENCE SHIP DATABASE CATALOG */}
-                <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-4 sm:p-5 rounded-2xl space-y-3.5 backdrop-blur-xl shadow-xs dark:shadow-xl">
+                <div className="space-y-6">
                   {/* Compact Header Bar */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800/60">
-                    <div className="flex items-center space-x-2.5">
-                      <FolderOpen size={16} className="text-blue-600 dark:text-blue-400" />
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border-default">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <FolderOpen size={16} className="text-accent-primary" />
+                      <h3 className="text-lg font-semibold text-text-primary">
                         {language === "en" ? "AI Comparable Ships" : "Katalog Kapal Pembanding AI"}
                       </h3>
-                      <span className="text-xs text-slate-600 dark:text-slate-400 font-mono font-semibold">({displayedComparableShips.length} {language === "en" ? "ships available" : "kapal tersedia"})</span>
+                      <span className="text-sm text-text-secondary font-mono font-semibold">({displayedComparableShips.length} {language === "en" ? "ships available" : "kapal tersedia"})</span>
                     </div>
-                    <div className="flex items-center space-x-2 text-xs">
-                      <span className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold">{language === "en" ? "Project Target:" : "Target Proyek:"}</span>
-                      <span className="bg-blue-100 dark:bg-blue-500/20 border border-blue-300 dark:border-blue-500/30 text-blue-900 dark:text-blue-300 font-bold px-2.5 py-0.5 rounded-full font-mono text-[11px]">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <span className="text-text-secondary text-xs font-semibold">{language === "en" ? "Project Target:" : "Target Proyek:"}</span>
+                      <span className="bg-surface-selected border border-border-default text-accent-primary font-semibold px-2.5 py-0.5 rounded-full font-mono text-xs">
                         {targetType} • {targetDwt.toLocaleString()} Ton
                       </span>
                     </div>
@@ -1303,17 +1307,17 @@ export default function Stage2PreliminaryDesign() {
                   {/* Compact Search & Filter Row */}
                   <div className="flex flex-col lg:flex-row items-center gap-2.5">
                     <div className="relative flex-1 w-full">
-                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                      <input
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
+                      <input aria-label={language === "en" ? "Search ship name or register reference..." : "Cari nama kapal atau referensi register..."}
                         type="text"
                         placeholder={language === "en" ? "Search ship name or register reference..." : "Cari nama kapal atau referensi register..."}
                         value={shipSearch}
                         onChange={(e) => setShipSearch(e.target.value)}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/90 border border-slate-300 hover:border-slate-400 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2 pl-9 pr-3 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all font-sans font-medium shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2 pl-9 pr-3 text-sm text-text-primary placeholder-text-tertiary focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring outline-none transition-colors font-sans font-medium"
                       />
                     </div>
 
-                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar w-full lg:w-auto shrink-0">
+                    <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center gap-1 overflow-x-auto  w-full lg:w-auto shrink-0">
                       {[
                         { id: "ALL", label: "All" },
                         { id: "CONTAINER", label: "Container" },
@@ -1326,11 +1330,11 @@ export default function Stage2PreliminaryDesign() {
                         <button
                           key={f.id}
                           onClick={() => setShipTypeFilter(f.id)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors border cursor-pointer ${
                             shipTypeFilter === f.id
-                              ? "bg-blue-600 border-blue-600 text-white shadow-xs"
-                              : "bg-white dark:bg-slate-950/70 border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-300 hover:text-blue-600 hover:border-blue-400 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-900 shadow-2xs"
-                          }`}
+                              ? "bg-accent-primary border-border-default text-on-accent"
+                              : "bg-surface-primary border-border-default text-text-primary hover:text-accent-primary hover:border-border-default hover:bg-surface-canvas"
+                          } `}
                         >
                           {f.label}
                         </button>
@@ -1339,12 +1343,12 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   {displayedComparableShips.length === 0 ? (
-                    <div className="p-8 text-center bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl space-y-2 backdrop-blur-md">
-                      <AlertCircle size={28} className="mx-auto text-slate-500" />
-                      <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold">{language === "en" ? "No comparable ships match search criteria." : "Tidak ada kapal pembanding yang cocok dengan kriteria pencarian."}</p>
+                    <div className="p-8 text-center bg-surface-canvas border border-border-default rounded-lg space-y-2">
+                      <AlertCircle size={28} className="mx-auto text-text-secondary" />
+                      <p className="text-sm text-text-secondary font-semibold">{language === "en" ? "No comparable ships match search criteria." : "Tidak ada kapal pembanding yang cocok dengan kriteria pencarian."}</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="atelier-reference-list">
                       {displayedComparableShips.map((ship, idx) => {
                         const isSelected = compForm.ship_name === ship.ship_name;
                         const isTopRank = idx === 0 && shipSearch === "" && shipTypeFilter === "ALL";
@@ -1352,95 +1356,95 @@ export default function Stage2PreliminaryDesign() {
                         return (
                           <div
                             key={idx}
-                            className={`p-5 rounded-2xl border transition-all duration-200 flex flex-col justify-between group relative overflow-hidden ${
+                            className={`atelier-reference-row group ${
                               isSelected
-                                ? "bg-gradient-to-b from-blue-50/90 via-white to-white dark:from-blue-950/40 dark:to-slate-900/90 border-2 border-blue-600 dark:border-blue-500 shadow-md shadow-blue-500/10 ring-2 ring-blue-600/15"
+                                ? "bg-surface-selected"
                                 : isTopRank
-                                ? "bg-gradient-to-b from-amber-50/50 via-white to-white dark:from-amber-950/20 dark:to-slate-900/90 border border-amber-300 dark:border-amber-500/40 hover:border-amber-400 shadow-xs hover:shadow-md"
-                                : "bg-white dark:bg-slate-900/60 hover:bg-slate-50/60 dark:hover:bg-slate-900/95 border border-slate-200 hover:border-slate-300 dark:border-slate-800/90 dark:hover:border-slate-700/90 shadow-2xs hover:shadow-sm"
-                            }`}
+                                ? "bg-surface-primary"
+                                : "bg-surface-primary hover:bg-surface-canvas"
+                            } `}
                           >
-                            <div className="space-y-3.5">
+                            <div className="atelier-reference-content">
                               {/* Recommendation / Match Badge Bar */}
-                              <div className="flex items-center justify-between gap-2">
+                              <div className="atelier-reference-badges flex flex-wrap items-center gap-2">
                                 <div>
                                   {ship.isExactMatch ? (
-                                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/30 text-emerald-950 dark:text-emerald-400 font-extrabold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
-                                      <Sparkles size={12} className="text-emerald-700 dark:text-emerald-400" />
+                                    <span className="inline-flex items-center gap-1.5 bg-status-success-subtle border border-status-success-border text-status-success font-semibold text-xs px-2.5 py-1 rounded-full tracking-normal font-mono">
+                                      <Sparkles size={12} className="text-status-success" />
                                       <span>{language === "en" ? "Perfect Match 100%" : "Perfek Match 100%"}</span>
                                     </span>
                                   ) : isTopRank ? (
-                                    <span className="inline-flex items-center gap-1.5 bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 text-amber-950 dark:text-amber-300 font-extrabold text-[11px] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
-                                      <Star size={12} className="text-amber-600 fill-amber-600 dark:text-amber-400 dark:fill-amber-400" />
+                                    <span className="inline-flex items-center gap-1.5 bg-status-warning-subtle border border-status-warning-border text-status-warning font-semibold text-xs px-2.5 py-1 rounded-full tracking-normal font-mono">
+                                      <Star size={12} className="text-status-warning fill-status-warning" />
                                       <span>{language === "en" ? "Recommended" : "Rekomendasi"} ({ship.matchScore}%)</span>
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center bg-slate-100 dark:bg-slate-800/80 text-slate-900 dark:text-slate-300 border border-slate-300 dark:border-slate-700/60 text-[11px] font-mono px-2.5 py-1 rounded-full font-bold">
+                                    <span className="inline-flex items-center bg-surface-secondary text-text-primary border border-border-default text-xs font-mono px-2.5 py-1 rounded-full font-semibold">
                                       Match: {ship.matchScore}%
                                     </span>
                                   )}
                                 </div>
 
-                                <span className="text-[11px] font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-950 dark:text-blue-300 border border-blue-300 dark:border-blue-500/30 px-2.5 py-0.5 rounded-full font-mono shrink-0">
+                                <span className="text-xs font-semibold bg-surface-selected text-accent-primary border border-border-default px-2.5 py-0.5 rounded-full font-mono shrink-0">
                                   {formatVesselType(ship.vessel_type)}
                                 </span>
                               </div>
 
                               {/* Ship Header */}
-                              <div>
-                                <h4 className="text-base font-extrabold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-200 transition-colors leading-snug">
+                              <div className="atelier-reference-heading">
+                                <h4 className="text-base font-semibold text-text-primary group-hover:text-accent-primary transition-colors leading-snug">
                                   {ship.ship_name}
                                 </h4>
-                                <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold mt-1 flex items-center gap-1.5 truncate">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-slate-500 shrink-0" />
-                                  <span className="truncate">{ship.source_reference}</span>
+                                <p className="text-xs text-text-secondary mt-1 flex items-center gap-1.5">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-accent-primary shrink-0" />
+                                  <span className="break-words">{ship.source_reference}</span>
                                 </p>
                               </div>
 
                               {/* 4-Stat Metric Grid */}
-                              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800/80">
-                                <div className={`p-3 rounded-xl border transition-colors ${
+                              <div className="atelier-reference-metrics grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
+                                <div className={`min-w-0 ${
                                   isSelected
-                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
-                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
-                                }`}>
-                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">Target DWT</span>
+                                    ? ""
+                                    : ""
+                                } `}>
+                                  <span className="text-xs text-text-primary font-semibold tracking-normal block mb-1">Target DWT</span>
                                   <div className="flex items-baseline space-x-1">
-                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.dwt_ton.toLocaleString()}</span>
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Ton</span>
+                                    <span className="text-base font-semibold font-mono text-text-primary">{ship.dwt_ton.toLocaleString()}</span>
+                                    <span className="text-sm font-semibold text-text-secondary">Ton</span>
                                   </div>
                                 </div>
-                                <div className={`p-3 rounded-xl border transition-colors ${
+                                <div className={`min-w-0 ${
                                   isSelected
-                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
-                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
-                                }`}>
-                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">{language === "en" ? "LBP Length" : "Panjang LBP"}</span>
+                                    ? ""
+                                    : ""
+                                } `}>
+                                  <span className="text-xs text-text-primary font-semibold tracking-normal block mb-1">{language === "en" ? "LBP Length" : "Panjang LBP"}</span>
                                   <div className="flex items-baseline space-x-1">
-                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.lbp_m}</span>
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">m</span>
+                                    <span className="text-base font-semibold font-mono text-text-primary">{ship.lbp_m}</span>
+                                    <span className="text-sm font-semibold text-text-secondary">m</span>
                                   </div>
                                 </div>
-                                <div className={`p-3 rounded-xl border transition-colors ${
+                                <div className={`min-w-0 ${
                                   isSelected
-                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
-                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
-                                }`}>
-                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">{language === "en" ? "Breadth (B)" : "Lebar (B)"}</span>
+                                    ? ""
+                                    : ""
+                                } `}>
+                                  <span className="text-xs text-text-primary font-semibold tracking-normal block mb-1">{language === "en" ? "Breadth (B)" : "Lebar (B)"}</span>
                                   <div className="flex items-baseline space-x-1">
-                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.breadth_m}</span>
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">m</span>
+                                    <span className="text-base font-semibold font-mono text-text-primary">{ship.breadth_m}</span>
+                                    <span className="text-sm font-semibold text-text-secondary">m</span>
                                   </div>
                                 </div>
-                                <div className={`p-3 rounded-xl border transition-colors ${
+                                <div className={`min-w-0 ${
                                   isSelected
-                                    ? "bg-blue-50/70 dark:bg-slate-950/60 border-blue-200 dark:border-slate-800/60"
-                                    : "bg-slate-50 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800/60 group-hover:border-slate-300 dark:group-hover:border-slate-700/60"
-                                }`}>
-                                  <span className="text-[11px] text-slate-700 dark:text-slate-300 uppercase font-bold tracking-wider block mb-1">{language === "en" ? "Draft (T)" : "Sarat Draft (T)"}</span>
+                                    ? ""
+                                    : ""
+                                } `}>
+                                  <span className="text-xs text-text-primary font-semibold tracking-normal block mb-1">{language === "en" ? "Draft (T)" : "Sarat Draft (T)"}</span>
                                   <div className="flex items-baseline space-x-1">
-                                    <span className="text-base font-black font-mono text-slate-900 dark:text-white">{ship.draft_m}</span>
-                                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">m</span>
+                                    <span className="text-base font-semibold font-mono text-text-primary">{ship.draft_m}</span>
+                                    <span className="text-sm font-semibold text-text-secondary">m</span>
                                   </div>
                                 </div>
                               </div>
@@ -1469,28 +1473,28 @@ export default function Stage2PreliminaryDesign() {
                                   document.getElementById("scaling-form-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
                                 }, 50);
                               }}
-                              className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 mt-4 active:scale-[0.98] ${
+                              className={`atelier-reference-action atelier-button whitespace-normal  ${
                                 isSelected
-                                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/25 border border-blue-600 font-extrabold"
+                                  ? "atelier-button-primary"
                                   : isTopRank
-                                  ? "bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold shadow-xs border border-amber-500/50"
-                                  : "bg-slate-100 hover:bg-blue-600 text-slate-800 hover:text-white dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-blue-600 dark:hover:text-white border border-slate-300 dark:border-slate-700 hover:border-blue-600 shadow-xs font-bold"
-                              }`}
+                                  ? "atelier-button-secondary"
+                                  : "atelier-button-secondary"
+                              } `}
                             >
                               {isSelected ? (
                                 <>
-                                  <Check size={15} className="text-white font-black shrink-0" />
-                                  <span className="text-white font-extrabold">{language === "en" ? "Selected as Primary Reference" : "Terpilih Sebagai Acuan Utama"}</span>
+                                  <Check size={15} className="text-current shrink-0" />
+                                  <span className="text-current">{language === "en" ? "Selected as Primary Reference" : "Terpilih Sebagai Acuan Utama"}</span>
                                 </>
                               ) : isTopRank ? (
                                 <>
-                                  <Sparkles size={15} className="text-slate-950 font-black shrink-0" />
-                                  <span className="text-slate-950 font-extrabold">{language === "en" ? "Use Recommended Ship" : "Gunakan Rekomendasi Ini"}</span>
+                                  <Sparkles size={15} className="text-current shrink-0" />
+                                  <span className="text-current">{language === "en" ? "Use Recommended Ship" : "Gunakan Rekomendasi Ini"}</span>
                                 </>
                               ) : (
                                 <>
-                                  <span className="font-bold">{language === "en" ? "Select This Ship" : "Pilih Kapal Ini"}</span>
-                                  <ArrowRight size={14} className="font-bold shrink-0" />
+                                  <span className="font-semibold">{language === "en" ? "Select This Ship" : "Pilih Kapal Ini"}</span>
+                                  <ArrowRight size={14} className="font-semibold shrink-0" />
                                 </>
                               )}
                             </button>
@@ -1501,18 +1505,18 @@ export default function Stage2PreliminaryDesign() {
                   )}
                 </div>
 
-                <div id="scaling-form-section" className="relative bg-white dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-slate-950/90 border border-slate-200 dark:border-slate-800/90 p-6 rounded-2xl space-y-5 backdrop-blur-xl shadow-xs dark:shadow-2xl overflow-hidden">
-                  <div className="absolute -top-24 -left-24 w-72 h-72 bg-blue-500/5 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+                <div id="scaling-form-section" className="relative bg-surface-primary border border-border-default p-6 rounded-lg space-y-5 overflow-hidden">
+                  <div className="absolute -top-24 -left-24 w-72 h-72 bg-surface-selected rounded-full blur-3xl pointer-events-none" />
                   
-                  <div className="flex items-center space-x-3 pb-3 border-b border-slate-200 dark:border-slate-800/80">
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <div className="flex items-center space-x-3 pb-3 border-b border-border-default">
+                    <div className="w-8 h-8 rounded-lg bg-surface-selected border border-border-default text-accent-primary flex items-center justify-center">
                       <Scale size={16} />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                      <h3 className="text-sm font-semibold text-text-primary">
                         {language === "en" ? "Primary Reference Ship Specifications" : "Spesifikasi Kapal Pembanding Acuan"}
                       </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-text-secondary mt-0.5">
                         {language === "en"
                           ? "The system uses this primary reference ship to estimate main hull dimensions proportionally using DWT power 1/3 scaling formula."
                           : "Sistem akan menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional menggunakan formula scaling rasio DWT pangkat 1/3."}
@@ -1522,76 +1526,76 @@ export default function Stage2PreliminaryDesign() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">{language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}</label>
+                      <input aria-label={language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}
                         type="text"
                         value={compForm.ship_name}
                         onChange={(e) => setCompForm({ ...compForm, ship_name: e.target.value })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Target DWT (Ton) *</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Target DWT (Ton) *</label>
+                      <input aria-label={["Target DWT (Ton) *"].join(" ")}
                         type="number"
                         value={compForm.dwt_ton}
                         onChange={(e) => setCompForm({ ...compForm, dwt_ton: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">LBP (m) *</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">LBP (m) *</label>
+                      <input aria-label={["LBP (m) *"].join(" ")}
                         type="number"
                         value={compForm.lbp_m}
                         onChange={(e) => setCompForm({ ...compForm, lbp_m: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Breadth (B) (m) *</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Breadth (B) (m) *</label>
+                      <input aria-label={["Breadth (B) (m) *"].join(" ")}
                         type="number"
                         value={compForm.breadth_m}
                         onChange={(e) => setCompForm({ ...compForm, breadth_m: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Draft (T) (m) *</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Draft (T) (m) *</label>
+                      <input aria-label={["Draft (T) (m) *"].join(" ")}
                         type="number"
                         value={compForm.draft_m}
                         onChange={(e) => setCompForm({ ...compForm, draft_m: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Depth (H) (m) *</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Depth (H) (m) *</label>
+                      <input aria-label={["Depth (H) (m) *"].join(" ")}
                         type="number"
                         value={compForm.depth_m}
                         onChange={(e) => setCompForm({ ...compForm, depth_m: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Block Coeff (Cb) *</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Block Coeff (Cb) *</label>
+                      <input aria-label={["Block Coeff (Cb) *"].join(" ")}
                         type="number"
                         step="0.01"
                         value={compForm.cb}
                         onChange={(e) => setCompForm({ ...compForm, cb: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">{language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">{language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}</label>
+                      <input aria-label={language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}
                         type="number"
                         value={compForm.service_speed_knots}
                         onChange={(e) => setCompForm({ ...compForm, service_speed_knots: Number(e.target.value) })}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                   </div>
@@ -1599,7 +1603,7 @@ export default function Stage2PreliminaryDesign() {
                   <div className="pt-3 flex justify-end">
                     <button
                       onClick={handleApplyScaling}
-                      className="py-2.5 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shadow-md shadow-blue-500/25 active:scale-[0.98] cursor-pointer"
+                      className="py-2.5 px-6 text-on-accent rounded-lg transition-colors font-semibold flex items-center space-x-2 text-sm  cursor-pointer bg-accent-primary"
                     >
                       <Scale size={16} />
                       <span>{language === "en" ? "Calculate & Apply DWT Scaling" : "Hitung & Terapkan Skala DWT"}</span>
@@ -1612,130 +1616,130 @@ export default function Stage2PreliminaryDesign() {
             {activeTab === "dimensions" && (
               <div className="space-y-6 w-full">
                 {/* OPTIMIZATION ACTION CARD & SHIP BASIC DESIGN FORMULA ENGINE */}
-                <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-5 shadow-xs dark:shadow-2xl">
+                <div className="bg-surface-primary border border-border-default p-5 sm:p-6 rounded-lg space-y-5">
                   {/* Card Header & Controls */}
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4 gap-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border-default pb-4 gap-4">
                     <div className="flex items-start space-x-3">
-                      <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5">
+                      <div className="p-2 rounded-lg bg-surface-selected border border-border-default text-accent-primary shrink-0 mt-0.5">
                         <Activity size={18} />
                       </div>
                       <div>
                         <div className="flex items-center space-x-2.5 flex-wrap">
-                          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                          <h3 className="text-sm sm:text-base font-semibold text-text-primary">
                             Hydrostatic Optimization & Formulation Engine
                           </h3>
-                          <span className="text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 px-2 py-0.5 rounded-md">
+                          <span className="text-xs font-mono font-semibold bg-surface-selected text-accent-primary border border-border-default px-2 py-0.5 rounded-md">
                             Ship Basic Design (p. 10)
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        <p className="text-sm text-text-secondary mt-1">
                           Live calculation of block coefficient Cb, displacement, and hydrostatic parameters based on service speed Vs and Lbp length.
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2.5 shrink-0 self-start lg:self-center">
-                      <span className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 text-blue-700 dark:text-blue-300 text-xs px-3 py-1.5 rounded-xl font-bold font-mono">
+                    <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
+                      <span className="bg-surface-selected border border-border-default text-accent-primary text-sm px-3 py-1.5 rounded-lg font-semibold font-mono">
                         Iteration #{optimizationCount}
                       </span>
                       <button
                         onClick={() => handleRunOptimization(1)}
                         disabled={isOptimizing}
-                        className="py-2 px-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-1.5 text-xs shadow-md shadow-blue-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                        className="py-2 px-3.5 text-on-accent rounded-lg transition-colors font-semibold flex items-center space-x-1.5 text-sm cursor-pointer  disabled:opacity-50 bg-accent-primary"
                       >
                         <RefreshCw size={13} className={isOptimizing ? "animate-spin" : ""} />
-                        <span>⚡ Run 1x Optimization</span>
+                        <span>Run 1x Optimization</span>
                       </button>
                       <button
                         onClick={() => handleRunOptimization(5)}
                         disabled={isOptimizing}
-                        className="py-2 px-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-bold flex items-center space-x-1.5 text-xs shadow-md shadow-indigo-600/20 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                        className="py-2 px-3.5 bg-accent-primary hover:bg-accent-hover text-on-accent rounded-lg transition-colors font-semibold flex items-center space-x-1.5 text-sm cursor-pointer  disabled:opacity-50"
                       >
                         <Sparkles size={13} />
-                        <span>🚀 Run 5x Iterations</span>
+                        <span>Run 5x Iterations</span>
                       </button>
                     </div>
                   </div>
 
                   {/* 4-Stat Metric KPI Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Block Coeff (Cb)</span>
-                      <div className="text-xl font-black font-mono text-emerald-600 dark:text-emerald-400">{activeOptData.cb}</div>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">Block Coefficient</span>
+                    <div className="bg-surface-canvas p-3.5 rounded-lg border border-border-default">
+                      <span className="text-xs text-text-secondary font-semibold tracking-normal block mb-1">Block Coeff (Cb)</span>
+                      <div className="text-xl font-semibold font-mono text-status-success">{activeOptData.cb}</div>
+                      <span className="text-xs text-text-secondary mt-1 block font-mono">Block Coefficient</span>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Displacement (Δ)</span>
-                      <div className="text-xl font-black font-mono text-cyan-600 dark:text-cyan-300">{activeOptData.displTon} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">Ton</span></div>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">Vol: {activeOptData.volM3} m³</span>
+                    <div className="bg-surface-canvas p-3.5 rounded-lg border border-border-default">
+                      <span className="text-xs text-text-secondary font-semibold tracking-normal block mb-1">Displacement (Δ)</span>
+                      <div className="text-xl font-semibold font-mono text-accent-primary">{activeOptData.displTon} <span className="text-sm font-normal text-text-secondary">Ton</span></div>
+                      <span className="text-xs text-text-secondary mt-1 block font-mono">Vol: {activeOptData.volM3} m³</span>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Froude Number (Fn)</span>
-                      <div className="text-xl font-black font-mono text-amber-600 dark:text-amber-300">{activeOptData.fn}</div>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">Speed: {activeOptData.vs} kts</span>
+                    <div className="bg-surface-canvas p-3.5 rounded-lg border border-border-default">
+                      <span className="text-xs text-text-secondary font-semibold tracking-normal block mb-1">Froude Number (Fn)</span>
+                      <div className="text-xl font-semibold font-mono text-status-warning">{activeOptData.fn}</div>
+                      <span className="text-xs text-text-secondary mt-1 block font-mono">Speed: {activeOptData.vs} kts</span>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-bold tracking-wider block mb-1">Freeboard (Fb)</span>
-                      <div className="text-xl font-black font-mono text-slate-900 dark:text-white">{activeOptData.fb} <span className="text-xs font-normal text-slate-500 dark:text-slate-400">m</span></div>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 block font-mono">H - T Reserve Buoyancy</span>
+                    <div className="bg-surface-canvas p-3.5 rounded-lg border border-border-default">
+                      <span className="text-xs text-text-secondary font-semibold tracking-normal block mb-1">Freeboard (Fb)</span>
+                      <div className="text-xl font-semibold font-mono text-text-primary">{activeOptData.fb} <span className="text-sm font-normal text-text-secondary">m</span></div>
+                      <span className="text-xs text-text-secondary mt-1 block font-mono">H - T Reserve Buoyancy</span>
                     </div>
                   </div>
 
                   {/* Complete Hydrostatic Specification Table */}
-                  <div className="w-full bg-white dark:bg-slate-950/90 rounded-xl border border-slate-200 dark:border-slate-800/80 overflow-hidden shadow-2xs flex flex-col justify-between">
-                    <div className="bg-slate-50 dark:bg-slate-900/80 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <div className="w-full bg-surface-primary rounded-lg border border-border-default overflow-hidden flex flex-col justify-between">
+                    <div className="bg-surface-canvas px-4 py-2.5 border-b border-border-default flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-text-primary tracking-normal flex items-center gap-2">
                         <span>Optimized Vessel Hydrostatic Specifications</span>
                       </h4>
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold font-mono bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded-md">
+                      <span className="text-xs text-status-success font-semibold font-mono bg-status-success-subtle border border-status-success-border px-2 py-0.5 rounded-md">
                         ✓ Synchronized
                       </span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-xs font-mono text-left border-collapse">
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium w-1/4">Lbp (Length Between Perp.)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400 w-1/4">{activeOptData.lbp} m</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium w-1/4">Breadth Molded (B)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400 w-1/4">{activeOptData.b} m</td>
+                    <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto">
+                      <table className="w-full text-sm font-mono text-left border-collapse">
+                        <tbody className="divide-y divide-border-default">
+                          <tr className="hover:bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium w-1/4">Lbp (Length Between Perp.)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-status-success w-1/4">{activeOptData.lbp} m</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium w-1/4">Breadth Molded (B)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-status-success w-1/4">{activeOptData.b} m</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Design Draft (T)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400">{activeOptData.t} m</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Depth Molded (H)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-emerald-600 dark:text-emerald-400">{activeOptData.h} m</td>
+                          <tr className="hover:bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Design Draft (T)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-status-success">{activeOptData.t} m</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Depth Molded (H)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-status-success">{activeOptData.h} m</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Waterline Length (Lwl)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.lwl} m</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Freeboard (Fb)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.fb} m</td>
+                          <tr className="hover:bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Waterline Length (Lwl)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.lwl} m</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Freeboard (Fb)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.fb} m</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Block Coeff (Cb)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-amber-600 dark:text-amber-300">{activeOptData.cb}</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Midship Coeff (Cm)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cm}</td>
+                          <tr className="hover:bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Block Coeff (Cb)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-status-warning">{activeOptData.cb}</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Midship Coeff (Cm)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.cm}</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Waterplane Coeff (Cw)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cw}</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Vert. Prismatic (Cpv)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cpv}</td>
+                          <tr className="hover:bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Waterplane Coeff (Cw)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.cw}</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Vert. Prismatic (Cpv)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.cpv}</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Horiz. Prismatic (Cph)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.cph}</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Froude Number (Fn)</td>
-                            <td className="py-2.5 px-3.5 font-bold text-slate-900 dark:text-white">{activeOptData.fn}</td>
+                          <tr className="hover:bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Horiz. Prismatic (Cph)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.cph}</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Froude Number (Fn)</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-text-primary">{activeOptData.fn}</td>
                           </tr>
-                          <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/40 bg-slate-50/50 dark:bg-slate-900/30">
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Molded Displacement</td>
-                            <td className="py-2.5 px-3.5 font-bold text-cyan-600 dark:text-cyan-300">{activeOptData.displTon} Ton</td>
-                            <td className="py-2.5 px-3.5 text-slate-600 dark:text-slate-400 font-medium">Molded Volume</td>
-                            <td className="py-2.5 px-3.5 font-bold text-cyan-600 dark:text-cyan-300">{activeOptData.volM3} m³</td>
+                          <tr className="hover:bg-surface-canvas bg-surface-canvas">
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Molded Displacement</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-accent-primary">{activeOptData.displTon} Ton</td>
+                            <td className="py-2.5 px-3.5 text-text-secondary font-medium">Molded Volume</td>
+                            <td className="py-2.5 px-3.5 font-semibold text-accent-primary">{activeOptData.volM3} m³</td>
                           </tr>
                         </tbody>
                       </table>
@@ -1744,22 +1748,22 @@ export default function Stage2PreliminaryDesign() {
                 </div>
 
                 {/* HULL PRINCIPAL DIMENSIONS & FORM COEFFICIENTS EDITOR */}
-                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 shadow-xs dark:shadow-2xl">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+                <div className="bg-surface-primary border border-border-default p-5 sm:p-6 rounded-lg space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border-default pb-4">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
-                        <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
+                      <h3 className="text-base font-semibold text-text-primary flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary">
                           <Compass size={18} />
                         </div>
                         <span>Hull Principal Dimensions & Form Coefficients Editor</span>
                       </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                      <p className="text-sm text-text-secondary mt-1">
                         Form parameter editor to view, input, or fine-tune principal hull dimensions (LBP, Breadth, Draft, Depth) and form coefficients (Cb, Cm, Cw).
                       </p>
                     </div>
 
                     <div className="flex items-center space-x-2 shrink-0">
-                      <span className="text-[11px] font-mono font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 px-3 py-1.5 rounded-xl flex items-center space-x-1.5">
+                      <span className="text-xs font-mono font-semibold bg-status-success-subtle text-status-success border border-status-success-border px-3 py-1.5 rounded-lg flex items-center space-x-1.5">
                         <span>🔗</span>
                         <span>Draft T = {Number(designData.draft_m || 5.44).toFixed(2)} m ➔ Stage 3 DWL</span>
                       </span>
@@ -1768,101 +1772,101 @@ export default function Stage2PreliminaryDesign() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">LBP (Length Between Perp.) (m)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">LBP (Length Between Perp.) (m)</label>
+                      <input aria-label={["LBP (Length Between Perp.) (m)"].join(" ")}
                         type="number"
                         value={designData.lbp_m || ""}
                         onChange={(e) => handleParamChange("lbp_m", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Breadth Molded (Beam B) (m)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Breadth Molded (Beam B) (m)</label>
+                      <input aria-label={["Breadth Molded (Beam B) (m)"].join(" ")}
                         type="number"
                         value={designData.breadth_m || ""}
                         onChange={(e) => handleParamChange("breadth_m", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Draft (Design Waterline T) (m)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Draft (Design Waterline T) (m)</label>
+                      <input aria-label={["Draft (Design Waterline T) (m)"].join(" ")}
                         type="number"
                         value={designData.draft_m || ""}
                         onChange={(e) => handleParamChange("draft_m", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Depth Molded (Height H) (m)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Depth Molded (Height H) (m)</label>
+                      <input aria-label={["Depth Molded (Height H) (m)"].join(" ")}
                         type="number"
                         value={designData.depth_m || ""}
                         onChange={(e) => handleParamChange("depth_m", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Block Coefficient (Cb)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Block Coefficient (Cb)</label>
+                      <input aria-label={["Block Coefficient (Cb)"].join(" ")}
                         type="number"
                         step="0.01"
                         value={designData.cb || ""}
                         onChange={(e) => handleParamChange("cb", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Midship Coefficient (Cm)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Midship Coefficient (Cm)</label>
+                      <input aria-label={["Midship Coefficient (Cm)"].join(" ")}
                         type="number"
                         step="0.01"
                         value={designData.cm || ""}
                         onChange={(e) => handleParamChange("cm", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Waterplane Coefficient (Cw)</label>
-                      <input
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Waterplane Coefficient (Cw)</label>
+                      <input aria-label={["Waterplane Coefficient (Cw)"].join(" ")}
                         type="number"
                         step="0.01"
                         value={designData.cw || ""}
                         onChange={(e) => handleParamChange("cw", Number(e.target.value))}
-                        className="w-full bg-slate-50 hover:bg-white dark:bg-slate-950/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-xl py-2.5 px-3.5 text-xs font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 text-slate-900 dark:text-white font-medium outline-none transition-all shadow-2xs"
+                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Froude Number (Fn)</label>
-                      <div className="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl py-2.5 px-3.5 text-xs text-slate-800 dark:text-slate-300 font-mono font-bold select-none shadow-2xs">
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Froude Number (Fn)</label>
+                      <div className="w-full bg-surface-secondary border border-border-default rounded-lg py-2.5 px-3.5 text-sm text-text-primary font-mono font-semibold select-none">
                         {designData.froude_number || "0.00"}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Displacement (Ton)</label>
-                      <div className="w-full bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 rounded-xl py-2.5 px-3.5 text-xs text-cyan-700 dark:text-cyan-400 font-mono font-bold select-none shadow-2xs">
+                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Displacement (Ton)</label>
+                      <div className="w-full bg-surface-secondary border border-border-default rounded-lg py-2.5 px-3.5 text-sm text-accent-primary font-mono font-semibold select-none">
                         {designData.displacement_ton || "0.00"}
                       </div>
                     </div>
                   </div>
 
                   {/* Dimension Ratios Status Bar */}
-                  <div className="bg-slate-50 dark:bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 space-y-4 shadow-inner">
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Empirical Dimensional Ratio Compliance Checks</h4>
+                  <div className="bg-surface-canvas p-5 sm:p-6 rounded-lg border border-border-default space-y-4">
+                    <h4 className="text-sm font-semibold text-text-primary tracking-normal">Empirical Dimensional Ratio Compliance Checks</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {/* Card 1: LBP / Breadth */}
                       {(() => {
                         const ratio = designData.lbp_m && designData.breadth_m ? designData.lbp_m / designData.breadth_m : 0;
                         const isValid = ratio >= 5.0 && ratio <= 8.5;
                         return (
-                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
-                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">LBP / Breadth</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                          <div className={`p-3.5 bg-surface-primary border ${isValid ? "border-status-success-border" : "border-status-warning-border"} rounded-lg text-center relative`}>
+                            <div className="text-xs text-text-secondary mb-1 font-medium">LBP / Breadth</div>
+                            <div className={`text-lg font-semibold font-mono ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {ratio ? ratio.toFixed(2) : "-"}
                             </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Range: 5.0 - 8.5</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            <div className="text-xs text-text-secondary mt-1 font-mono">Range: 5.0 - 8.5</div>
+                            <div className={`text-xs font-semibold font-mono mt-1 ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
@@ -1874,13 +1878,13 @@ export default function Stage2PreliminaryDesign() {
                         const ratio = designData.breadth_m && designData.draft_m ? designData.breadth_m / designData.draft_m : 0;
                         const isValid = ratio >= 1.8 && ratio <= 3.2;
                         return (
-                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
-                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">Breadth / Draft</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                          <div className={`p-3.5 bg-surface-primary border ${isValid ? "border-status-success-border" : "border-status-warning-border"} rounded-lg text-center relative`}>
+                            <div className="text-xs text-text-secondary mb-1 font-medium">Breadth / Draft</div>
+                            <div className={`text-lg font-semibold font-mono ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {ratio ? ratio.toFixed(2) : "-"}
                             </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Range: 1.8 - 3.2</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            <div className="text-xs text-text-secondary mt-1 font-mono">Range: 1.8 - 3.2</div>
+                            <div className={`text-xs font-semibold font-mono mt-1 ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
@@ -1892,13 +1896,13 @@ export default function Stage2PreliminaryDesign() {
                         const ratio = designData.lbp_m && designData.depth_m ? designData.lbp_m / designData.depth_m : 0;
                         const isValid = ratio >= 9.0 && ratio <= 15.0;
                         return (
-                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
-                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">LBP / Depth</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                          <div className={`p-3.5 bg-surface-primary border ${isValid ? "border-status-success-border" : "border-status-warning-border"} rounded-lg text-center relative`}>
+                            <div className="text-xs text-text-secondary mb-1 font-medium">LBP / Depth</div>
+                            <div className={`text-lg font-semibold font-mono ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {ratio ? ratio.toFixed(2) : "-"}
                             </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Range: 9.0 - 15.0</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            <div className="text-xs text-text-secondary mt-1 font-mono">Range: 9.0 - 15.0</div>
+                            <div className={`text-xs font-semibold font-mono mt-1 ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
@@ -1911,13 +1915,13 @@ export default function Stage2PreliminaryDesign() {
                         const minFb = designData.depth_m ? 0.10 * designData.depth_m : 0.5;
                         const isValid = fb >= minFb;
                         return (
-                          <div className={`p-3.5 bg-white dark:bg-slate-900/80 border ${isValid ? "border-emerald-300 dark:border-emerald-500/30" : "border-amber-300 dark:border-amber-500/30"} rounded-xl text-center shadow-2xs relative`}>
-                            <div className="text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-medium">Freeboard (H - T)</div>
-                            <div className={`text-lg font-bold font-mono ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                          <div className={`p-3.5 bg-surface-primary border ${isValid ? "border-status-success-border" : "border-status-warning-border"} rounded-lg text-center relative`}>
+                            <div className="text-xs text-text-secondary mb-1 font-medium">Freeboard (H - T)</div>
+                            <div className={`text-lg font-semibold font-mono ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {fb ? fb.toFixed(2) : "-"} m
                             </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-mono">Min: &gt; 10% H</div>
-                            <div className={`text-[9px] font-bold font-mono mt-1 ${isValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                            <div className="text-xs text-text-secondary mt-1 font-mono">Min: &gt; 10% H</div>
+                            <div className={`text-xs font-semibold font-mono mt-1 ${isValid ? "text-status-success" : "text-status-warning"} `}>
                               {isValid ? "✓ Compliant" : "⚠️ Needs Adjustment"}
                             </div>
                           </div>
@@ -1929,7 +1933,7 @@ export default function Stage2PreliminaryDesign() {
                   <div className="flex justify-end pt-2">
                     <button
                       onClick={handleSaveScenario}
-                      className="py-2.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl transition-all font-semibold flex items-center justify-center space-x-2 text-xs shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer"
+                      className="py-2.5 px-6 text-on-accent rounded-lg transition-colors font-semibold flex items-center justify-center space-x-2 text-sm  cursor-pointer bg-accent-primary"
                     >
                       <Save size={16} />
                       <span>Save Changes & Recalculate</span>
@@ -1942,50 +1946,50 @@ export default function Stage2PreliminaryDesign() {
             {activeTab === "weight" && (
               <div className="space-y-6 max-w-7xl mx-auto">
                 {/* Weight Items Table */}
-                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 shadow-xs dark:shadow-2xl">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
+                <div className="bg-surface-primary border border-border-default p-5 sm:p-6 rounded-lg space-y-6">
+                  <h3 className="text-base font-semibold text-text-primary flex items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary">
                       <Layers size={18} />
                     </div>
                     <span>Distribusi Berat Ringan (LWT) & Berat Mati (DWT)</span>
                   </h3>
 
-                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-800/80 rounded-xl bg-white dark:bg-slate-950/80 shadow-2xs">
-                    <table className="w-full text-left border-collapse text-xs font-sans">
+                  <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto border border-border-default rounded-lg bg-surface-primary">
+                    <table className="w-full text-left border-collapse text-sm font-sans">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-950/60 text-slate-700 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800/80 uppercase text-[10px] tracking-wider">
+                        <tr className="bg-surface-canvas text-text-primary font-semibold border-b border-border-default text-xs tracking-normal">
                           <th className="p-3.5 sm:p-4">Kelompok Berat</th>
                           <th className="p-3.5 sm:p-4 text-center">Massa (Ton)</th>
                           <th className="p-3.5 sm:p-4 text-center">LCG dari AP (m)</th>
                           <th className="p-3.5 sm:p-4 text-center">VCG dari BL (m)</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-800 dark:text-slate-200">
+                      <tbody className="divide-y divide-border-default text-text-primary">
                         {designData.weight_items?.map((item: any, idx: number) => (
-                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors font-medium">
-                            <td className="p-3.5 sm:p-4 font-semibold text-slate-900 dark:text-slate-100">{item.group_name}</td>
+                          <tr key={idx} className="hover:bg-surface-canvas transition-colors font-medium">
+                            <td className="p-3.5 sm:p-4 font-semibold text-text-primary">{item.group_name}</td>
                             <td className="p-3.5 sm:p-4 text-center">
-                              <input
+                              <input aria-label="weight ton"
                                 type="number"
                                 value={item.weight_ton}
                                 onChange={(e) => handleWeightChange(idx, "weight_ton", Number(e.target.value))}
-                                className="bg-slate-50 hover:bg-white dark:bg-slate-900/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-28 text-slate-900 dark:text-white font-mono text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all shadow-2xs"
+                                className="bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-1.5 px-2.5 text-center w-28 text-text-primary font-mono text-sm focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring outline-none transition-colors"
                               />
                             </td>
                             <td className="p-3.5 sm:p-4 text-center">
-                              <input
+                              <input aria-label="lcg m"
                                 type="number"
                                 value={item.lcg_m}
                                 onChange={(e) => handleWeightChange(idx, "lcg_m", Number(e.target.value))}
-                                className="bg-slate-50 hover:bg-white dark:bg-slate-900/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-24 text-slate-900 dark:text-white font-mono text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all shadow-2xs"
+                                className="bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-1.5 px-2.5 text-center w-24 text-text-primary font-mono text-sm focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring outline-none transition-colors"
                               />
                             </td>
                             <td className="p-3.5 sm:p-4 text-center">
-                              <input
+                              <input aria-label="vcg m"
                                 type="number"
                                 value={item.vcg_m}
                                 onChange={(e) => handleWeightChange(idx, "vcg_m", Number(e.target.value))}
-                                className="bg-slate-50 hover:bg-white dark:bg-slate-900/80 border border-slate-200 hover:border-slate-300 dark:border-slate-800 rounded-lg py-1.5 px-2.5 text-center w-24 text-slate-900 dark:text-white font-mono text-xs focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 outline-none transition-all shadow-2xs"
+                                className="bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-1.5 px-2.5 text-center w-24 text-text-primary font-mono text-sm focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring outline-none transition-colors"
                               />
                             </td>
                           </tr>
@@ -1995,12 +1999,12 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   {/* Weight Displacement mismatch panel */}
-                  <div className="bg-slate-50 dark:bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-inner">
+                  <div className="bg-surface-canvas p-5 sm:p-6 rounded-lg border border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-1">Status Keseimbangan Berat</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        Target Displacement: <span className="text-slate-900 dark:text-white font-bold font-mono">{designData.displacement_ton} Ton</span> | 
-                        Total Berat: <span className="text-slate-900 dark:text-white font-bold font-mono">
+                      <h4 className="text-sm font-semibold text-text-primary tracking-normal mb-1">Status Keseimbangan Berat</h4>
+                      <p className="text-sm text-text-secondary">
+                        Target Displacement: <span className="text-text-primary font-semibold font-mono">{designData.displacement_ton} Ton</span> |
+                        Total Berat: <span className="text-text-primary font-semibold font-mono">
                           {designData.weight_items?.reduce((sum: number, w: any) => sum + w.weight_ton, 0).toFixed(2)} Ton
                         </span>
                       </p>
@@ -2008,39 +2012,39 @@ export default function Stage2PreliminaryDesign() {
 
                     <div className="flex items-center space-x-6">
                       <div className="text-right">
-                        <div className="text-[10px] text-slate-600 dark:text-slate-400 uppercase font-semibold tracking-wider mb-0.5">Mismatch Selisih</div>
-                        <div className={`text-xl font-mono font-black ${
+                        <div className="text-xs text-text-secondary font-semibold tracking-normal mb-0.5">Mismatch Selisih</div>
+                        <div className={`text-xl font-mono font-semibold ${
                           (designData.weight_mismatch_percent || 0) <= 1.5
-                            ? "text-emerald-600 dark:text-emerald-400"
+                            ? "text-status-success"
                             : (designData.weight_mismatch_percent || 0) <= 5.0
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-rose-600 dark:text-rose-400"
-                        }`}>
+                            ? "text-status-warning"
+                            : "text-status-danger"
+                        } `}>
                           {designData.weight_mismatch_percent || "0.0"} %
                         </div>
                       </div>
                       
                       <div className={`w-3 h-3 rounded-full animate-pulse ${
                         (designData.weight_mismatch_percent || 0) <= 1.5
-                          ? "bg-emerald-500"
+                          ? "bg-status-success"
                           : (designData.weight_mismatch_percent || 0) <= 5.0
-                          ? "bg-amber-500"
-                          : "bg-rose-500"
-                      }`} />
+                          ? "bg-status-warning"
+                          : "bg-status-danger"
+                      } `} />
                     </div>
                   </div>
 
                   <div className="flex justify-end pt-2 space-x-3">
                     <button
                       onClick={handleAutoBalanceWeight}
-                      className="py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer"
+                      className="py-2.5 px-4 text-on-accent rounded-lg transition-colors font-semibold flex items-center space-x-2 text-sm  cursor-pointer bg-accent-primary"
                     >
                       <RefreshCw size={14} />
                       <span>⚡ Auto-Balance Weight (Mismatch ≤ 0.2%)</span>
                     </button>
                     <button
                       onClick={handleSaveScenario}
-                      className="py-2.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl transition-all font-semibold flex items-center space-x-2 text-xs shadow-md shadow-emerald-600/20 active:scale-[0.98] cursor-pointer"
+                      className="py-2.5 px-6 text-on-accent rounded-lg transition-colors font-semibold flex items-center space-x-2 text-sm  cursor-pointer bg-accent-primary"
                     >
                       <Save size={16} />
                       <span>Save Weight Distribution</span>
@@ -2053,23 +2057,23 @@ export default function Stage2PreliminaryDesign() {
             {activeTab === "geometry" && (
               <div className="space-y-6 w-full">
                 {/* TOP SECTION: DIAGRAM LENGKUNG CSA (BERDASARKAN DIAGRAM NSP WAGENINGEN) */}
-                <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 backdrop-blur-xl shadow-xs dark:shadow-2xl">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4 gap-4">
+                <div className="bg-surface-primary border border-border-default p-5 sm:p-6 rounded-lg space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-border-default pb-4 gap-4">
                     <div>
-                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center space-x-2.5">
-                        <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
+                      <h3 className="text-base font-semibold text-text-primary flex items-center space-x-2.5">
+                        <div className="p-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary">
                           <Layers size={18} />
                         </div>
                         <span>1. Curve of Sectional Areas (CSA) & Design Waterline (DWL)</span>
                       </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                      <p className="text-sm text-text-secondary mt-1">
                         The CSA curve illustrates the transverse sectional area of the hull from Station 0 (AP) to Station 20 (FP) computed according to the Wageningen NSP percentage distribution.
                       </p>
                     </div>
 
                     <button
                       onClick={() => setShowNspReference(!showNspReference)}
-                      className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-950 dark:hover:bg-slate-800 dark:text-blue-400 border border-slate-300 dark:border-slate-800 rounded-xl transition-all font-bold flex items-center space-x-2 text-xs shrink-0 cursor-pointer shadow-xs"
+                      className="py-2.5 px-4 bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default rounded-lg transition-colors font-semibold flex items-center space-x-2 text-sm shrink-0 cursor-pointer"
                     >
                       <Eye size={15} />
                       <span>{showNspReference ? "Hide NSP Reference" : "🔍 View Wageningen NSP Reference Diagram"}</span>
@@ -2078,7 +2082,7 @@ export default function Stage2PreliminaryDesign() {
 
                   {/* NSP Wageningen Reference Diagram Interactive Box */}
                   {showNspReference && (
-                    <div className="bg-slate-50 dark:bg-[#030712] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 sm:p-6 space-y-6 shadow-xs dark:shadow-2xl">
+                    <div className="bg-surface-canvas dark:bg-[#030712] border border-border-default rounded-lg p-4 sm:p-6 space-y-6">
                       {/* Dynamic Digital NSP Wageningen Engine */}
                       {(() => {
                         const currentAm = (designData.breadth_m || 14) * (designData.draft_m || 5) * (designData.cm || 0.98);
@@ -2114,10 +2118,10 @@ export default function Stage2PreliminaryDesign() {
                         return (
                           <div className="space-y-6">
                             {/* Controls Header: Standard Reference Badge + Cb Input + Fullscreen Trigger */}
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-default pb-4">
                               {/* Reference Standards Badge */}
                               <div className="flex items-center space-x-2">
-                                <span className="text-xs font-mono font-bold px-3 py-1.5 rounded-xl border bg-emerald-100 border-emerald-300 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-400 flex items-center space-x-2">
+                                <span className="text-sm font-mono font-semibold px-3 py-1.5 rounded-lg border bg-status-success-subtle border-status-success-border text-status-success flex items-center space-x-2">
                                   <span>📖</span>
                                   <span>Data Baku Nomogram NSP Wageningen (SNAME / PNA)</span>
                                 </span>
@@ -2125,9 +2129,9 @@ export default function Stage2PreliminaryDesign() {
 
                               {/* Direct Numerical Cb Input & Reset */}
                               <div className="flex items-center space-x-3 shrink-0">
-                                <div className="flex items-center space-x-2 bg-white dark:bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-800 shadow-2xs">
-                                  <label className="text-slate-700 dark:text-slate-300 text-xs font-mono font-bold">Nilai Cb:</label>
-                                  <input
+                                <div className="flex items-center space-x-2 bg-surface-primary px-3 py-1.5 rounded-lg border border-border-default">
+                                  <label className="text-text-primary text-sm font-mono font-semibold">Nilai Cb:</label>
+                                  <input aria-label={["Nilai Cb:"].join(" ")}
                                     type="number"
                                     min="0.55"
                                     max="0.80"
@@ -2139,11 +2143,11 @@ export default function Stage2PreliminaryDesign() {
                                         setInteractiveCb(Math.max(0.55, Math.min(0.80, val)));
                                       }
                                     }}
-                                    className="w-20 bg-slate-50 dark:bg-slate-950 border border-amber-500 text-slate-900 dark:text-amber-300 font-mono font-black text-xs px-2 py-1 rounded text-center focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                    className="w-20 bg-surface-canvas border border-status-warning-border text-text-primary font-mono font-semibold text-sm px-2 py-1 rounded text-center focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:ring-1 focus:ring-status-warning"
                                   />
                                   <button
                                     onClick={() => setInteractiveCb(designData.cb || 0.76)}
-                                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-[10px] font-mono font-bold rounded cursor-pointer transition-all border border-slate-300 dark:border-slate-700"
+                                    className="px-2.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary text-xs font-mono font-semibold rounded cursor-pointer transition-colors border border-border-default"
                                   >
                                     Atur Ulang Cb
                                   </button>
@@ -2153,20 +2157,20 @@ export default function Stage2PreliminaryDesign() {
 
                             {/* 1 & 2. Digital NSP Nomogram Canvas */}
                             <div className="space-y-4">
-                              <div className="bg-white dark:bg-[#02050e] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-xs dark:shadow-2xl relative overflow-hidden">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-200 dark:border-slate-800/80 font-mono text-xs">
+                              <div className="bg-surface-primary  border border-border-default rounded-lg p-4 md:p-6 relative overflow-hidden">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-border-default font-mono text-sm">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-blue-600 dark:text-cyan-400 font-extrabold uppercase tracking-wider">
+                                    <span className="text-accent-primary font-semibold tracking-normal">
                                       📐 1 & 2. Diagram NSP Interaktif (Wageningen)
                                     </span>
                                   </div>
-                                  <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">
+                                  <div className="text-xs text-text-secondary font-mono font-medium">
                                     Standard NSP Wageningen (21 Station: St. 0 AP s.d St. 20 FP)
                                   </div>
                                 </div>
 
                                 {/* High Precision Digitized Vector SVG Nomogram */}
-                                <div className="w-full overflow-x-auto no-scrollbar py-2">
+                                <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="w-full overflow-x-auto  py-2">
                                   <svg className="w-full min-w-[760px] h-auto" viewBox="0 0 1000 550" preserveAspectRatio="xMidYMid meet">
                                     <defs>
                                       {/* Strict clip path strictly enclosing the plot area: x=100 to 940, y=50 to 470 */}
@@ -2176,19 +2180,19 @@ export default function Stage2PreliminaryDesign() {
                                     </defs>
 
                                     {/* Blueprint Outer Frame */}
-                                    <rect x="100" y="50" width="840" height="420" fill="#f8fafc" className="dark:fill-[#030712]" stroke="#94a3b8" strokeWidth="1.5" />
+                                    <rect x="100" y="50" width="840" height="420" fill={engineeringColor("#f8fafc")} className="dark:fill-[#030712]" stroke={engineeringColor("#94a3b8")} strokeWidth="1.5" />
                                     
                                     {/* Centerline: Station 10 / 0% Line */}
-                                    <line x1="520" y1="50" x2="520" y2="470" stroke="#2563eb" strokeWidth="1.8" strokeDasharray="6,3" />
-                                    <text x="520" y="42" fill="#1d4ed8" className="dark:fill-[#60a5fa]" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <line x1="520" y1="50" x2="520" y2="470" stroke={engineeringColor("#2563eb")} strokeWidth="1.8" strokeDasharray="6,3" />
+                                    <text x="520" y="42" fill={engineeringColor("#1d4ed8", "text")} className="dark:fill-[#60a5fa]" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       Station 10 (0% Luas dari Garis Tengah)
                                     </text>
 
                                     {/* Top Subheaders for Stern & Bow */}
-                                    <text x="310" y="30" fill="#1e293b" className="dark:fill-[#cbd5e1]" fontSize="11.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <text x="310" y="30" fill={engineeringColor("#1e293b", "text")} className="dark:fill-[#cbd5e1]" fontSize="11.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       &larr; Bagian Belakang (Buritan / Stern: Station 0 s.d 9)
                                     </text>
-                                    <text x="730" y="30" fill="#1e293b" className="dark:fill-[#cbd5e1]" fontSize="11.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <text x="730" y="30" fill={engineeringColor("#1e293b", "text")} className="dark:fill-[#cbd5e1]" fontSize="11.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       Bagian Depan (Haluan / Bow: Station 11 s.d 20) &rarr;
                                     </text>
 
@@ -2197,9 +2201,9 @@ export default function Stage2PreliminaryDesign() {
                                       const x = 100 + idx * 42;
                                       return (
                                         <g key={`stern-grid-${idx}`}>
-                                          <line x1={x} y1="50" x2={x} y2="470" stroke="#cbd5e1" className="dark:stroke-[#1e293b]" strokeWidth="0.8" strokeDasharray="2,3" />
-                                          <line x1={x} y1="470" x2={x} y2="476" stroke="#64748b" strokeWidth="1" />
-                                          <text x={x} y="492" fill="#334155" className="dark:fill-[#94a3b8]" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{val}</text>
+                                          <line x1={x} y1="50" x2={x} y2="470" stroke={engineeringColor("#cbd5e1")} className="" strokeWidth="0.8" strokeDasharray="2,3" />
+                                          <line x1={x} y1="470" x2={x} y2="476" stroke={engineeringColor("#64748b")} strokeWidth="1" />
+                                          <text x={x} y="492" fill={engineeringColor("#334155", "text")} className="dark:fill-[#94a3b8]" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{val}</text>
                                         </g>
                                       );
                                     })}
@@ -2209,15 +2213,15 @@ export default function Stage2PreliminaryDesign() {
                                       const x = 520 + idx * 42;
                                       return (
                                         <g key={`bow-grid-${idx}`}>
-                                          <line x1={x} y1="50" x2={x} y2="470" stroke="#cbd5e1" className="dark:stroke-[#1e293b]" strokeWidth="0.8" strokeDasharray="2,3" />
-                                          <line x1={x} y1="470" x2={x} y2="476" stroke="#64748b" strokeWidth="1" />
-                                          <text x={x} y="492" fill="#334155" className="dark:fill-[#94a3b8]" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{val}</text>
+                                          <line x1={x} y1="50" x2={x} y2="470" stroke={engineeringColor("#cbd5e1")} className="" strokeWidth="0.8" strokeDasharray="2,3" />
+                                          <line x1={x} y1="470" x2={x} y2="476" stroke={engineeringColor("#64748b")} strokeWidth="1" />
+                                          <text x={x} y="492" fill={engineeringColor("#334155", "text")} className="dark:fill-[#94a3b8]" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{val}</text>
                                         </g>
                                       );
                                     })}
 
                                     {/* Sumbu X Main Label */}
-                                    <text x="520" y="518" fill="#0f172a" className="dark:fill-white" fontSize="12" fontWeight="extrabold" textAnchor="middle" fontFamily="monospace">
+                                    <text x="520" y="518" fill={engineeringColor("#0f172a", "text")} className="" fontSize="12" fontWeight="extrabold" textAnchor="middle" fontFamily="monospace">
                                       Ordinat Luasan Gading / Station (% Am)
                                     </text>
 
@@ -2226,9 +2230,9 @@ export default function Stage2PreliminaryDesign() {
                                       const y = 470 - ((cbVal - 0.55) / 0.25) * 420;
                                       return (
                                         <g key={`y-grid-${i}`}>
-                                          <line x1="100" y1={y} x2="940" y2={y} stroke="#cbd5e1" className="dark:stroke-[#1e293b]" strokeWidth="0.8" strokeDasharray="2,3" />
-                                          <line x1="92" y1={y} x2="100" stroke="#64748b" strokeWidth="1.2" />
-                                          <text x="86" y={y + 4} fill="#0f172a" className="dark:fill-[#f8fafc]" fontSize="11" fontWeight="extrabold" textAnchor="end" fontFamily="monospace">
+                                          <line x1="100" y1={y} x2="940" y2={y} stroke={engineeringColor("#cbd5e1")} className="" strokeWidth="0.8" strokeDasharray="2,3" />
+                                          <line x1="92" y1={y} x2="100" stroke={engineeringColor("#64748b")} strokeWidth="1.2" />
+                                          <text x="86" y={y + 4} fill={engineeringColor("#0f172a", "text")} className="dark:fill-[#f8fafc]" fontSize="11" fontWeight="extrabold" textAnchor="end" fontFamily="monospace">
                                             {cbVal.toFixed(2)}
                                           </text>
                                         </g>
@@ -2236,7 +2240,7 @@ export default function Stage2PreliminaryDesign() {
                                     })}
 
                                     {/* Sumbu Y Title (Rotated) */}
-                                    <text x="-260" y="24" fill="#0f172a" className="dark:fill-white" fontSize="12" fontWeight="extrabold" textAnchor="middle" fontFamily="monospace" transform="rotate(-90)">
+                                    <text x="-260" y="24" fill={engineeringColor("#0f172a", "text")} className="" fontSize="12" fontWeight="extrabold" textAnchor="middle" fontFamily="monospace" transform="rotate(-90)">
                                       Koefisien Blok (Cb)
                                     </text>
 
@@ -2257,7 +2261,7 @@ export default function Stage2PreliminaryDesign() {
                                             key={`st-curve-${stNum}`}
                                             d={`M ${pathPoints.join(" L ")}`}
                                             fill="none"
-                                            stroke="#334155"
+                                            stroke={engineeringColor("#334155")}
                                             className="dark:stroke-[#94a3b8]"
                                             strokeWidth="1.5"
                                           />
@@ -2272,9 +2276,9 @@ export default function Stage2PreliminaryDesign() {
                                       return (
                                         <g key="active-laser-bc">
                                           {/* Horizontal Red Laser Line for active Cb */}
-                                          <line x1="90" y1={yBC} x2="950" y2={yBC} stroke="#dc2626" strokeWidth="2.5" />
-                                          <rect x="36" y={yBC - 10} width="54" height="20" rx="5" fill="#dc2626" />
-                                          <text x="63" y={yBC + 4} fill="#ffffff" fontSize="10" fontWeight="black" textAnchor="middle" fontFamily="monospace">
+                                          <line x1="90" y1={yBC} x2="950" y2={yBC} stroke={engineeringColor("#dc2626")} strokeWidth="2.5" />
+                                          <rect x="36" y={yBC - 10} width="54" height="20" rx="5" fill={engineeringColor("#dc2626")} />
+                                          <text x="63" y={yBC + 4} fill={engineeringColor("#ffffff", "text")} fontSize="10" fontWeight="black" textAnchor="middle" fontFamily="monospace">
                                             Cb {activeCb.toFixed(2)}
                                           </text>
 
@@ -2288,9 +2292,9 @@ export default function Stage2PreliminaryDesign() {
                                               return (
                                                 <g key={`laser-drop-${stNum}`}>
                                                   {/* Green Vertical Projection Line to Sumbu X */}
-                                                  <line x1={xPoint} y1={yBC} x2={xPoint} y2="470" stroke="#16a34a" strokeWidth="1.2" strokeDasharray="3,2" />
+                                                  <line x1={xPoint} y1={yBC} x2={xPoint} y2="470" stroke={engineeringColor("#16a34a")} strokeWidth="1.2" strokeDasharray="3,2" />
                                                   {/* Yellow Active Intersection Point */}
-                                                  <circle cx={xPoint} cy={yBC} r="3.5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.2" />
+                                                  <circle cx={xPoint} cy={yBC} r="3.5" fill={engineeringColor("#f59e0b")} stroke={engineeringColor("#ffffff")} strokeWidth="1.2" />
                                                 </g>
                                               );
                                             })}
@@ -2303,202 +2307,202 @@ export default function Stage2PreliminaryDesign() {
                               </div>
 
                               {/* Reading Guide / Step-by-Step Procedure */}
-                              <div className="bg-white dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800/80 p-5 font-mono text-xs space-y-3 shadow-2xs">
-                                <div className="text-amber-700 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider flex items-center space-x-2">
+                              <div className="bg-surface-primary rounded-lg border border-border-default p-5 font-mono text-sm space-y-3">
+                                <div className="text-status-warning font-semibold text-sm tracking-normal flex items-center space-x-2">
                                   <span>📖 Prosedur Pembacaan Nomogram NSP Wageningen:</span>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-[11px]">
-                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
-                                    <span className="text-rose-600 dark:text-rose-400 font-bold block mb-1">① Atur Nilai Cb</span>
-                                    <span className="text-slate-700 dark:text-slate-300">Garis merah horizontal bergeser sesuai Koefisien Blok kapal (sumbu Y).</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                                  <div className="p-3 bg-surface-canvas rounded-lg border border-border-default">
+                                    <span className="text-status-danger font-semibold block mb-1">① Atur Nilai Cb</span>
+                                    <span className="text-text-primary">Garis merah horizontal bergeser sesuai Koefisien Blok kapal (sumbu Y).</span>
                                   </div>
-                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
-                                    <span className="text-amber-600 dark:text-amber-400 font-bold block mb-1">② Titik Potong</span>
-                                    <span className="text-slate-700 dark:text-slate-300">Garis merah memotong kurva tiap station (titik kuning intersep).</span>
+                                  <div className="p-3 bg-surface-canvas rounded-lg border border-border-default">
+                                    <span className="text-status-warning font-semibold block mb-1">② Titik Potong</span>
+                                    <span className="text-text-primary">Garis merah memotong kurva tiap station (titik kuning intersep).</span>
                                   </div>
-                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
-                                    <span className="text-emerald-600 dark:text-emerald-400 font-bold block mb-1">③ Proyeksi Vertikal</span>
-                                    <span className="text-slate-700 dark:text-slate-300">Garis hijau putus-putus diproyeksikan tegak lurus turun ke sumbu X.</span>
+                                  <div className="p-3 bg-surface-canvas rounded-lg border border-border-default">
+                                    <span className="text-status-success font-semibold block mb-1">③ Proyeksi Vertikal</span>
+                                    <span className="text-text-primary">Garis hijau putus-putus diproyeksikan tegak lurus turun ke sumbu X.</span>
                                   </div>
-                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
-                                    <span className="text-blue-600 dark:text-cyan-400 font-bold block mb-1">④ Baca Ordinat (% Am)</span>
-                                    <span className="text-slate-700 dark:text-slate-300">Nilai persentase luasan gading (% Am) terbaca di skala sumbu X.</span>
+                                  <div className="p-3 bg-surface-canvas rounded-lg border border-border-default">
+                                    <span className="text-accent-primary font-semibold block mb-1">④ Baca Ordinat (% Am)</span>
+                                    <span className="text-text-primary">Nilai persentase luasan gading (% Am) terbaca di skala sumbu X.</span>
                                   </div>
-                                  <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800/60 shadow-2xs">
-                                    <span className="text-indigo-600 dark:text-purple-400 font-bold block mb-1">⑤ Integrasi CSA</span>
-                                    <span className="text-slate-700 dark:text-slate-300">Data 21 ordinat luasan (Luas = % Am x Am, Am = B x T x Cm) otomatis dihitung menjadi Kurva CSA & Simpson 1/3.</span>
+                                  <div className="p-3 bg-surface-canvas rounded-lg border border-border-default">
+                                    <span className="text-accent-primary font-semibold block mb-1">⑤ Integrasi CSA</span>
+                                    <span className="text-text-primary">Data 21 ordinat luasan (Luas = % Am x Am, Am = B x T x Cm) otomatis dihitung menjadi Kurva CSA & Simpson 1/3.</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
 
                             {/* KARTU TEORI & DIAGRAM ILUSTRASI LUAS MIDSHIP (Am) */}
-                            <div className="bg-white dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4 font-mono shadow-xs dark:shadow-xl">
+                            <div className="bg-surface-primary border border-border-default p-5 rounded-lg space-y-4 font-mono">
                               <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
                                 {/* Left Side: Explanation Text & Formula */}
-                                <div className="space-y-3 flex-1 text-xs">
-                                  <div className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 font-bold text-sm">
-                                    <span className="text-base text-amber-500 dark:text-amber-400">❖</span>
+                                <div className="space-y-3 flex-1 text-sm">
+                                  <div className="flex items-center space-x-2 text-accent-primary font-semibold text-sm">
+                                    <span className="text-base text-status-warning">❖</span>
                                     <span>Luas Midship (Am)</span>
                                   </div>
-                                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-xs">
-                                    Merupakan luasan bagian tengah kapal yang dipotong secara melintang yang memiliki lebar <strong className="text-cyan-600 dark:text-cyan-300">B</strong> dan tinggi sarat <strong className="text-emerald-600 dark:text-emerald-300">T</strong>. Dirumuskan dengan :
+                                  <p className="text-text-secondary leading-relaxed text-sm">
+                                    Merupakan luasan bagian tengah kapal yang dipotong secara melintang yang memiliki lebar <strong className="text-accent-primary">B</strong> dan tinggi sarat <strong className="text-status-success">T</strong>. Dirumuskan dengan :
                                   </p>
                                   
                                   {/* Formula Box */}
-                                  <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
-                                    <div className="text-amber-700 dark:text-amber-300 font-bold text-sm tracking-wide">
+                                  <div className="p-3.5 bg-surface-canvas rounded-lg border border-border-default space-y-1.5">
+                                    <div className="text-status-warning font-semibold text-sm tracking-normal">
                                       Am = B x T x Cm
                                     </div>
-                                    <div className="text-slate-600 dark:text-slate-400 text-xs font-medium">
-                                      = {Number(designData.breadth_m || 0).toFixed(2)}m × {Number(designData.draft_m || 0).toFixed(3)}m × {Number(designData.cm || 0.98).toFixed(2)} = <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">{currentAm.toFixed(2)} m²</span>
+                                    <div className="text-text-secondary text-sm font-medium">
+                                      = {Number(designData.breadth_m || 0).toFixed(2)}m × {Number(designData.draft_m || 0).toFixed(3)}m × {Number(designData.cm || 0.98).toFixed(2)} = <span className="text-status-success font-semibold text-sm">{currentAm.toFixed(2)} m²</span>
                                     </div>
                                   </div>
 
-                                  <div className="grid grid-cols-3 gap-2 text-center text-[11px] pt-1">
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/70 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                                      <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">Lebar (B)</span>
-                                      <span className="text-cyan-700 dark:text-cyan-300 font-bold">{Number(designData.breadth_m || 0).toFixed(2)} m</span>
+                                  <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+                                    <div className="p-2 bg-surface-canvas rounded-lg border border-border-default">
+                                      <span className="text-text-secondary block text-xs font-semibold">Lebar (B)</span>
+                                      <span className="text-accent-primary font-semibold">{Number(designData.breadth_m || 0).toFixed(2)} m</span>
                                     </div>
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/70 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                                      <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">Sarat (T)</span>
-                                      <span className="text-emerald-700 dark:text-emerald-300 font-bold">{Number(designData.draft_m || 0).toFixed(3)} m</span>
+                                    <div className="p-2 bg-surface-canvas rounded-lg border border-border-default">
+                                      <span className="text-text-secondary block text-xs font-semibold">Sarat (T)</span>
+                                      <span className="text-status-success font-semibold">{Number(designData.draft_m || 0).toFixed(3)} m</span>
                                     </div>
-                                    <div className="p-2 bg-slate-50 dark:bg-slate-900/70 rounded-lg border border-slate-200 dark:border-slate-800/80 shadow-2xs">
-                                      <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-semibold">Koefisien (Cm)</span>
-                                      <span className="text-amber-700 dark:text-amber-300 font-bold">{Number(designData.cm || 0.98).toFixed(2)}</span>
+                                    <div className="p-2 bg-surface-canvas rounded-lg border border-border-default">
+                                      <span className="text-text-secondary block text-xs font-semibold">Koefisien (Cm)</span>
+                                      <span className="text-status-warning font-semibold">{Number(designData.cm || 0.98).toFixed(2)}</span>
                                     </div>
                                   </div>
                                 </div>
 
                                 {/* Right Side: Technical Blueprint SVG Diagram */}
-                                <div className="w-full lg:w-80 h-56 bg-slate-50 dark:bg-[#02050e] rounded-xl border border-slate-200 dark:border-slate-800/90 p-3 flex items-center justify-center relative overflow-hidden shadow-2xs shrink-0">
+                                <div className="w-full lg:w-80 h-56 bg-surface-canvas  rounded-lg border border-border-default p-3 flex items-center justify-center relative overflow-hidden shrink-0">
                                   <svg className="w-full h-full" viewBox="0 0 360 220" preserveAspectRatio="xMidYMid meet">
                                     <defs>
                                       {/* Hatch Pattern for Shaded Area Am */}
                                       <pattern id="hatch-midship-am" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                                        <line x1="0" y1="0" x2="0" y2="8" stroke="#0284c7" strokeWidth="1.2" strokeOpacity="0.45" />
+                                        <line x1="0" y1="0" x2="0" y2="8" stroke={engineeringColor("#0284c7")} strokeWidth="1.2" strokeOpacity="0.45" />
                                       </pattern>
                                     </defs>
 
                                     {/* Centerline Line and Symbol */}
-                                    <line x1="180" y1="15" x2="180" y2="195" stroke="#64748b" strokeWidth="1" strokeDasharray="6,3,2,3" />
+                                    <line x1="180" y1="15" x2="180" y2="195" stroke={engineeringColor("#64748b")} strokeWidth="1" strokeDasharray="6,3,2,3" />
                                     {/* CL symbol */}
-                                    <text x="180" y="208" fill="#64748b" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">℄</text>
+                                    <text x="180" y="208" fill={engineeringColor("#64748b", "text")} fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">℄</text>
 
                                     {/* Upper Deck Outline with Camber */}
-                                    <path d="M 60,55 Q 180,45 300,55" fill="none" stroke="#475569" strokeWidth="1.5" />
+                                    <path d="M 60,55 Q 180,45 300,55" fill="none" stroke={engineeringColor("#475569")} strokeWidth="1.5" />
 
                                     {/* Topsides Hull Outline above Waterline */}
-                                    <line x1="60" y1="55" x2="60" y2="90" stroke="#475569" strokeWidth="1.5" />
-                                    <line x1="300" y1="55" x2="300" y2="90" stroke="#475569" strokeWidth="1.5" />
+                                    <line x1="60" y1="55" x2="60" y2="90" stroke={engineeringColor("#475569")} strokeWidth="1.5" />
+                                    <line x1="300" y1="55" x2="300" y2="90" stroke={engineeringColor("#475569")} strokeWidth="1.5" />
 
                                     {/* Waterline (W - L) */}
-                                    <line x1="35" y1="90" x2="325" y2="90" stroke="#0284c7" strokeWidth="1.5" />
-                                    <text x="45" y="83" fill="#0284c7" fontSize="13" fontWeight="bold" fontFamily="serif">W</text>
-                                    <text x="315" y="83" fill="#0284c7" fontSize="13" fontWeight="bold" fontFamily="serif">L</text>
+                                    <line x1="35" y1="90" x2="325" y2="90" stroke={engineeringColor("#0284c7")} strokeWidth="1.5" />
+                                    <text x="45" y="83" fill={engineeringColor("#0284c7", "text")} fontSize="13" fontWeight="bold" fontFamily="serif">W</text>
+                                    <text x="315" y="83" fill={engineeringColor("#0284c7", "text")} fontSize="13" fontWeight="bold" fontFamily="serif">L</text>
 
                                     {/* Submerged Hull Shaded Area Am (Cross Section below WL) */}
                                     <path
                                       d="M 60,90 L 60,150 Q 60,170 85,170 L 275,170 Q 300,170 300,150 L 300,90 Z"
                                       fill="url(#hatch-midship-am)"
-                                      stroke="#0284c7"
+                                      stroke={engineeringColor("#0284c7")}
                                       strokeWidth="2"
                                     />
 
                                     {/* Center Am Text Badge */}
                                     <g>
-                                      <rect x="155" y="118" width="50" height="22" rx="4" fill="#ffffff" stroke="#0284c7" strokeWidth="1" />
-                                      <text x="180" y="133" fill="#0f172a" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">Am</text>
+                                      <rect x="155" y="118" width="50" height="22" rx="4" fill={engineeringColor("#ffffff")} stroke={engineeringColor("#0284c7")} strokeWidth="1" />
+                                      <text x="180" y="133" fill={engineeringColor("#0f172a", "text")} fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">Am</text>
                                     </g>
 
                                     {/* Dimension T (Draft) on Right */}
-                                    <line x1="300" y1="90" x2="335" y2="90" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
-                                    <line x1="275" y1="170" x2="335" y2="170" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
-                                    <line x1="330" y1="92" x2="330" y2="168" stroke="#059669" strokeWidth="1.2" />
+                                    <line x1="300" y1="90" x2="335" y2="90" stroke={engineeringColor("#64748b")} strokeWidth="0.8" strokeDasharray="2,2" />
+                                    <line x1="275" y1="170" x2="335" y2="170" stroke={engineeringColor("#64748b")} strokeWidth="0.8" strokeDasharray="2,2" />
+                                    <line x1="330" y1="92" x2="330" y2="168" stroke={engineeringColor("#059669")} strokeWidth="1.2" />
                                     {/* Dimension Arrows for T */}
-                                    <polygon points="330,90 327,97 333,97" fill="#059669" />
-                                    <polygon points="330,170 327,163 333,163" fill="#059669" />
-                                    <text x="345" y="134" fill="#059669" fontSize="12" fontWeight="bold" textAnchor="start" fontFamily="monospace">T</text>
+                                    <polygon points="330,90 327,97 333,97" fill={engineeringColor("#059669")} />
+                                    <polygon points="330,170 327,163 333,163" fill={engineeringColor("#059669")} />
+                                    <text x="345" y="134" fill={engineeringColor("#059669", "text")} fontSize="12" fontWeight="bold" textAnchor="start" fontFamily="monospace">T</text>
 
                                     {/* Dimension B (Breadth) on Bottom */}
-                                    <line x1="60" y1="170" x2="60" y2="195" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
-                                    <line x1="300" y1="170" x2="300" y2="195" stroke="#64748b" strokeWidth="0.8" strokeDasharray="2,2" />
-                                    <line x1="62" y1="190" x2="298" y2="190" stroke="#0284c7" strokeWidth="1.2" />
+                                    <line x1="60" y1="170" x2="60" y2="195" stroke={engineeringColor("#64748b")} strokeWidth="0.8" strokeDasharray="2,2" />
+                                    <line x1="300" y1="170" x2="300" y2="195" stroke={engineeringColor("#64748b")} strokeWidth="0.8" strokeDasharray="2,2" />
+                                    <line x1="62" y1="190" x2="298" y2="190" stroke={engineeringColor("#0284c7")} strokeWidth="1.2" />
                                     {/* Dimension Arrows for B */}
-                                    <polygon points="60,190 67,187 67,193" fill="#0284c7" />
-                                    <polygon points="300,190 293,187 293,193" fill="#0284c7" />
-                                    <text x="180" y="185" fill="#0284c7" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">B</text>
+                                    <polygon points="60,190 67,187 67,193" fill={engineeringColor("#0284c7")} />
+                                    <polygon points="300,190 293,187 293,193" fill={engineeringColor("#0284c7")} />
+                                    <text x="180" y="185" fill={engineeringColor("#0284c7", "text")} fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">B</text>
                                   </svg>
                                 </div>
                               </div>
                             </div>
 
                             {/* 3. HASIL PEMBACAAN NUMERIK ORDINAT STATION (0 S.D 20) */}
-                            <div className="bg-white dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-4 font-mono text-xs shadow-xs dark:shadow-xl">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-cyan-700 dark:text-cyan-400 font-bold uppercase tracking-wider">
+                            <div className="bg-surface-primary border border-border-default p-5 rounded-lg space-y-4 font-mono text-sm">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-accent-primary font-semibold tracking-normal">
                                 <div className="flex items-center space-x-2">
                                   <span>📊 3. HASIL PEMBACAAN NUMERIK ORDINAT STATION (0 S.D 20)</span>
                                 </div>
-                                <span className="text-slate-600 dark:text-slate-400 text-[11px] font-mono">
-                                  Luas Midship Am = <span className="text-slate-900 dark:text-white font-bold">{currentAm.toFixed(2)} m²</span> (Am = B x T x Cm = {Number(designData.breadth_m || 0).toFixed(2)}m x {Number(designData.draft_m || 0).toFixed(3)}m x {Number(designData.cm || 0.98).toFixed(2)})
+                                <span className="text-text-secondary text-xs font-mono">
+                                  Luas Midship Am = <span className="text-current">{currentAm.toFixed(2)} m²</span> (Am = B x T x Cm = {Number(designData.breadth_m || 0).toFixed(2)}m x {Number(designData.draft_m || 0).toFixed(3)}m x {Number(designData.cm || 0.98).toFixed(2)})
                                 </span>
                               </div>
                               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
                                 {computedStationData.map((st) => (
-                                  <div key={`st-card-${st.station}`} className="p-3 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-center space-y-1 shadow-2xs">
-                                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">St. {st.station}</div>
-                                    <div className="font-bold text-cyan-700 dark:text-cyan-400 text-xs">{st.pctAm.toFixed(1)}% Am</div>
-                                    <div className="text-[10px] text-slate-600 dark:text-slate-400 font-mono">{st.areaM2.toFixed(1)} m²</div>
+                                  <div key={`st-card-${st.station}`} className="p-3 bg-surface-canvas rounded-lg border border-border-default text-center space-y-1">
+                                    <div className="text-xs text-text-secondary font-semibold">St. {st.station}</div>
+                                    <div className="font-semibold text-accent-primary text-sm">{st.pctAm.toFixed(1)}% Am</div>
+                                    <div className="text-xs text-text-secondary font-mono">{st.areaM2.toFixed(1)} m²</div>
                                   </div>
                                 ))}
                               </div>
                             </div>
 
                             {/* 4 & 5. KURVA CSA REAL-TIME & HASIL INTEGRASI SIMPSON 1/3 */}
-                            <div className="bg-white dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl space-y-5 font-mono shadow-xs dark:shadow-xl">
+                            <div className="bg-surface-primary border border-border-default p-5 rounded-lg space-y-5 font-mono">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div>
-                                  <div className="flex items-center space-x-2 text-cyan-700 dark:text-cyan-400 font-bold text-xs uppercase tracking-wider">
+                                  <div className="flex items-center space-x-2 text-accent-primary font-semibold text-sm tracking-normal">
                                     <span>📈 4 & 5. KURVA CSA REAL-TIME & HASIL INTEGRASI SIMPSON 1/3</span>
                                   </div>
-                                  <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                                    Kurva CSA dihitung dari 21 ordinat luasan station (Luas = % Am × Am) dengan Luas Midship <span className="text-slate-900 dark:text-white font-semibold">Am = B x T x Cm = {currentAm.toFixed(2)} m²</span>.
+                                  <p className="text-xs text-text-secondary mt-0.5">
+                                    Kurva CSA dihitung dari 21 ordinat luasan station (Luas = % Am × Am) dengan Luas Midship <span className="text-current">Am = B x T x Cm = {currentAm.toFixed(2)} m²</span>.
                                   </p>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-amber-800 dark:text-amber-300 font-bold text-[11px] bg-amber-50 dark:bg-slate-900 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-lg">
+                                  <span className="text-status-warning font-semibold text-xs bg-status-warning-subtle border border-status-warning-border px-3 py-1 rounded-lg">
                                     Am = B x T x Cm = {currentAm.toFixed(2)} m²
                                   </span>
-                                  <span className="text-cyan-800 dark:text-cyan-400 font-bold text-[11px] bg-cyan-50 dark:bg-slate-900 border border-cyan-300 dark:border-cyan-500/30 px-3 py-1 rounded-lg">
-                                    Rule Integrasi: <span className="text-slate-900 dark:text-white">Simpson 1/3 (21 Station)</span>
+                                  <span className="text-accent-primary font-semibold text-xs bg-surface-selected border border-border-default px-3 py-1 rounded-lg">
+                                    Rule Integrasi: <span className="text-text-primary">Simpson 1/3 (21 Station)</span>
                                   </span>
                                 </div>
                               </div>
 
                               {/* Real-time CSA Curve Plot with Midship Am Indicator */}
-                              <div className="w-full h-72 bg-slate-50 dark:bg-[#02050e] rounded-xl border border-slate-200 dark:border-slate-800 p-4 relative overflow-hidden flex items-center justify-center shadow-inner">
+                              <div className="w-full h-72 bg-surface-canvas  rounded-lg border border-border-default p-4 relative overflow-hidden flex items-center justify-center">
                                 <svg className="w-full h-full" viewBox="0 0 1000 280" preserveAspectRatio="none">
                                   {computedStationData.map((_, idx) => {
                                     const x = 50 + (idx / 20) * 900;
-                                    return <line key={`csa-grid-v-${idx}`} x1={x} y1="20" x2={x} y2="230" stroke="#cbd5e1" strokeWidth="0.6" strokeDasharray="2,2" />;
+                                    return <line key={`csa-grid-v-${idx}`} x1={x} y1="20" x2={x} y2="230" stroke={engineeringColor("#cbd5e1")} strokeWidth="0.6" strokeDasharray="2,2" />;
                                   })}
-                                  <line x1="50" y1="230" x2="950" y2="230" stroke="#64748b" strokeWidth="1.5" />
+                                  <line x1="50" y1="230" x2="950" y2="230" stroke={engineeringColor("#64748b")} strokeWidth="1.5" />
                                   <path
                                     d={`M 50,230 ${computedStationData.map((st, idx) => {
                                       const x = 50 + (idx / 20) * 900;
                                       const y = 230 - (st.pctAm / 100) * 190;
                                       return `L ${x},${y}`;
                                     }).join(" ")} L 950,230 Z`}
-                                    fill="rgba(2, 132, 199, 0.15)"
-                                    stroke="#0284c7"
+                                    fill={engineeringColor("rgba(2, 132, 199, 0.15)")}
+                                    stroke={engineeringColor("#0284c7")}
                                     strokeWidth="2.5"
                                   />
                                   {/* Apex Midship Label at Station 10 */}
                                   <g key="csa-midship-tag">
-                                    <line x1="500" y1="22" x2="500" y2="38" stroke="#d97706" strokeWidth="1" strokeDasharray="2,2" />
-                                    <rect x="390" y="8" width="220" height="20" rx="5" fill="#ffffff" stroke="#d97706" strokeWidth="1" />
-                                    <text x="500" y="22" fill="#b45309" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                                    <line x1="500" y1="22" x2="500" y2="38" stroke={engineeringColor("#d97706")} strokeWidth="1" strokeDasharray="2,2" />
+                                    <rect x="390" y="8" width="220" height="20" rx="5" fill={engineeringColor("#ffffff")} stroke={engineeringColor("#d97706")} strokeWidth="1" />
+                                    <text x="500" y="22" fill={engineeringColor("#b45309", "text")} fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                                       St. 10 Midship: Am = {currentAm.toFixed(2)} m² (100%)
                                     </text>
                                   </g>
@@ -2508,8 +2512,8 @@ export default function Stage2PreliminaryDesign() {
                                     return (
                                       <g key={`csa-node-${idx}`}>
                                         <title>{`Station ${idx}: ${st.pctAm.toFixed(1)}% Am | Luas = ${st.areaM2.toFixed(2)} m² (Am = B x T x Cm = ${currentAm.toFixed(2)} m²)`}</title>
-                                        <circle cx={x} cy={y} r="3.5" fill="#d97706" stroke="#ffffff" strokeWidth="1" />
-                                        <text x={x} y="252" fill="#334155" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{idx}</text>
+                                        <circle cx={x} cy={y} r="3.5" fill={engineeringColor("#d97706")} stroke={engineeringColor("#ffffff")} strokeWidth="1" />
+                                        <text x={x} y="252" fill={engineeringColor("#334155", "text")} fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{idx}</text>
                                       </g>
                                     );
                                   })}
@@ -2518,29 +2522,29 @@ export default function Stage2PreliminaryDesign() {
 
                               {/* 4 Hydrostatic Result Cards */}
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">VOLUME DISPLACEMENT (V)</div>
-                                  <div className="text-xl font-black text-cyan-700 dark:text-cyan-400">{simpsonVolumeM3.toFixed(2)} m³</div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Volume = (h / 3) * Jumlah(Faktor * Luas)</div>
-                                  <div className="text-[9px] text-slate-500 font-mono">h = {stationInterval.toFixed(2)}m | Am = {currentAm.toFixed(2)} m²</div>
+                                <div className="p-3.5 bg-surface-canvas rounded-lg border border-border-default space-y-1">
+                                  <div className="text-text-secondary text-xs font-semibold tracking-normal">VOLUME DISPLACEMENT (V)</div>
+                                  <div className="text-xl font-semibold text-accent-primary">{simpsonVolumeM3.toFixed(2)} m³</div>
+                                  <div className="text-xs text-text-secondary font-mono">Volume = (h / 3) * Jumlah(Faktor * Luas)</div>
+                                  <div className="text-xs text-text-secondary font-mono">h = {stationInterval.toFixed(2)}m | Am = {currentAm.toFixed(2)} m²</div>
                                 </div>
-                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">TONASE DISPLACEMENT (Δ)</div>
-                                  <div className="text-xl font-black text-emerald-700 dark:text-emerald-400">{simpsonDisplacementTon.toFixed(2)} Ton</div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Displacement = Volume * 1.025</div>
-                                  <div className="text-[9px] text-slate-500 font-mono">Massa Jenis Air Laut = 1.025 ton/m³</div>
+                                <div className="p-3.5 bg-surface-canvas rounded-lg border border-border-default space-y-1">
+                                  <div className="text-text-secondary text-xs font-semibold tracking-normal">TONASE DISPLACEMENT (Δ)</div>
+                                  <div className="text-xl font-semibold text-status-success">{simpsonDisplacementTon.toFixed(2)} Ton</div>
+                                  <div className="text-xs text-text-secondary font-mono">Displacement = Volume * 1.025</div>
+                                  <div className="text-xs text-text-secondary font-mono">Massa Jenis Air Laut = 1.025 ton/m³</div>
                                 </div>
-                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">KOEFISIEN PRISMA (CP)</div>
-                                  <div className="text-xl font-black text-amber-700 dark:text-amber-400">{calculatedCp.toFixed(3)}</div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">Cp = Volume / (Lbp * Am)</div>
-                                  <div className="text-[9px] text-slate-500 font-mono">Am = B x T x Cm ({currentAm.toFixed(2)} m²)</div>
+                                <div className="p-3.5 bg-surface-canvas rounded-lg border border-border-default space-y-1">
+                                  <div className="text-text-secondary text-xs font-semibold tracking-normal">KOEFISIEN PRISMA (CP)</div>
+                                  <div className="text-xl font-semibold text-status-warning">{calculatedCp.toFixed(3)}</div>
+                                  <div className="text-xs text-text-secondary font-mono">Cp = Volume / (Lbp * Am)</div>
+                                  <div className="text-xs text-text-secondary font-mono">Am = B x T x Cm ({currentAm.toFixed(2)} m²)</div>
                                 </div>
-                                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 shadow-2xs">
-                                  <div className="text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">TITIK BERAT LCB (DARI AP)</div>
-                                  <div className="text-xl font-black text-slate-900 dark:text-white">{calculatedLcbM.toFixed(2)} m</div>
-                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">LCB = Total_Momen / Total_Luas</div>
-                                  <div className="text-[9px] text-slate-500 font-mono">({lcbPctLbp >= 0 ? `+${lcbPctLbp.toFixed(2)}%` : `${lcbPctLbp.toFixed(2)}%`} dari Midship)</div>
+                                <div className="p-3.5 bg-surface-canvas rounded-lg border border-border-default space-y-1">
+                                  <div className="text-text-secondary text-xs font-semibold tracking-normal">TITIK BERAT LCB (DARI AP)</div>
+                                  <div className="text-xl font-semibold text-text-primary">{calculatedLcbM.toFixed(2)} m</div>
+                                  <div className="text-xs text-text-secondary font-mono">LCB = Total_Momen / Total_Luas</div>
+                                  <div className="text-xs text-text-secondary font-mono">({lcbPctLbp >= 0 ? `+${lcbPctLbp.toFixed(2)}%` : `${lcbPctLbp.toFixed(2)}%`} dari Midship)</div>
                                 </div>
                               </div>
                             </div>
@@ -2553,32 +2557,32 @@ export default function Stage2PreliminaryDesign() {
                 </div>
 
                 {/* BOTTOM SECTION: ESTIMASI HAMBATAN & DAYA MESIN (NSP POWERING) */}
-                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 sm:p-6 rounded-2xl space-y-6 shadow-xs dark:shadow-2xl">
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
+                <div className="bg-surface-primary border border-border-default p-5 sm:p-6 rounded-lg space-y-6">
+                  <h3 className="text-base font-semibold text-text-primary flex items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary">
                       <Activity size={18} />
                     </div>
                     <span>2. Perhitungan Estimasi Daya Mesin (NSP Powering & Resistance)</span>
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-sm text-text-secondary leading-relaxed">
                     Estimasi daya NSP (Navy Sparrows Point) menghitung daya EHP / BHP bersih berdasarkan korelasi koefisien kepenuhan Cb ({designData.cb}), Froude number ({designData.froude_number}), dan target kecepatan dinas Vs ({designData.service_speed_knots || 12} Knot).
                   </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 dark:bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-inner">
-                    <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-xl text-center space-y-1 shadow-2xs">
-                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Daya Hambatan Bersih (EHP)</div>
-                      <div className="text-2xl font-black font-mono text-cyan-700 dark:text-cyan-400">{designData.ehp_kw?.toFixed(2) || "0.0"} kW</div>
-                      <div className="text-[10px] font-mono text-slate-500">{(designData.ehp_kw / 0.7457).toFixed(1)} HP</div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-surface-canvas p-5 sm:p-6 rounded-lg border border-border-default">
+                    <div className="p-4 bg-surface-primary border border-border-default rounded-lg text-center space-y-1">
+                      <div className="text-xs font-medium text-text-secondary">Daya Hambatan Bersih (EHP)</div>
+                      <div className="text-2xl font-semibold font-mono text-accent-primary">{designData.ehp_kw?.toFixed(2) || "0.0"} kW</div>
+                      <div className="text-xs font-mono text-text-secondary">{(designData.ehp_kw / 0.7457).toFixed(1)} HP</div>
                     </div>
-                    <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-xl text-center space-y-1 shadow-2xs">
-                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Efisiensi Propulsi (&eta;p)</div>
-                      <div className="text-2xl font-black font-mono text-slate-900 dark:text-white">{designData.propulsive_efficiency || "0.55"}</div>
-                      <div className="text-[10px] text-slate-500">Estimasi Efisiensi Lambung & Propeller</div>
+                    <div className="p-4 bg-surface-primary border border-border-default rounded-lg text-center space-y-1">
+                      <div className="text-xs font-medium text-text-secondary">Efisiensi Propulsi (&eta;p)</div>
+                      <div className="text-2xl font-semibold font-mono text-text-primary">{designData.propulsive_efficiency || "0.55"}</div>
+                      <div className="text-xs text-text-secondary">Estimasi Efisiensi Lambung & Propeller</div>
                     </div>
-                    <div className="p-4 bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 rounded-xl text-center space-y-1 shadow-2xs">
-                      <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Daya Poros Mesin (BHP)</div>
-                      <div className="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400">{designData.bhp_kw?.toFixed(2) || "0.0"} kW</div>
-                      <div className="text-[10px] font-mono text-slate-500">Termasuk Sea Margin {designData.sea_margin_percent}%</div>
+                    <div className="p-4 bg-surface-primary border border-border-default rounded-lg text-center space-y-1">
+                      <div className="text-xs font-medium text-text-secondary">Daya Poros Mesin (BHP)</div>
+                      <div className="text-2xl font-semibold font-mono text-status-success">{designData.bhp_kw?.toFixed(2) || "0.0"} kW</div>
+                      <div className="text-xs font-mono text-text-secondary">Termasuk Sea Margin {designData.sea_margin_percent}%</div>
                     </div>
                   </div>
                 </div>
@@ -2587,16 +2591,16 @@ export default function Stage2PreliminaryDesign() {
 
             {activeTab === "ai" && (
               <div className="space-y-0 max-w-7xl mx-auto">
-                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 p-5 rounded-2xl flex flex-col space-y-4 shadow-xs dark:shadow-2xl" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2.5">
-                    <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-600/20 border border-blue-200 dark:border-blue-500/30 text-blue-600 dark:text-blue-400">
+                <div className="bg-surface-primary border border-border-default p-5 rounded-lg flex flex-col space-y-4" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
+                  <h3 className="text-base font-semibold text-text-primary flex items-center space-x-2.5">
+                    <div className="p-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary">
                       <Cpu size={18} />
                     </div>
                     <span>AI Design Companion (Stage 2 Explainer)</span>
                   </h3>
                   {/* Section Explanation Presets */}
-                  <div className="space-y-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 block">
+                  <div className="space-y-2 border-b border-border-default pb-3">
+                    <span className="text-xs font-mono font-semibold tracking-normal text-text-secondary block">
                       Pilih Section Modul Pra-Rancangan untuk Penjelasan AI:
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -2610,7 +2614,7 @@ export default function Stage2PreliminaryDesign() {
                           key={pidx}
                           onClick={() => handleAskAI(preset.query)}
                           disabled={aiLoading}
-                          className="py-1.5 px-3 bg-slate-50 hover:bg-blue-50 dark:bg-slate-950/80 dark:hover:bg-blue-600/20 border border-slate-200 hover:border-blue-300 dark:border-slate-800 dark:hover:border-blue-500/40 text-slate-700 hover:text-blue-700 dark:text-slate-300 dark:hover:text-cyan-300 rounded-xl text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer text-left shadow-2xs"
+                          className="py-1.5 px-3 bg-surface-canvas hover:bg-surface-selected border border-border-default hover:border-border-default text-text-primary hover:text-accent-primary rounded-lg text-sm font-semibold transition-colors  disabled:opacity-50 cursor-pointer text-left"
                         >
                           {preset.label}
                         </button>
@@ -2619,14 +2623,14 @@ export default function Stage2PreliminaryDesign() {
                   </div>
 
                   {/* Chat logs */}
-                  <div className="flex-1 border border-slate-200 dark:border-slate-800/80 rounded-2xl bg-slate-50 dark:bg-slate-950/80 p-4 overflow-y-auto space-y-3 no-scrollbar shadow-inner" style={{ minHeight: 0 }}>
+                  <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex-1 border border-border-default rounded-lg bg-surface-canvas p-4 overflow-y-auto space-y-3 " style={{ minHeight: 0 }}>
                     {aiChat.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 space-y-3 p-6">
-                        <Cpu size={32} className="text-blue-500/60 animate-pulse" />
+                      <div className="h-full flex flex-col items-center justify-center text-center text-text-secondary space-y-3 p-6">
+                        <Cpu size={32} className="text-accent-primary animate-pulse" />
                         <div>
-                          <p className="text-xs font-bold text-slate-900 dark:text-white">AI Stage 2 Design Explainer</p>
-                          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 max-w-md leading-relaxed">
-                            Klik salah satu tombol <span className="text-cyan-700 dark:text-cyan-400 font-semibold font-mono">Pilih Section Modul</span> di atas untuk mendapatkan rincian teknis hidrostatik (Alexander Cb, LWT, NSP Powering, GM Stabilitas). Setelah itu Anda dapat mengajukan pertanyaan lanjutan!
+                          <p className="text-sm font-semibold text-text-primary">AI Stage 2 Design Explainer</p>
+                          <p className="text-xs text-text-secondary mt-1 max-w-md leading-relaxed">
+                            Klik salah satu tombol <span className="text-accent-primary font-semibold font-mono">Pilih Section Modul</span> di atas untuk mendapatkan rincian teknis hidrostatik (Alexander Cb, LWT, NSP Powering, GM Stabilitas). Setelah itu Anda dapat mengajukan pertanyaan lanjutan!
                           </p>
                         </div>
                       </div>
@@ -2634,37 +2638,37 @@ export default function Stage2PreliminaryDesign() {
                       aiChat.map((msg, idx) => (
                         <div
                           key={idx}
-                          className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                          className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} `}
                         >
                           <div
-                            className={`max-w-2xl p-4 rounded-2xl text-xs leading-relaxed shadow-md ${
+                            className={`max-w-2xl p-4 rounded-lg text-sm leading-relaxed ${
                               msg.sender === "user"
-                                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none border border-blue-400/30"
+                                ? "text-on-accent rounded-tr-none border border-border-default bg-accent-primary"
                                 : msg.blocked
-                                ? "bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/50 text-rose-800 dark:text-rose-300 rounded-tl-none"
-                                : "bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none whitespace-pre-wrap shadow-2xs"
-                            }`}
+                                ? "bg-status-danger-subtle border border-status-danger-border text-status-danger rounded-tl-none"
+                                : "bg-surface-primary border border-border-default text-text-primary rounded-tl-none whitespace-pre-wrap"
+                            } `}
                           >
-                            <p className="font-semibold mb-1.5 opacity-70 text-[10px] uppercase font-mono tracking-wider">
+                            <p className="font-semibold mb-1.5 opacity-70 text-xs font-mono tracking-normal">
                               {msg.sender === "user" ? "Perancang" : "AI Asisten"}
                             </p>
-                            <div className="space-y-2 text-slate-800 dark:text-slate-200">
+                            <div className="space-y-2 text-text-primary">
                               {msg.text.split("\n").filter(l => l.trim() !== "").map((line, lidx) => {
                                 const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                                 
                                 if (line.startsWith("# ")) {
-                                  return <h1 key={lidx} className="text-sm font-bold text-cyan-700 dark:text-cyan-300 mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("# ", "") }} />;
+                                  return <h1 key={lidx} className="text-sm font-semibold text-accent-primary mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("# ", "") }} />;
                                 }
                                 if (line.startsWith("## ")) {
-                                  return <h2 key={lidx} className="text-xs font-bold text-cyan-700 dark:text-cyan-300 mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("## ", "") }} />;
+                                  return <h2 key={lidx} className="text-sm font-semibold text-accent-primary mt-2 mb-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("## ", "") }} />;
                                 }
                                 if (line.startsWith("### ")) {
-                                  return <h3 key={lidx} className="text-xs font-semibold text-slate-900 dark:text-slate-100 mt-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("### ", "") }} />;
+                                  return <h3 key={lidx} className="text-sm font-semibold text-text-primary mt-1" dangerouslySetInnerHTML={{ __html: formattedLine.replace("### ", "") }} />;
                                 }
                                 if (line.trim().startsWith("- ") || line.trim().startsWith("* ")) {
                                   return (
                                     <div key={lidx} className="flex items-start space-x-2 pl-2 my-0.5">
-                                      <span className="text-cyan-600 dark:text-cyan-400 font-bold">•</span>
+                                      <span className="text-accent-primary font-semibold">•</span>
                                       <span dangerouslySetInnerHTML={{ __html: formattedLine.replace(/^[-*]\s+/, "") }} />
                                     </div>
                                   );
@@ -2680,8 +2684,8 @@ export default function Stage2PreliminaryDesign() {
                     )}
                     {aiLoading && (
                       <div className="flex justify-start">
-                        <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800/80 p-3.5 rounded-2xl rounded-tl-none text-xs text-slate-600 dark:text-slate-400 flex items-center space-x-2 shadow-2xs">
-                          <RefreshCw className="animate-spin text-blue-600 dark:text-blue-400" size={14} />
+                        <div className="bg-surface-primary border border-border-default p-3.5 rounded-lg rounded-tl-none text-sm text-text-secondary flex items-center space-x-2">
+                          <RefreshCw className="animate-spin text-accent-primary" size={14} />
                           <span>AI is analyzing project data...</span>
                         </div>
                       </div>
@@ -2690,7 +2694,7 @@ export default function Stage2PreliminaryDesign() {
 
                   {/* Message input */}
                   <div className="flex space-x-2.5">
-                    <input
+                    <input aria-label="Ask a question regarding preliminary ship design..."
                       type="text"
                       value={aiQuestion}
                       onChange={(e) => setAiQuestion(e.target.value)}
@@ -2698,12 +2702,12 @@ export default function Stage2PreliminaryDesign() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleAskAI();
                       }}
-                      className="flex-1 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-xl py-2.5 px-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all font-sans shadow-2xs"
+                      className="flex-1 bg-surface-primary border border-border-default rounded-lg py-2.5 px-4 text-sm text-text-primary placeholder-text-tertiary outline-none focus:border-border-default focus:ring-2 focus:ring-focus-ring transition-colors font-sans"
                     />
                     <button
                       onClick={() => handleAskAI()}
                       disabled={aiLoading || !aiQuestion.trim()}
-                      className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-semibold text-xs flex items-center space-x-1.5 shadow-md shadow-blue-600/20 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2.5 text-on-accent rounded-lg font-semibold text-sm flex items-center space-x-1.5  cursor-pointer disabled:opacity-50 bg-accent-primary"
                     >
                       <Send size={14} />
                       <span>Send</span>
@@ -2718,28 +2722,28 @@ export default function Stage2PreliminaryDesign() {
 
       {/* Sleek Floating Toast Notification (replaces blocking browser alerts) */}
       {toast && toast.show && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-5 duration-300 pointer-events-auto">
+        <div role="status" className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-50 pointer-events-auto">
           <div
-            className={`px-4 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border flex items-center space-x-3.5 max-w-md ${
+            className={`px-4 py-3 rounded-lg border flex items-center space-x-3.5 max-w-md ${
               toast.type === "success"
-                ? "bg-slate-900/95 border-emerald-500/50 text-white ring-1 ring-emerald-500/30"
+                ? "bg-surface-primary border-status-success-border text-text-primary ring-1 ring-status-success"
                 : toast.type === "error"
-                ? "bg-slate-900/95 border-rose-500/50 text-white ring-1 ring-rose-500/30"
+                ? "bg-surface-primary border-status-danger-border text-text-primary ring-1 ring-status-danger"
                 : toast.type === "warning"
-                ? "bg-slate-900/95 border-amber-500/50 text-white ring-1 ring-amber-500/30"
-                : "bg-slate-900/95 border-blue-500/50 text-white ring-1 ring-blue-500/30"
-            }`}
+                ? "bg-surface-primary border-status-warning-border text-text-primary ring-1 ring-status-warning"
+                : "bg-surface-primary border-border-default text-text-primary ring-1 ring-focus-ring"
+            } `}
           >
             <div
-              className={`p-2 rounded-xl shrink-0 ${
+              className={`p-2 rounded-lg shrink-0 ${
                 toast.type === "success"
-                  ? "bg-emerald-500/20 text-emerald-400"
+                  ? "bg-status-success-subtle text-status-success"
                   : toast.type === "error"
-                  ? "bg-rose-500/20 text-rose-400"
+                  ? "bg-status-danger-subtle text-status-danger"
                   : toast.type === "warning"
-                  ? "bg-amber-500/20 text-amber-400"
-                  : "bg-blue-500/20 text-blue-400"
-              }`}
+                  ? "bg-status-warning-subtle text-status-warning"
+                  : "bg-surface-selected text-accent-primary"
+              } `}
             >
               {toast.type === "success" && <CheckCircle size={20} />}
               {toast.type === "error" && <AlertCircle size={20} />}
@@ -2747,12 +2751,13 @@ export default function Stage2PreliminaryDesign() {
               {toast.type === "info" && <Info size={20} />}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-white tracking-wide">{toast.title}</h4>
-              <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">{toast.message}</p>
+              <h4 className="text-sm font-semibold text-text-primary tracking-normal">{toast.title}</h4>
+              <p className="text-xs text-text-primary mt-0.5 leading-relaxed">{toast.message}</p>
             </div>
             <button
+              aria-label="Dismiss notification"
               onClick={() => setToast((prev) => (prev ? { ...prev, show: false } : null))}
-              className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              className="p-1 text-text-secondary hover:text-text-primary rounded-lg hover:bg-surface-secondary transition-colors cursor-pointer shrink-0"
             >
               <X size={14} />
             </button>

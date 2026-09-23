@@ -1,5 +1,7 @@
 "use client";
 
+import { engineeringColor } from "./EngineeringPalette";
+
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
@@ -686,20 +688,20 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
   };
 
   return (
-    <div className="space-y-6 font-sans text-slate-900 dark:text-slate-100">
+    <div className="min-w-0 space-y-8 font-sans text-text-primary">
       {/* Header Banner: Title & Educational Directives */}
-      <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl backdrop-blur-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+      <div className="border-b border-border-default pb-5 space-y-4">
+        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-5">
           <div className="flex-1 min-w-0">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 shrink-0">
+              <div className="text-text-secondary shrink-0">
                 <Compass size={20} />
               </div>
               <div className="min-w-0 flex-1">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-base sm:text-lg font-semibold text-text-primary tracking-tight">
                   {language === "en" ? "Side Profile & Hull Profile Studio (NURBS Spline)" : "Studio Tampak Samping & Profil Lambung (NURBS Spline)"}
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                <p className="text-sm text-text-secondary mt-0.5 leading-relaxed">
                   {language === "en"
                     ? "Design bow, stern, baseline, and deck sheer curves with interactive control points."
                     : "Perancangan kurva linggi haluan (bow), linggi buritan (stern), garis dasar (baseline), dan sheer geladak dengan titik kontrol interaktif."}
@@ -710,12 +712,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
           {/* Quick Preset Selector & Save Button */}
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <div className="flex items-center space-x-2 bg-slate-100 dark:bg-slate-900/80 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Preset:</span>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="text-sm text-text-secondary font-medium">Preset:</span>
               <select
+                aria-label="Hull profile preset"
                 value={selectedPreset}
                 onChange={(e) => applyPreset(e.target.value)}
-                className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-cyan-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer font-medium shadow-sm"
+                className="bg-surface-primary border border-border-default text-text-primary text-sm rounded-md px-2.5 py-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default cursor-pointer font-medium min-h-10"
               >
                 <option value="cargo">General Cargo (Raked Bow + Transom)</option>
                 <option value="tanker">Tanker / Bulk (Bulbous Bow + Cruiser)</option>
@@ -727,17 +730,17 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <button
               onClick={handleSaveProfile}
               disabled={isSaving}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 shadow-lg cursor-pointer ${
+              className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors flex items-center space-x-2 cursor-pointer ${
                 saveSuccess
-                  ? "bg-emerald-600 text-white border border-emerald-400 shadow-emerald-900/40"
-                  : "bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border border-cyan-400/30 shadow-cyan-900/20 active:scale-95"
-              }`}
+                  ? "bg-status-success text-on-accent border border-status-success-border min-h-9"
+                  : "text-on-accent border border-border-default bg-accent-primary min-h-9"
+              } `}
               title="Save the side profile (bow, stern & sheer control points) to the database"
-            >
+             aria-label="Save the side profile (bow, stern & sheer control points) to the database">
               {isSaving ? (
-                <RotateCcw size={14} className="animate-spin text-white" />
+                <RotateCcw size={14} className="animate-spin text-text-primary" />
               ) : saveSuccess ? (
-                <CheckCircle2 size={14} className="text-white" />
+                <CheckCircle2 size={14} className="text-current" />
               ) : (
                 <Save size={14} />
               )}
@@ -749,7 +752,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                   : language === "en" ? "Save Side Profile" : "Simpan Profil Samping"}
               </span>
               {lastSavedTime && !isSaving && !saveSuccess && (
-                <span className="text-[10px] font-mono opacity-75 ml-0.5">({lastSavedTime})</span>
+                <span className="text-xs font-mono opacity-75 ml-0.5">({lastSavedTime})</span>
               )}
             </button>
           </div>
@@ -757,68 +760,68 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
       </div>
 
       {/* Main Studio Work Area */}
-      <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-4 md:p-6 space-y-4 shadow-sm dark:shadow-2xl relative overflow-hidden backdrop-blur-md">
+      <div className="min-w-0 space-y-4 relative">
         {/* Top Control Bar for View Toggles & Add Point Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs border-b border-slate-200 dark:border-slate-800/80 pb-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm border-b border-border-default pb-3">
           {/* Left: View Layer Switches (Unified CAD Layer Toggles) */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowStations(!showStations)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 showStations
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
-                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showStations ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                  ? "bg-surface-secondary text-text-primary border-border-default min-h-9"
+                  : "bg-surface-primary border-border-default text-text-secondary hover:text-text-primary hover:bg-surface-canvas min-h-9"
+              } `}
+             aria-pressed={showStations}>
+              <span aria-hidden="true" className={`relative h-5 w-9 shrink-0 rounded-full border border-border-strong after:absolute after:left-0.5 after:top-0.5 after:h-3.5 after:w-3.5 after:rounded-full after:bg-surface-primary after:content-[''] ${showStations ? "bg-accent-primary after:translate-x-4" : "bg-surface-inset"} `} />
               <span>St. 0-20</span>
             </button>
 
             <button
               onClick={() => setShowWaterlines(!showWaterlines)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 showWaterlines
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
-                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showWaterlines ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                  ? "bg-surface-secondary text-text-primary border-border-default min-h-9"
+                  : "bg-surface-primary border-border-default text-text-secondary hover:text-text-primary hover:bg-surface-canvas min-h-9"
+              } `}
+             aria-pressed={showWaterlines}>
+              <span aria-hidden="true" className={`relative h-5 w-9 shrink-0 rounded-full border border-border-strong after:absolute after:left-0.5 after:top-0.5 after:h-3.5 after:w-3.5 after:rounded-full after:bg-surface-primary after:content-[''] ${showWaterlines ? "bg-accent-primary after:translate-x-4" : "bg-surface-inset"} `} />
               <span>Waterlines (WL / DWL)</span>
             </button>
 
             <button
               onClick={() => setShowPmbZone(!showPmbZone)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 showPmbZone
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
-                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showPmbZone ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                  ? "bg-surface-secondary text-text-primary border-border-default min-h-9"
+                  : "bg-surface-primary border-border-default text-text-secondary hover:text-text-primary hover:bg-surface-canvas min-h-9"
+              } `}
+             aria-pressed={showPmbZone}>
+              <span aria-hidden="true" className={`relative h-5 w-9 shrink-0 rounded-full border border-border-strong after:absolute after:left-0.5 after:top-0.5 after:h-3.5 after:w-3.5 after:rounded-full after:bg-surface-primary after:content-[''] ${showPmbZone ? "bg-accent-primary after:translate-x-4" : "bg-surface-inset"} `} />
               <span>Zona PMB</span>
             </button>
 
             <button
               onClick={() => setShowControlNodes(!showControlNodes)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 showControlNodes
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
-                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showControlNodes ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                  ? "bg-surface-secondary text-text-primary border-border-default min-h-9"
+                  : "bg-surface-primary border-border-default text-text-secondary hover:text-text-primary hover:bg-surface-canvas min-h-9"
+              } `}
+             aria-pressed={showControlNodes}>
+              <span aria-hidden="true" className={`relative h-5 w-9 shrink-0 rounded-full border border-border-strong after:absolute after:left-0.5 after:top-0.5 after:h-3.5 after:w-3.5 after:rounded-full after:bg-surface-primary after:content-[''] ${showControlNodes ? "bg-accent-primary after:translate-x-4" : "bg-surface-inset"} `} />
               <span>Control Points (Nodes)</span>
             </button>
 
             <button
               onClick={() => setShowWaterlineShading(!showWaterlineShading)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-md border text-sm font-medium transition-colors flex items-center space-x-1.5 cursor-pointer ${
                 showWaterlineShading
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-300 dark:border-slate-600 shadow-xs"
-                  : "bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40"
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors ${showWaterlineShading ? "bg-cyan-500" : "bg-slate-300 dark:bg-slate-600"}`} />
+                  ? "bg-surface-secondary text-text-primary border-border-default min-h-9"
+                  : "bg-surface-primary border-border-default text-text-secondary hover:text-text-primary hover:bg-surface-canvas min-h-9"
+              } `}
+             aria-pressed={showWaterlineShading}>
+              <span aria-hidden="true" className={`relative h-5 w-9 shrink-0 rounded-full border border-border-strong after:absolute after:left-0.5 after:top-0.5 after:h-3.5 after:w-3.5 after:rounded-full after:bg-surface-primary after:content-[''] ${showWaterlineShading ? "bg-accent-primary after:translate-x-4" : "bg-surface-inset"} `} />
               <span>Draft Shading (T)</span>
             </button>
           </div>
@@ -826,22 +829,22 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
           {/* Right: Add Point Mode & Reset Controls */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Add Point Toolbar Toggle & Category Pill */}
-            <div className="flex items-center space-x-1.5 bg-slate-100/80 dark:bg-slate-900/80 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+            <div className="flex items-center space-x-1.5 bg-surface-secondary p-1 rounded-lg border border-border-default">
               <button
                 onClick={() => setIsAddMode(!isAddMode)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center space-x-1.5 cursor-pointer ${
                   isAddMode
-                    ? "bg-cyan-600 text-white shadow-sm border border-cyan-500"
-                    : "bg-white hover:bg-slate-50 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
-                }`}
+                    ? "bg-accent-primary text-on-accent border border-border-default min-h-9"
+                    : "bg-surface-primary hover:bg-surface-canvas text-text-primary border border-border-default min-h-9"
+                } `}
                 title="Klik untuk mengaktifkan mode penambahan titik baru pada profil kapal"
-              >
+               aria-pressed={isAddMode} aria-label="Klik untuk mengaktifkan mode penambahan titik baru pada profil kapal">
                 <Plus size={13} className={isAddMode ? "rotate-45 transition-transform" : "transition-transform"} />
                 <span>{isAddMode ? "Close Add Mode" : "Add Control Point"}</span>
               </button>
 
               {isAddMode && (
-                <div className="flex items-center space-x-1 pl-1.5 border-l border-slate-300 dark:border-slate-700/80">
+                <div className="flex items-center space-x-1 pl-1.5 border-l border-border-default">
                   {(
                     [
                       { key: "auto", label: "Otomatis", desc: "Deteksi otomatis berdasarkan posisi klik" },
@@ -854,12 +857,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                       key={cat.key}
                       onClick={() => setAddCategory(cat.key)}
                       title={cat.desc}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all cursor-pointer ${
+                      className={`px-2.5 py-1 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                         addCategory === cat.key
-                          ? "bg-cyan-600 text-white shadow-xs border border-cyan-500"
-                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
-                      }`}
-                    >
+                          ? "bg-accent-primary text-on-accent border border-border-default min-h-9"
+                          : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary min-h-9"
+                      } `}
+                     aria-label={cat.desc}>
                       <span>{cat.label}</span>
                     </button>
                   ))}
@@ -869,9 +872,9 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
             <button
               onClick={() => applyPreset(selectedPreset)}
-              className="px-3 py-1.5 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
+              className="px-3 py-1.5 bg-surface-primary hover:bg-surface-canvas border border-border-default text-text-secondary hover:text-text-primary rounded-md text-sm font-medium flex items-center space-x-1.5 transition-colors cursor-pointer min-h-9"
               title="Reset ke posisi default preset"
-            >
+             aria-label="Reset ke posisi default preset">
               <RotateCcw size={13} />
               <span>Reset Points</span>
             </button>
@@ -879,123 +882,40 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
         </div>
 
         {/* Interactive SVG Profile View Canvas */}
-        <div className="w-full h-[540px] bg-slate-50 dark:bg-[#01040a] rounded-xl border border-slate-300 dark:border-slate-800/80 relative overflow-hidden flex items-center justify-center select-none shadow-inner">
+        <div className="atelier-profile-canvas mx-auto h-[540px] bg-surface-engineering rounded-lg border border-border-default relative overflow-hidden flex items-center justify-center select-none">
           {/* Add Point Active Center Banner */}
           {isAddMode && (
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-slate-900/95 dark:bg-slate-950/95 border border-cyan-500/60 text-slate-200 px-4 py-2 rounded-xl text-xs flex items-center space-x-3 shadow-2xl backdrop-blur-md animate-fadeIn">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="font-semibold text-cyan-300">Add Point Mode:</span>
-              <span className="text-slate-300 text-[11px]">
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-surface-primary border border-border-default text-text-primary px-4 py-2 rounded-lg text-sm flex items-center space-x-3">
+              <span className="w-2 h-2 rounded-full bg-surface-selected" />
+              <span className="font-semibold text-accent-primary">Add Point Mode:</span>
+              <span className="text-text-primary text-xs">
                 Klik pada garis profil untuk menempatkan titik{" "}
-                <span className="font-semibold text-white font-mono">
+                <span className="font-semibold text-text-primary font-mono">
                   ({addCategory === "auto" ? "Automatic" : addCategory === "bow" ? "Bow" : addCategory === "stern" ? "Stern" : "Sheer"})
                 </span>
               </span>
               <button
                 onClick={() => setIsAddMode(false)}
-                className="px-2.5 py-1 bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/50 text-cyan-200 rounded-lg text-[11px] font-medium cursor-pointer transition-all ml-1"
+                className="px-2.5 py-1 bg-surface-selected hover:bg-accent-hover border border-border-default text-accent-primary rounded-md text-sm font-medium cursor-pointer transition-colors ml-1 min-h-9"
               >
                 Selesai
               </button>
             </div>
           )}
 
-          {/* Floating Selected Node Quick Inspector (Bottom-Left) */}
-          {(() => {
-            const selectedPt = allPoints.find((p) => p.id === selectedPointId);
-            if (!selectedPt) return null;
-            const isLocked = selectedPt.locked || selectedPt.id === "st-4" || selectedPt.id === "bw-4";
-            return (
-              <div className="absolute bottom-3 left-3 z-30 bg-white/95 dark:bg-slate-950/95 border border-slate-300 dark:border-slate-700/80 rounded-xl p-2.5 shadow-2xl backdrop-blur-md flex items-center space-x-3 text-xs font-mono animate-fadeIn">
-                <div className="flex items-center space-x-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${
-                    selectedPt.category === "bow"
-                      ? "bg-emerald-500"
-                      : selectedPt.category === "stern"
-                      ? "bg-orange-500"
-                      : "bg-amber-500"
-                  }`} />
-                  <div className="flex flex-col">
-                    <span className="font-bold text-slate-900 dark:text-white text-[11px] truncate max-w-[140px]">{selectedPt.name}</span>
-                    <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase">
-                      {selectedPt.category === "bow" ? "Bow" : selectedPt.category === "stern" ? "Stern" : "Sheer"}
-                      {isLocked && " • Statis"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="h-6 w-px bg-slate-200 dark:bg-slate-800" />
-
-                {/* X input */}
-                <div className="flex items-center space-x-1">
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">X:</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    disabled={isLocked}
-                    value={selectedPt.x}
-                    onChange={(e) => handleNumericUpdate(selectedPt.id, "x", parseFloat(e.target.value) || 0)}
-                    className={`w-16 px-1.5 py-0.5 rounded border text-center font-bold text-[11px] ${
-                      isLocked
-                        ? "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                        : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-cyan-300 focus:border-cyan-500 shadow-sm"
-                    }`}
-                  />
-                  <span className="text-slate-400 dark:text-slate-500 text-[10px]">m</span>
-                </div>
-
-                {/* Y input */}
-                <div className="flex items-center space-x-1">
-                  <span className="text-slate-500 dark:text-slate-400 text-[10px]">Y:</span>
-                  <input
-                    type="number"
-                    step="0.1"
-                    disabled={isLocked}
-                    value={selectedPt.y}
-                    onChange={(e) => handleNumericUpdate(selectedPt.id, "y", parseFloat(e.target.value) || 0)}
-                    className={`w-16 px-1.5 py-0.5 rounded border text-center font-bold text-[11px] ${
-                      isLocked
-                        ? "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                        : "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-cyan-300 focus:border-cyan-500 shadow-sm"
-                    }`}
-                  />
-                  <span className="text-slate-400 dark:text-slate-500 text-[10px]">m</span>
-                </div>
-
-                {!isLocked && (
-                  <button
-                    onClick={() => handleDeletePoint(selectedPt.id)}
-                    className="p-1.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-white hover:bg-red-50 dark:hover:bg-red-950/80 rounded-lg transition-colors cursor-pointer"
-                    title="Delete this control point"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setSelectedPointId(null)}
-                  className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                    title="Close Inspector"
-                >
-                  <X size={12} />
-                </button>
-              </div>
-            );
-          })()}
-
           {/* Coordinate HUD (Live Meter Tracker) */}
-          <div className="absolute bottom-3 right-3 z-20 bg-white/95 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800/90 rounded-lg px-3 py-1.5 text-[11px] font-mono text-slate-600 dark:text-slate-300 flex items-center space-x-2.5 pointer-events-none backdrop-blur-md shadow-xl">
-            <Crosshair size={13} className="text-cyan-600 dark:text-cyan-400" />
-            <span>X: <strong className="text-slate-900 dark:text-white">{hoverCoords ? `${hoverCoords.x.toFixed(2)} m` : "--"}</strong></span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>Y: <strong className="text-slate-900 dark:text-white">{hoverCoords ? `${hoverCoords.y.toFixed(2)} m` : "--"}</strong></span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>Station: <strong className="text-cyan-600 dark:text-cyan-400">{hoverCoords ? (hoverCoords.x / (LBP / 20)).toFixed(1) : "--"}</strong></span>
+          <div className="absolute bottom-3 right-3 z-20 bg-surface-primary border border-border-default rounded-lg px-3 py-1.5 text-xs font-mono text-text-secondary flex items-center space-x-2.5 pointer-events-none">
+            <Crosshair size={13} className="text-accent-primary" />
+            <span>X: <strong className="text-text-primary">{hoverCoords ? `${hoverCoords.x.toFixed(2)} m` : "--"}</strong></span>
+            <span className="text-text-primary">|</span>
+            <span>Y: <strong className="text-text-primary">{hoverCoords ? `${hoverCoords.y.toFixed(2)} m` : "--"}</strong></span>
+            <span className="text-text-primary">|</span>
+            <span>Station: <strong className="text-accent-primary">{hoverCoords ? (hoverCoords.x / (LBP / 20)).toFixed(1) : "--"}</strong></span>
           </div>
 
           <svg
             ref={svgRef}
-            className={`w-full h-full ${isAddMode ? "cursor-crosshair" : "cursor-default"}`}
+            className={`w-full h-full ${isAddMode ? "cursor-crosshair" : "cursor-default"} `}
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
             onDoubleClick={(e) => {
               if (!svgRef.current) return;
@@ -1029,12 +949,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <defs>
               {/* Pattern for Submerged Region */}
               <pattern id="submerged-hatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                <line x1="0" y1="0" x2="0" y2="8" stroke="#0284c7" className="dark:stroke-[#0ea5e9]" strokeWidth="0.8" strokeOpacity="0.3" />
+                <line x1="0" y1="0" x2="0" y2="8" stroke={engineeringColor("#0284c7")} className="" strokeWidth="0.8" strokeOpacity="0.3" />
               </pattern>
 
               {/* Grid Background Pattern */}
               <pattern id="cad-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M 20 0 L 0 0 0 20" fill="none" className="stroke-slate-200 dark:stroke-[#0f172a]" strokeWidth="0.5" />
+                <path d="M 20 0 L 0 0 0 20" fill="none" className="stroke-border-subtle" strokeWidth="0.5" />
               </pattern>
             </defs>
 
@@ -1049,14 +969,14 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                   y={toSvgY(H * 1.15)}
                   width={toSvgX(pmbEndX) - toSvgX(pmbStartX)}
                   height={toSvgY(0) - toSvgY(H * 1.15)}
-                  className="fill-purple-500/10 dark:fill-purple-500/10 stroke-purple-500/50 dark:stroke-purple-400/40"
+                  className="fill-chart-secondary/10 stroke-chart-secondary/50"
                   strokeWidth="1"
                   strokeDasharray="4,4"
                 />
                 <text
                   x={(toSvgX(pmbStartX) + toSvgX(pmbEndX)) / 2}
                   y={toSvgY(H * 1.1) - 4}
-                  className="fill-purple-700 dark:fill-purple-300"
+                  className="fill-chart-secondary"
                   fontSize="10"
                   fontWeight="bold"
                   textAnchor="middle"
@@ -1086,12 +1006,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y2={y}
                         className={
                           isDwl
-                            ? "stroke-sky-600 dark:stroke-sky-400"
+                            ? "stroke-chart-primary"
                             : isDeck
-                            ? "stroke-amber-500 dark:stroke-yellow-400"
+                            ? "stroke-chart-tertiary"
                             : isBase
-                            ? "stroke-slate-500 dark:stroke-slate-400"
-                            : "stroke-slate-300/80 dark:stroke-slate-800/80"
+                            ? "stroke-text-tertiary"
+                            : "stroke-border-subtle/80"
                         }
                         strokeWidth={isDwl || isDeck || isBase ? 1.5 : 0.6}
                         strokeDasharray={isDwl ? "6,3" : isDeck ? "4,2" : undefined}
@@ -1101,12 +1021,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y={y + 3.5}
                         className={
                           isDwl
-                            ? "fill-sky-700 dark:fill-sky-300 font-bold"
+                            ? "fill-chart-primary font-semibold"
                             : isDeck
-                            ? "fill-amber-600 dark:fill-yellow-400 font-bold"
+                            ? "fill-chart-tertiary font-semibold"
                             : isBase
-                            ? "fill-slate-600 dark:fill-slate-300"
-                            : "fill-slate-400 dark:fill-slate-500"
+                            ? "fill-text-secondary"
+                            : "fill-text-secondary"
                         }
                         fontSize="9.5"
                         fontWeight={isDwl || isDeck ? "bold" : "normal"}
@@ -1127,7 +1047,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         <text
                           x={svgWidth - margin.right + 20}
                           y={y + 3.5}
-                          className={isDwl ? "fill-sky-700 dark:fill-sky-300" : "fill-amber-600 dark:fill-yellow-400"}
+                          className={isDwl ? "fill-chart-primary" : "fill-chart-tertiary"}
                           fontSize="9"
                           fontWeight="bold"
                           textAnchor="start"
@@ -1161,12 +1081,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y2={toSvgY(Math.max(H * 1.15, plotMaxY - 1.0))}
                         className={
                           isAp
-                            ? "stroke-orange-500 dark:stroke-orange-400"
+                            ? "stroke-chart-tertiary"
                             : isFp
-                            ? "stroke-emerald-600 dark:stroke-emerald-400"
+                            ? "stroke-status-success"
                             : isMid
-                            ? "stroke-sky-600 dark:stroke-sky-400"
-                            : "stroke-slate-300/80 dark:stroke-slate-800/80"
+                            ? "stroke-chart-primary"
+                            : "stroke-border-subtle/80"
                         }
                         strokeWidth={isAp || isFp ? 1.5 : isMid ? 1.8 : 0.6}
                         strokeDasharray={isAp || isFp ? "6,2" : isMid ? "5,3" : "2,2"}
@@ -1176,12 +1096,12 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y={toSvgY(0) + 16}
                         className={
                           isAp
-                            ? "fill-orange-600 dark:fill-orange-400 font-bold"
+                            ? "fill-chart-tertiary font-semibold"
                             : isFp
-                            ? "fill-emerald-600 dark:fill-emerald-400 font-bold"
+                            ? "fill-status-success font-semibold"
                             : isMid
-                            ? "fill-sky-600 dark:fill-sky-400 font-bold"
-                            : "fill-slate-500 dark:fill-slate-400"
+                            ? "fill-chart-primary font-semibold"
+                            : "fill-text-secondary"
                         }
                         fontSize={isAp || isFp || isMid ? "9.5" : "9"}
                         fontWeight={isAp || isFp || isMid ? "bold" : "normal"}
@@ -1200,13 +1120,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             width={104}
                             height={15}
                             rx={3}
-                            className="fill-sky-500/15 dark:fill-sky-500/25 stroke-sky-600 dark:stroke-sky-400"
+                            className="fill-chart-primary/15 stroke-chart-primary"
                             strokeWidth={0.8}
                           />
                           <text
                             x={x}
                             y={toSvgY(Math.max(H * 1.15, plotMaxY - 1.0)) - 5}
-                            className="fill-sky-800 dark:fill-sky-200 font-bold font-mono text-[8.5px]"
+                            className="fill-chart-primary font-semibold font-mono text-[8.5px]"
                             textAnchor="middle"
                           >
                             ⊗ Station 10 (Midship)
@@ -1217,11 +1137,11 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                             cx={x}
                             cy={toSvgY(T)}
                             r={6}
-                            className="fill-sky-500/20 dark:fill-sky-500/25 stroke-sky-600 dark:stroke-sky-400"
+                            className="fill-chart-primary/20 stroke-chart-primary"
                             strokeWidth={1.2}
                           />
-                          <line x1={x - 6} y1={toSvgY(T)} x2={x + 6} y2={toSvgY(T)} className="stroke-sky-600 dark:stroke-sky-400" strokeWidth={1} />
-                          <line x1={x} y1={toSvgY(T) - 6} x2={x} y2={toSvgY(T) + 6} className="stroke-sky-600 dark:stroke-sky-400" strokeWidth={1} />
+                          <line x1={x - 6} y1={toSvgY(T)} x2={x + 6} y2={toSvgY(T)} className="stroke-chart-primary" strokeWidth={1} />
+                          <line x1={x} y1={toSvgY(T) - 6} x2={x} y2={toSvgY(T) + 6} className="stroke-chart-primary" strokeWidth={1} />
                         </g>
                       )}
                     </g>
@@ -1261,7 +1181,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
               y1={toSvgY(0)}
               x2={toSvgX(bowSpline[0].x)}
               y2={toSvgY(0)}
-              className="stroke-sky-700 dark:stroke-sky-400"
+              className="stroke-chart-primary"
               strokeWidth="2.5"
             />
 
@@ -1272,7 +1192,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 .map((p) => `L ${toSvgX(p.x)},${toSvgY(p.y)}`)
                 .join(" ")}`}
               fill="none"
-              className="stroke-sky-600 dark:stroke-sky-400"
+              className="stroke-chart-primary"
               strokeWidth="2.5"
             />
 
@@ -1283,7 +1203,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 .map((p) => `L ${toSvgX(p.x)},${toSvgY(p.y)}`)
                 .join(" ")}`}
               fill="none"
-              className="stroke-sky-600 dark:stroke-sky-400"
+              className="stroke-chart-primary"
               strokeWidth="2.5"
             />
 
@@ -1294,7 +1214,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 .map((p) => `L ${toSvgX(p.x)},${toSvgY(p.y)}`)
                 .join(" ")}`}
               fill="none"
-              className="stroke-amber-500 dark:stroke-yellow-400"
+              className="stroke-chart-tertiary"
               strokeWidth="2"
               strokeDasharray="5,2"
             />
@@ -1306,7 +1226,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 <polyline
                   points={sternPoints.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(" ")}
                   fill="none"
-                  className="stroke-slate-400 dark:stroke-slate-600"
+                  className="stroke-text-tertiary"
                   strokeWidth="0.8"
                   strokeDasharray="2,2"
                 />
@@ -1314,7 +1234,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 <polyline
                   points={bowPoints.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(" ")}
                   fill="none"
-                  className="stroke-slate-400 dark:stroke-slate-600"
+                  className="stroke-text-tertiary"
                   strokeWidth="0.8"
                   strokeDasharray="2,2"
                 />
@@ -1322,7 +1242,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                 <polyline
                   points={sheerPoints.map((p) => `${toSvgX(p.x)},${toSvgY(p.y)}`).join(" ")}
                   fill="none"
-                  className="stroke-slate-400 dark:stroke-slate-600"
+                  className="stroke-text-tertiary"
                   strokeWidth="0.8"
                   strokeDasharray="2,2"
                 />
@@ -1369,23 +1289,23 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         r={isLocked ? 11 : isSelected ? 10 : 7}
                         className={
                           isLocked
-                            ? "fill-sky-500/20 dark:fill-sky-500/35"
+                            ? "fill-chart-primary/20"
                             : isDragging
-                            ? "fill-sky-400/40 dark:fill-sky-400/50"
-                            : "fill-white dark:fill-slate-900"
+                            ? "fill-chart-primary/40"
+                            : "fill-surface-engineering"
                         }
-                        stroke={color}
+                        stroke={engineeringColor(color)}
                         strokeWidth={isLocked ? 2.5 : isSelected ? 2.5 : 1.8}
                         pointerEvents="none"
                       />
                       {/* Locked concentric crosshair / indicator */}
                       {isLocked ? (
                         <>
-                          <circle cx={cx} cy={cy} r={6} fill="none" stroke={color} strokeWidth={1.2} strokeDasharray="2,2" pointerEvents="none" />
-                          <circle cx={cx} cy={cy} r={2} fill={color} pointerEvents="none" />
+                          <circle cx={cx} cy={cy} r={6} fill="none" stroke={engineeringColor(color)} strokeWidth={1.2} strokeDasharray="2,2" pointerEvents="none" />
+                          <circle cx={cx} cy={cy} r={2} fill={engineeringColor(color)} pointerEvents="none" />
                         </>
                       ) : (
-                        <circle cx={cx} cy={cy} r={2.5} className="fill-slate-800 dark:fill-white" pointerEvents="none" />
+                        <circle cx={cx} cy={cy} r={2.5} className="fill-text-secondary" pointerEvents="none" />
                       )}
 
                       {/* Coordinates Label */}
@@ -1394,10 +1314,10 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         y={cy - (isLocked ? 13 : 10)}
                         className={
                           isLocked
-                            ? "fill-sky-700 dark:fill-sky-300 font-bold"
+                            ? "fill-chart-primary font-semibold"
                             : isSelected
-                            ? "fill-slate-900 dark:fill-white font-bold"
-                            : "fill-slate-700 dark:fill-slate-300"
+                            ? "fill-text-secondary font-semibold"
+                            : "fill-text-secondary"
                         }
                         fontSize={isLocked ? "9" : "8.5"}
                         fontWeight={isLocked || isSelected ? "bold" : "normal"}
@@ -1420,24 +1340,24 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                       cx={toSvgX(hoverCoords.x)}
                       cy={toSvgY(hoverCoords.y)}
                       r={14}
-                      className="fill-cyan-500/20 dark:fill-cyan-500/25 stroke-cyan-600 dark:stroke-cyan-400"
+                      className="fill-chart-primary/20 stroke-chart-primary"
                       strokeWidth="1.5"
                       strokeDasharray="3,3"
                     />
-                    <circle cx={toSvgX(hoverCoords.x)} cy={toSvgY(hoverCoords.y)} r={3.5} className="fill-cyan-600 dark:fill-cyan-400" />
+                    <circle cx={toSvgX(hoverCoords.x)} cy={toSvgY(hoverCoords.y)} r={3.5} className="fill-chart-primary" />
                     <line
                       x1={toSvgX(hoverCoords.x)}
                       y1={toSvgY(0)}
                       x2={toSvgX(hoverCoords.x)}
                       y2={toSvgY(hoverCoords.y)}
-                      className="stroke-emerald-600/70 dark:stroke-emerald-400/70"
+                      className="stroke-status-success/70"
                       strokeWidth="0.8"
                       strokeDasharray="2,2"
                     />
                     <text
                       x={toSvgX(hoverCoords.x)}
                       y={toSvgY(hoverCoords.y) - 16}
-                      className="fill-emerald-700 dark:fill-emerald-300"
+                      className="fill-status-success"
                       fontSize="9.5"
                       fontWeight="bold"
                       textAnchor="middle"
@@ -1453,20 +1373,20 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             {/* Key Dimension Dimension Arrows & Labels */}
             {/* LBP Dimension */}
             <g key="dim-lbp">
-              <line x1={toSvgX(0)} y1={toSvgY(0) + 32} x2={toSvgX(LBP)} y2={toSvgY(0) + 32} className="stroke-sky-600 dark:stroke-sky-400" strokeWidth="1.2" />
-              <polygon points={`${toSvgX(0)},${toSvgY(0) + 32} ${toSvgX(0) + 6},${toSvgY(0) + 29} ${toSvgX(0) + 6},${toSvgY(0) + 35}`} className="fill-sky-600 dark:fill-sky-400" />
-              <polygon points={`${toSvgX(LBP)},${toSvgY(0) + 32} ${toSvgX(LBP) - 6},${toSvgY(0) + 29} ${toSvgX(LBP) - 6},${toSvgY(0) + 35}`} className="fill-sky-600 dark:fill-sky-400" />
-              <text x={toSvgX(LBP / 2)} y={toSvgY(0) + 44} className="fill-sky-700 dark:fill-sky-300" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              <line x1={toSvgX(0)} y1={toSvgY(0) + 32} x2={toSvgX(LBP)} y2={toSvgY(0) + 32} className="stroke-chart-primary" strokeWidth="1.2" />
+              <polygon points={`${toSvgX(0)},${toSvgY(0) + 32} ${toSvgX(0) + 6},${toSvgY(0) + 29} ${toSvgX(0) + 6},${toSvgY(0) + 35}`} className="fill-chart-primary" />
+              <polygon points={`${toSvgX(LBP)},${toSvgY(0) + 32} ${toSvgX(LBP) - 6},${toSvgY(0) + 29} ${toSvgX(LBP) - 6},${toSvgY(0) + 35}`} className="fill-chart-primary" />
+              <text x={toSvgX(LBP / 2)} y={toSvgY(0) + 44} className="fill-chart-primary" fontSize="10" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                 LBP = {LBP.toFixed(2)} m (Acuan Konstan Desain)
               </text>
             </g>
 
             {/* LOA Dimension (Top) */}
             <g key="dim-loa">
-              <line x1={toSvgX(xMin)} y1={margin.top - 16} x2={toSvgX(xMax)} y2={margin.top - 16} className="stroke-emerald-600 dark:stroke-emerald-400" strokeWidth="1.5" />
-              <polygon points={`${toSvgX(xMin)},${margin.top - 16} ${toSvgX(xMin) + 6},${margin.top - 19} ${toSvgX(xMin) + 6},${margin.top - 13}`} className="fill-emerald-600 dark:fill-emerald-400" />
-              <polygon points={`${toSvgX(xMax)},${margin.top - 16} ${toSvgX(xMax) - 6},${margin.top - 19} ${toSvgX(xMax) - 6},${margin.top - 13}`} className="fill-emerald-600 dark:fill-emerald-400" />
-              <text x={toSvgX((xMin + xMax) / 2)} y={margin.top - 22} className="fill-emerald-700 dark:fill-emerald-300" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              <line x1={toSvgX(xMin)} y1={margin.top - 16} x2={toSvgX(xMax)} y2={margin.top - 16} className="stroke-status-success" strokeWidth="1.5" />
+              <polygon points={`${toSvgX(xMin)},${margin.top - 16} ${toSvgX(xMin) + 6},${margin.top - 19} ${toSvgX(xMin) + 6},${margin.top - 13}`} className="fill-status-success" />
+              <polygon points={`${toSvgX(xMax)},${margin.top - 16} ${toSvgX(xMax) - 6},${margin.top - 19} ${toSvgX(xMax) - 6},${margin.top - 13}`} className="fill-status-success" />
+              <text x={toSvgX((xMin + xMax) / 2)} y={margin.top - 22} className="fill-status-success" fontSize="10.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                 LOA Pasti = {exactLoa.toFixed(2)} m ({loaRatio.toFixed(3)} x LBP)
               </text>
             </g>
@@ -1474,8 +1394,8 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             {/* Fore Overhang & Aft Overhang dimension markers */}
             {foreOverhang > 0 && (
               <g key="dim-fore-oh">
-                <line x1={toSvgX(LBP)} y1={margin.top - 2} x2={toSvgX(xMax)} y2={margin.top - 2} className="stroke-emerald-500 dark:stroke-emerald-300" strokeWidth="1" strokeDasharray="2,2" />
-                <text x={toSvgX(LBP + foreOverhang / 2)} y={margin.top - 5} className="fill-emerald-700 dark:fill-emerald-300" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                <line x1={toSvgX(LBP)} y1={margin.top - 2} x2={toSvgX(xMax)} y2={margin.top - 2} className="stroke-status-success" strokeWidth="1" strokeDasharray="2,2" />
+                <text x={toSvgX(LBP + foreOverhang / 2)} y={margin.top - 5} className="fill-status-success" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
                   OH Bow: +{foreOverhang.toFixed(2)}m
                 </text>
               </g>
@@ -1483,8 +1403,8 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
             {aftOverhang > 0 && (
               <g key="dim-aft-oh">
-                <line x1={toSvgX(xMin)} y1={margin.top - 2} x2={toSvgX(0)} y2={margin.top - 2} className="stroke-amber-500 dark:stroke-amber-300" strokeWidth="1" strokeDasharray="2,2" />
-                <text x={toSvgX(xMin / 2)} y={margin.top - 5} className="fill-amber-700 dark:fill-amber-300" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
+                <line x1={toSvgX(xMin)} y1={margin.top - 2} x2={toSvgX(0)} y2={margin.top - 2} className="stroke-chart-tertiary" strokeWidth="1" strokeDasharray="2,2" />
+                <text x={toSvgX(xMin / 2)} y={margin.top - 5} className="fill-chart-tertiary" fontSize="8.5" textAnchor="middle" fontFamily="monospace">
                   OH Stern: +{aftOverhang.toFixed(2)}m
                 </text>
               </g>
@@ -1492,55 +1412,141 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
           </svg>
         </div>
 
+          {/* Selected node inspector — kept outside the drawing so controls never cover geometry */}
+          {(() => {
+            const selectedPt = allPoints.find((p) => p.id === selectedPointId);
+            if (!selectedPt) return null;
+            const isLocked = selectedPt.locked || selectedPt.id === "st-4" || selectedPt.id === "bw-4";
+            return (
+              <div className="bg-surface-primary border border-border-default rounded-lg p-4 flex flex-wrap items-center gap-4 text-sm font-mono">
+                <div className="flex items-center space-x-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${
+                    selectedPt.category === "bow"
+                      ? "bg-status-success"
+                      : selectedPt.category === "stern"
+                      ? "bg-status-warning"
+                      : "bg-status-warning"
+                  } `} />
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-text-primary text-xs truncate max-w-[140px]">{selectedPt.name}</span>
+                    <span className="text-xs text-text-secondary">
+                      {selectedPt.category === "bow" ? "Bow" : selectedPt.category === "stern" ? "Stern" : "Sheer"}
+                      {isLocked && " • Statis"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-6 w-px bg-surface-secondary" />
+
+                {/* X input */}
+                <div className="flex items-center space-x-1">
+                  <span className="text-text-secondary text-xs">X:</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    disabled={isLocked}
+                    aria-label="Selected point X coordinate in metres"
+                    value={selectedPt.x}
+                    onChange={(e) => handleNumericUpdate(selectedPt.id, "x", parseFloat(e.target.value) || 0)}
+                    className={`w-16 px-1.5 py-0.5 rounded border text-center font-semibold text-sm ${
+                      isLocked
+                        ? "bg-surface-secondary border-border-default text-text-secondary cursor-not-allowed min-h-10"
+                        : "bg-surface-primary border-border-default text-text-primary focus:border-border-default min-h-10"
+                    } `}
+                  />
+                  <span className="text-text-secondary text-xs">m</span>
+                </div>
+
+                {/* Y input */}
+                <div className="flex items-center space-x-1">
+                  <span className="text-text-secondary text-xs">Y:</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    disabled={isLocked}
+                    aria-label="Selected point Y coordinate in metres"
+                    value={selectedPt.y}
+                    onChange={(e) => handleNumericUpdate(selectedPt.id, "y", parseFloat(e.target.value) || 0)}
+                    className={`w-16 px-1.5 py-0.5 rounded border text-center font-semibold text-sm ${
+                      isLocked
+                        ? "bg-surface-secondary border-border-default text-text-secondary cursor-not-allowed min-h-10"
+                        : "bg-surface-primary border-border-default text-text-primary focus:border-border-default min-h-10"
+                    } `}
+                  />
+                  <span className="text-text-secondary text-xs">m</span>
+                </div>
+
+                {!isLocked && (
+                  <button
+                    onClick={() => handleDeletePoint(selectedPt.id)}
+                    className="p-1.5 text-status-danger hover:text-status-danger hover:bg-status-danger-subtle rounded-md transition-colors cursor-pointer min-h-9"
+                    title="Delete this control point"
+                   aria-label="Delete this control point">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setSelectedPointId(null)}
+                  className="text-text-secondary hover:text-text-secondary p-1 rounded-md hover:bg-surface-secondary transition-colors cursor-pointer min-h-9"
+                    title="Close Inspector"
+                 aria-label="Close Inspector">
+                  <X size={12} />
+                </button>
+              </div>
+            );
+          })()}
+
+
         {/* Live Hydrostatic & Dimension Calculation Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center">
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Panjang LBP</div>
-            <div className="text-base font-bold text-cyan-600 dark:text-cyan-400 font-mono">{LBP.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500">AP ke FP (Konstan)</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-x-6 gap-y-3 text-left tabular-nums">
+          <div className="py-3 border-b border-border-subtle space-y-1 min-w-0">
+            <div className="text-xs text-text-secondary font-medium">Panjang LBP</div>
+            <div className="text-base font-semibold text-accent-primary font-mono">{LBP.toFixed(2)} m</div>
+            <div className="text-xs text-text-secondary">AP ke FP (Konstan)</div>
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">LOA Pasti (Kurva)</div>
-            <div className="text-base font-bold text-cyan-600 dark:text-cyan-400 font-mono">{exactLoa.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Xmax - Xmin</div>
+          <div className="py-3 border-b border-border-subtle space-y-1 min-w-0">
+            <div className="text-xs text-text-secondary font-medium">LOA Pasti (Kurva)</div>
+            <div className="text-base font-semibold text-accent-primary font-mono">{exactLoa.toFixed(2)} m</div>
+            <div className="text-xs text-text-secondary font-mono">Xmax - Xmin</div>
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Aproksimasi Awal</div>
-            <div className="text-base font-bold text-slate-700 dark:text-slate-300 font-mono">{loaApproximation.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">1.025 x LBP</div>
+          <div className="py-3 border-b border-border-subtle space-y-1 min-w-0">
+            <div className="text-xs text-text-secondary font-medium">Aproksimasi Awal</div>
+            <div className="text-base font-semibold text-text-primary font-mono">{loaApproximation.toFixed(2)} m</div>
+            <div className="text-xs text-text-secondary font-mono">1.025 x LBP</div>
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Fore Overhang</div>
-            <div className="text-base font-bold text-slate-900 dark:text-white font-mono">+{foreOverhang.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500">Di depan FP</div>
+          <div className="py-3 border-b border-border-subtle space-y-1 min-w-0">
+            <div className="text-xs text-text-secondary font-medium">Fore Overhang</div>
+            <div className="text-base font-semibold text-text-primary font-mono">+{foreOverhang.toFixed(2)} m</div>
+            <div className="text-xs text-text-secondary">Di depan FP</div>
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Aft Overhang</div>
-            <div className="text-base font-bold text-slate-900 dark:text-white font-mono">+{aftOverhang.toFixed(2)} m</div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500">Di belakang AP</div>
+          <div className="py-3 border-b border-border-subtle space-y-1 min-w-0">
+            <div className="text-xs text-text-secondary font-medium">Aft Overhang</div>
+            <div className="text-base font-semibold text-text-primary font-mono">+{aftOverhang.toFixed(2)} m</div>
+            <div className="text-xs text-text-secondary">Di belakang AP</div>
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-0.5 shadow-sm">
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Rasio LOA / LBP</div>
-            <div className="text-base font-bold text-slate-900 dark:text-white font-mono">{loaRatio.toFixed(3)}</div>
-            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Std: 1.02 ~ 1.06</div>
+          <div className="py-3 border-b border-border-subtle space-y-1 min-w-0">
+            <div className="text-xs text-text-secondary font-medium">Rasio LOA / LBP</div>
+            <div className="text-base font-semibold text-text-primary font-mono">{loaRatio.toFixed(3)}</div>
+            <div className="text-xs text-text-secondary font-mono">Std: 1.02 ~ 1.06</div>
           </div>
         </div>
       </div>
 
       {/* Control Points 2-Way Coordinate Table */}
-      <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 space-y-4 shadow-sm dark:shadow-xl backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
-          <div className="flex items-center space-x-2 text-cyan-600 dark:text-cyan-400 font-bold text-xs tracking-wide">
+      <div className="pt-6 border-t border-border-default space-y-4 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-default pb-3">
+          <div className="flex items-center space-x-2 text-accent-primary font-semibold text-sm tracking-normal">
             <TableIcon size={16} />
             <span>Control Point Coordinate Tables (2-Way Interactive Sync)</span>
           </div>
           <div className="flex items-center space-x-3">
-            <span className="text-xs text-slate-500 dark:text-slate-400 hidden md:inline">
+            <span className="text-sm text-text-secondary hidden md:inline">
               {language === "en"
                 ? "Values can be edited directly for millimeter precision."
                 : "Nilai dapat disunting langsung untuk presisi tingkat milimeter."}
@@ -1548,18 +1554,22 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <button
               type="button"
               onClick={() => setShowCoordinateTables(!showCoordinateTables)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-sm border ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer border ${
                 showCoordinateTables
-                  ? "bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
-                  : "bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 text-cyan-700 dark:text-cyan-300 border-cyan-300 dark:border-cyan-500/40"
-              }`}
+                  ? "bg-surface-secondary hover:bg-surface-secondary text-text-primary border-border-default min-h-9"
+                  : "bg-surface-selected hover:bg-surface-selected text-accent-primary border-border-default min-h-9"
+              } `}
               title={
                 showCoordinateTables
                   ? (language === "en" ? "Hide Coordinate Tables" : "Sembunyikan Tabel Koordinat")
                   : (language === "en" ? "Show Coordinate Tables" : "Tampilkan Tabel Koordinat")
               }
-            >
-              {showCoordinateTables ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+             aria-pressed={showCoordinateTables} aria-label={
+                showCoordinateTables
+                  ? (language === "en" ? "Hide Coordinate Tables" : "Sembunyikan Tabel Koordinat")
+                  : (language === "en" ? "Show Coordinate Tables" : "Tampilkan Tabel Koordinat")
+              }>
+              {showCoordinateTables ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
               <span>
                 {showCoordinateTables
                   ? (language === "en" ? "Hide Tables" : "Sembunyikan Tabel")
@@ -1574,16 +1584,16 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Haluan (Bow) Table */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-text-primary flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                <span className="w-2 h-2 rounded-full bg-accent-primary" />
                 <span>Bow Stem Control Points (Bow Stem Profile)</span>
               </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">{bowPoints.length} Points</span>
+              <span className="text-xs text-text-secondary">{bowPoints.length} Points</span>
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
+            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-surface-secondary text-text-secondary text-xs font-semibold border-b border-border-default">
                   <tr>
                     <th className="p-2.5">Node Name</th>
                     <th className="p-2.5">X (Meters from AP)</th>
@@ -1592,7 +1602,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                     <th className="p-2.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-border-default text-sm">
                   {bowPoints.map((pt) => {
                     const stasiEst = (pt.x / (LBP / 20)).toFixed(1);
                     const isLocked = pt.locked || pt.id === "bw-4";
@@ -1603,55 +1613,55 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         onClick={() => setSelectedPointId(pt.id)}
                         className={`transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-cyan-50/70 dark:bg-cyan-950/40"
+                            ? "bg-surface-selected"
                             : isLocked
-                            ? "bg-slate-50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-900/50"
-                            : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
-                        }`}
+                            ? "bg-surface-canvas hover:bg-surface-secondary"
+                            : "hover:bg-surface-canvas"
+                        } `}
                       >
-                        <td className="p-2.5 text-slate-800 dark:text-slate-200">
+                        <td className="p-2.5 text-text-primary">
                           <div className="font-medium flex items-center space-x-1.5">
                             <span>{englishPointText(pt.name)}</span>
                             {isLocked && (
-                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] border border-slate-200 dark:border-slate-700 font-mono font-medium">
+                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary text-xs border border-border-default font-mono font-medium">
                                 <Lock size={9} />
                                 <span>STATIS (FP)</span>
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{englishPointText(pt.description)}</div>
+                          <div className="text-xs text-text-secondary">{englishPointText(pt.description)}</div>
                         </td>
                         <td className="p-2.5">
-                          <input
+                          <input aria-label={`Point ${pt.id}: X coordinate (m)`}
                             type="number"
                             step="0.05"
                             value={pt.x}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "x", parseFloat(e.target.value) || 0)}
-                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-md text-sm font-mono font-semibold ${
                               isLocked
-                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
-                            }`}
+                                ? "bg-surface-secondary border-border-default text-text-secondary cursor-not-allowed min-h-10"
+                                : "bg-surface-primary border-border-default text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
+                            } `}
                             title={isLocked ? "Garis acuan konstan FP (LBP) terkunci statis" : ""}
                           />
                         </td>
                         <td className="p-2.5">
-                          <input
+                          <input aria-label={`Point ${pt.id}: Y coordinate (m)`}
                             type="number"
                             step="0.05"
                             value={pt.y}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "y", parseFloat(e.target.value) || 0)}
-                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-md text-sm font-mono font-semibold ${
                               isLocked
-                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
-                            }`}
+                                ? "bg-surface-secondary border-border-default text-text-secondary cursor-not-allowed min-h-10"
+                                : "bg-surface-primary border-border-default text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
+                            } `}
                             title={isLocked ? "Garis acuan konstan sarat DWL terkunci statis" : ""}
                           />
                         </td>
-                        <td className="p-2.5 text-slate-500 dark:text-slate-400 text-xs font-mono">St. {stasiEst}</td>
+                        <td className="p-2.5 text-text-secondary text-sm font-mono">St. {stasiEst}</td>
                         <td className="p-2.5 text-center">
                           {!isLocked ? (
                             <button
@@ -1659,13 +1669,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                                 e.stopPropagation();
                                 handleDeletePoint(pt.id);
                               }}
-                              className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              className="text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle p-1.5 rounded-md transition-colors cursor-pointer min-h-9"
                               title="Delete this point"
-                            >
+                             aria-label="Delete this point">
                               <Trash2 size={13} />
                             </button>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-600 text-[10px]">-</span>
+                            <span className="text-text-secondary text-xs">-</span>
                           )}
                         </td>
                       </tr>
@@ -1678,16 +1688,16 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
 
           {/* Buritan (Stern) Table */}
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-text-primary flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="w-2 h-2 rounded-full bg-accent-primary" />
                 <span>Stern Stem Control Points (Stern & Transom Profile)</span>
               </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">{sternPoints.length} Points</span>
+              <span className="text-xs text-text-secondary">{sternPoints.length} Points</span>
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
+            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-surface-secondary text-text-secondary text-xs font-semibold border-b border-border-default">
                   <tr>
                     <th className="p-2.5">Node Name</th>
                     <th className="p-2.5">X (Meters from AP)</th>
@@ -1696,7 +1706,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                     <th className="p-2.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-border-default text-sm">
                   {sternPoints.map((pt) => {
                     const stasiEst = (pt.x / (LBP / 20)).toFixed(1);
                     const isLocked = pt.locked || pt.id === "st-4";
@@ -1707,55 +1717,55 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         onClick={() => setSelectedPointId(pt.id)}
                         className={`transition-colors cursor-pointer ${
                           isSelected
-                            ? "bg-cyan-50/70 dark:bg-cyan-950/40"
+                            ? "bg-surface-selected"
                             : isLocked
-                            ? "bg-slate-50 dark:bg-slate-900/30 hover:bg-slate-100 dark:hover:bg-slate-900/50"
-                            : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
-                        }`}
+                            ? "bg-surface-canvas hover:bg-surface-secondary"
+                            : "hover:bg-surface-canvas"
+                        } `}
                       >
-                        <td className="p-2.5 text-slate-800 dark:text-slate-200">
+                        <td className="p-2.5 text-text-primary">
                           <div className="font-medium flex items-center space-x-1.5">
                             <span>{englishPointText(pt.name)}</span>
                             {isLocked && (
-                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[9px] border border-slate-200 dark:border-slate-700 font-mono font-medium">
+                              <span className="inline-flex items-center space-x-0.5 px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary text-xs border border-border-default font-mono font-medium">
                                 <Lock size={9} />
                                 <span>STATIS (AP)</span>
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{englishPointText(pt.description)}</div>
+                          <div className="text-xs text-text-secondary">{englishPointText(pt.description)}</div>
                         </td>
                         <td className="p-2.5">
-                          <input
+                          <input aria-label={`Point ${pt.id}: X coordinate (m)`}
                             type="number"
                             step="0.05"
                             value={pt.x}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "x", parseFloat(e.target.value) || 0)}
-                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-md text-sm font-mono font-semibold ${
                               isLocked
-                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
-                            }`}
+                                ? "bg-surface-secondary border-border-default text-text-secondary cursor-not-allowed min-h-10"
+                                : "bg-surface-primary border-border-default text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
+                            } `}
                             title={isLocked ? "Garis acuan konstan AP (x=0) terkunci statis" : ""}
                           />
                         </td>
                         <td className="p-2.5">
-                          <input
+                          <input aria-label={`Point ${pt.id}: Y coordinate (m)`}
                             type="number"
                             step="0.05"
                             value={pt.y}
                             disabled={isLocked}
                             onChange={(e) => handleNumericUpdate(pt.id, "y", parseFloat(e.target.value) || 0)}
-                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold ${
+                            className={`w-24 min-w-[5.5rem] border px-2 py-1 rounded-md text-sm font-mono font-semibold ${
                               isLocked
-                                ? "bg-slate-100 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed"
-                                : "bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
-                            }`}
+                                ? "bg-surface-secondary border-border-default text-text-secondary cursor-not-allowed min-h-10"
+                                : "bg-surface-primary border-border-default text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
+                            } `}
                             title={isLocked ? "Garis acuan konstan sarat DWL terkunci statis" : ""}
                           />
                         </td>
-                        <td className="p-2.5 text-slate-500 dark:text-slate-400 text-xs font-mono">St. {stasiEst}</td>
+                        <td className="p-2.5 text-text-secondary text-sm font-mono">St. {stasiEst}</td>
                         <td className="p-2.5 text-center">
                           {!isLocked ? (
                             <button
@@ -1763,13 +1773,13 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                                 e.stopPropagation();
                                 handleDeletePoint(pt.id);
                               }}
-                              className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              className="text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle p-1.5 rounded-md transition-colors cursor-pointer min-h-9"
                               title="Delete this point"
-                            >
+                             aria-label="Delete this point">
                               <Trash2 size={13} />
                             </button>
                           ) : (
-                            <span className="text-slate-400 dark:text-slate-600 text-[10px]">-</span>
+                            <span className="text-text-secondary text-xs">-</span>
                           )}
                         </td>
                       </tr>
@@ -1782,18 +1792,18 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
         </div>
 
         {/* Sheer Geladak Table (Collapsible / Secondary) */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80">
+        <div className="pt-2 border-t border-border-default">
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-text-primary flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                <span className="w-2 h-2 rounded-full bg-accent-primary" />
                 <span>Deck Sheer Control Points (Deck Sheer Profile)</span>
               </div>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">{sheerPoints.length} Points</span>
+              <span className="text-xs text-text-secondary">{sheerPoints.length} Points</span>
             </h4>
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-sm">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 text-[11px] font-semibold border-b border-slate-200 dark:border-slate-800">
+            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-surface-secondary text-text-secondary text-xs font-semibold border-b border-border-default">
                   <tr>
                     <th className="p-2.5">Node Name</th>
                     <th className="p-2.5">X (Meters from AP)</th>
@@ -1802,7 +1812,7 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                     <th className="p-2.5 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-border-default text-sm">
                   {sheerPoints.map((pt) => {
                     const stasiEst = (pt.x / (LBP / 20)).toFixed(1);
                     const isSelected = selectedPointId === pt.id;
@@ -1811,41 +1821,41 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
                         key={pt.id}
                         onClick={() => setSelectedPointId(pt.id)}
                         className={`transition-colors cursor-pointer ${
-                          isSelected ? "bg-cyan-50/70 dark:bg-cyan-950/40" : "hover:bg-slate-50 dark:hover:bg-slate-900/40"
-                        }`}
+                          isSelected ? "bg-surface-selected" : "hover:bg-surface-canvas"
+                        } `}
                       >
-                        <td className="p-2.5 text-slate-800 dark:text-slate-200">
+                        <td className="p-2.5 text-text-primary">
                           <div className="font-medium">{englishPointText(pt.name)}</div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500">{englishPointText(pt.description)}</div>
+                          <div className="text-xs text-text-secondary">{englishPointText(pt.description)}</div>
                         </td>
                         <td className="p-2.5">
-                          <input
+                          <input aria-label={`Point ${pt.id}: X coordinate (m)`}
                             type="number"
                             step="0.05"
                             value={pt.x}
                             onChange={(e) => handleNumericUpdate(pt.id, "x", parseFloat(e.target.value) || 0)}
-                            className="w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
+                            className="w-24 min-w-[5.5rem] border px-2 py-1 rounded-md text-sm font-mono font-semibold bg-surface-primary border-border-default text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
                           />
                         </td>
                         <td className="p-2.5">
-                          <input
+                          <input aria-label={`Point ${pt.id}: Y coordinate (m)`}
                             type="number"
                             step="0.05"
                             value={pt.y}
                             onChange={(e) => handleNumericUpdate(pt.id, "y", parseFloat(e.target.value) || 0)}
-                            className="w-24 min-w-[5.5rem] border px-2 py-1 rounded-lg text-xs font-mono font-bold bg-white dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500 shadow-xs"
+                            className="w-24 min-w-[5.5rem] border px-2 py-1 rounded-md text-sm font-mono font-semibold bg-surface-primary border-border-default text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default min-h-10"
                           />
                         </td>
-                        <td className="p-2.5 text-slate-500 dark:text-slate-400 text-xs font-mono">St. {stasiEst}</td>
+                        <td className="p-2.5 text-text-secondary text-sm font-mono">St. {stasiEst}</td>
                         <td className="p-2.5 text-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeletePoint(pt.id);
                             }}
-                            className="text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            className="text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle p-1.5 rounded-md transition-colors cursor-pointer min-h-9"
                             title="Delete this point"
-                          >
+                           aria-label="Delete this point">
                             <Trash2 size={13} />
                           </button>
                         </td>
@@ -1861,21 +1871,21 @@ export const SideProfileNurbsEditor: React.FC<SideProfileProps> = ({
         ) : (
           <div
             onClick={() => setShowCoordinateTables(true)}
-            className="bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/40 dark:hover:bg-slate-900/70 border border-dashed border-slate-300 dark:border-slate-800 hover:border-cyan-500/40 rounded-xl p-3.5 flex items-center justify-between gap-3 text-xs cursor-pointer transition-all group shadow-sm"
+            className="bg-surface-canvas hover:bg-surface-secondary border border-dashed border-border-default hover:border-border-default rounded-lg p-3.5 flex items-center justify-between gap-3 text-sm cursor-pointer transition-colors group"
             title={language === "en" ? "Click to expand coordinate tables" : "Klik untuk menampilkan tabel koordinat"}
           >
-            <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
-              <TableIcon size={16} className="text-slate-400 dark:text-slate-500 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors" />
+            <div className="flex items-center space-x-3 text-text-secondary">
+              <TableIcon size={16} className="text-text-secondary group-hover:text-accent-primary transition-colors" />
               <div>
-                <span className="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
+                <span className="font-semibold text-text-primary group-hover:text-text-primary transition-colors">
                   {language === "en" ? "Control Points Coordinate Tables are Hidden" : "Tabel Koordinat Titik Kontrol Disembunyikan"}
                 </span>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono ml-2">
+                <span className="text-xs text-text-secondary font-mono ml-2">
                   ({bowPoints.length} Bow • {sternPoints.length} Stern • {sheerPoints.length} Sheer)
                 </span>
               </div>
             </div>
-            <span className="text-xs text-slate-500 dark:text-slate-400 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 flex items-center gap-1 font-medium transition-colors">
+            <span className="text-sm text-text-secondary group-hover:text-accent-primary flex items-center gap-1 font-medium transition-colors">
               <span>{language === "en" ? "Click to expand" : "Klik untuk menampilkan"}</span>
               <ChevronDown size={14} />
             </span>

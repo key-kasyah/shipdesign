@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-21T07:15:01.192Z",
+  "title": "Design System: SHIP DESIGN AI — Precision Atelier",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "overlay",
+        "value": "0 8px 28px #10232622",
+        "purpose": "Floating overlays only; dark token supplied by CSS."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-color",
+        "value": "140ms ease-out",
+        "purpose": "Color feedback on controls; never engineering geometry."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "640px"
+      },
+      {
+        "name": "tablet",
+        "value": "768px"
+      },
+      {
+        "name": "desktop-shell",
+        "value": "1024px"
+      },
+      {
+        "name": "wide",
+        "value": "1440px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action in the approved system.",
+      "html": "<button class=\"ds-primary\">Save changes</button>",
+      "css": ".ds-primary{background:var(--accent-primary);color:var(--text-on-accent);border:1px solid var(--accent-primary);border-radius:6px;padding:7px 14px;min-height:36px;font:500 14px Geist,sans-serif}.ds-primary:hover{background:var(--accent-hover)}.ds-primary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Secondary action in the approved system.",
+      "html": "<button class=\"ds-secondary\">Import JSON</button>",
+      "css": ".ds-secondary{background:var(--surface-primary);color:var(--text-primary);border:1px solid var(--border-strong);border-radius:6px;padding:7px 14px;min-height:36px;font:500 14px Geist,sans-serif}.ds-secondary:hover{background:var(--surface-secondary)}.ds-secondary:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}"
+    },
+    {
+      "name": "Numeric input",
+      "kind": "input",
+      "description": "Numeric input in the approved system.",
+      "html": "<label class=\"ds-label\">Draft (m)<input class=\"ds-field\" type=\"number\" value=\"6.15\" /></label>",
+      "css": ".ds-label{display:grid;gap:8px;font:14px Geist,sans-serif;color:var(--text-primary)}.ds-field{background:var(--surface-inset);color:var(--text-primary);border:1px solid var(--border-default);border-radius:6px;padding:8px 12px;font:14px \"Geist Mono\",monospace;min-height:40px}.ds-field:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}"
+    },
+    {
+      "name": "Workspace tab",
+      "kind": "nav",
+      "description": "Workspace tab in the approved system.",
+      "html": "<button class=\"ds-tab\" aria-pressed=\"true\">Comparable ships</button>",
+      "css": ".ds-tab{background:transparent;color:var(--accent-primary);border:0;border-bottom:2px solid var(--accent-primary);padding:12px 4px;font:500 14px Geist,sans-serif}.ds-tab:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}"
+    },
+    {
+      "name": "Status",
+      "kind": "chip",
+      "description": "Status in the approved system.",
+      "html": "<span class=\"ds-status\">✓ Saved</span>",
+      "css": ".ds-status{display:inline-flex;gap:6px;background:var(--status-success-subtle);color:var(--status-success);border:1px solid var(--status-success-border);border-radius:6px;padding:4px 8px;font:12px Geist,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Precision Atelier",
+    "overview": "A matte, disciplined engineering workspace following approved Option A and the 44-page brief.",
+    "keyCharacteristics": [
+      "Porcelain and graphite",
+      "Mineral teal",
+      "Aligned engineering data",
+      "Unchanged product behavior"
+    ],
+    "rules": [
+      {
+        "name": "Behavior is invariant",
+        "body": "Presentation changes never modify API, data, calculation, storage or editing behavior.",
+        "section": "layout"
+      }
+    ],
+    "dos": [
+      "Preserve data, provenance and units.",
+      "Test both themes and narrow viewports."
+    ],
+    "donts": [
+      "No purple-blue gradients or decorative glass.",
+      "No generic equal card grid.",
+      "No new latent features."
+    ]
+  }
+}

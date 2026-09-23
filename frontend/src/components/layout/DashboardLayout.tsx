@@ -40,15 +40,15 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   if (disabled || locked) {
     return (
       <div
-        className="group relative flex items-center px-3.5 py-2.5 text-xs font-medium rounded-xl text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800/40 cursor-not-allowed select-none transition-all"
-        title={`${label} is locked`}
+        className="group relative flex items-center px-3 py-3 text-sm rounded-md text-text-tertiary cursor-not-allowed select-none"
+        aria-disabled="true" tabIndex={0} title={tooltip || `${label} is locked`}
       >
-        <span className="mr-3 text-slate-400 dark:text-slate-500">{icon}</span>
-        <span className="flex-1 tracking-wide">{label}</span>
-        {locked && <Lock size={13} className="text-slate-400 dark:text-slate-500" />}
+        <span className="mr-2.5 text-text-secondary">{icon}</span>
+        <span className="flex-1 leading-5">{label}</span>
+        {locked && <Lock size={13} className="text-text-secondary" />}
 
         {/* Tooltip */}
-        <div className="absolute left-full ml-3 px-3 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none whitespace-nowrap backdrop-blur-md">
+        <div className="absolute left-0 top-full mt-1 px-3 py-1.5 text-xs font-medium text-text-primary bg-surface-primary border border-border-default rounded-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50 pointer-events-none w-full">
           {tooltip || "Please select or create a project first"}
         </div>
       </div>
@@ -58,14 +58,15 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   return (
     <Link
       href={href}
-      className={`flex items-center px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 ${
+      aria-current={active ? "page" : undefined}
+      className={`flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors duration-150 ${
         active
-          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/20 border border-blue-500/30 font-bold"
-          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:text-blue-600 dark:hover:text-white border border-transparent"
-      }`}
+          ? "bg-surface-selected text-accent-primary border border-transparent"
+          : "text-text-primary hover:bg-surface-secondary hover:text-accent-primary border border-transparent"
+      } `}
     >
-      <span className={`mr-3 ${active ? "text-white" : "text-slate-500 dark:text-slate-400"}`}>{icon}</span>
-      <span className="flex-1 tracking-wide">{label}</span>
+      <span className={`mr-2.5 ${active ? "text-accent-primary" : "text-text-secondary"} `}>{icon}</span>
+      <span className="flex-1 leading-5">{label}</span>
     </Link>
   );
 };
@@ -172,7 +173,7 @@ export default function DashboardLayout({
   const stagesNav = [
     {
       label: t("nav.stage1", "Tahap 1: Kebutuhan Kapal"),
-      icon: projectId ? <Unlock size={15} className="text-emerald-500 dark:text-emerald-400" /> : <Lock size={15} />,
+      icon: projectId ? <Unlock size={15} className="text-status-success" /> : <Lock size={15} />,
       href: projectId ? `/projects/${projectId}` : "#",
       active: isStage1,
       locked: !projectId,
@@ -181,9 +182,9 @@ export default function DashboardLayout({
     {
       label: t("nav.stage2", "Tahap 2: Pra-Rancangan"),
       icon: isStage1Validated ? (
-        <Unlock size={15} className="text-emerald-500 dark:text-emerald-400" />
+        <Unlock size={15} className="text-status-success" />
       ) : (
-        <Lock size={15} className="text-slate-400 dark:text-slate-600" />
+        <Lock size={15} className="text-text-secondary" />
       ),
       href: isStage1Validated ? `/projects/${projectId}/stage2` : "#",
       locked: !isStage1Validated,
@@ -197,9 +198,9 @@ export default function DashboardLayout({
     {
       label: t("nav.stage3", "Tahap 3: Basic Design"),
       icon: isStage1Validated ? (
-        <Unlock size={15} className="text-emerald-500 dark:text-emerald-400" />
+        <Unlock size={15} className="text-status-success" />
       ) : (
-        <Lock size={15} className="text-slate-400 dark:text-slate-600" />
+        <Lock size={15} className="text-text-secondary" />
       ),
       href: isStage1Validated ? `/projects/${projectId}/stage3` : "#",
       locked: !isStage1Validated,
@@ -240,47 +241,48 @@ export default function DashboardLayout({
     : t("system_active", "System Active");
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-[#070B12] text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
+    <div className="flex h-screen bg-surface-canvas text-text-primary overflow-hidden font-sans">
+      <a href="#main-content" className="atelier-skip">Skip to workspace</a>
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/40 dark:bg-slate-950/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-overlay lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-white dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800/80 backdrop-blur-xl transition-all duration-300 ease-in-out lg:static ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col bg-surface-primary border-r border-border-default transition-colors duration-300 ease-in-out lg:static ${
+          sidebarOpen ? "visible translate-x-0" : "invisible -translate-x-full"
+        }  ${
           sidebarCollapsed
-            ? "lg:-translate-x-full lg:w-0 lg:opacity-0 lg:border-r-0 lg:pointer-events-none"
-            : "lg:translate-x-0 lg:w-72 sm:lg:w-80 lg:opacity-100"
-        } w-72 sm:w-80 shrink-0 overflow-hidden shadow-2xl lg:shadow-none`}
+            ? "lg:invisible lg:-translate-x-full lg:w-0 lg:opacity-0 lg:border-r-0 lg:pointer-events-none"
+            : "lg:visible lg:translate-x-0 lg:w-[216px] lg:opacity-100"
+        } w-72 sm:w-80 shrink-0 overflow-hidden`}
       >
-        <div className="w-72 sm:w-80 flex flex-col h-full shrink-0">
+        <div className="w-72 sm:w-80 lg:w-[216px] flex flex-col h-full shrink-0">
           {/* Sidebar Header with Ship Design Logo */}
-          <div className="min-h-16 h-auto py-3.5 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/40 shrink-0">
-            <Link href="/" className="flex items-center space-x-3 group min-w-0 flex-1 overflow-hidden">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
-                <Ship size={20} className="text-white" />
+          <div className="h-14 flex items-center justify-between pl-4 pr-2 border-b border-border-default shrink-0">
+            <Link href="/" className="flex items-center gap-2 group min-w-0 flex-1 overflow-hidden">
+              <div className="flex items-center justify-center text-accent-primary shrink-0">
+                <Ship size={20} />
               </div>
               <div className="flex flex-col min-w-0 flex-1 justify-center">
-                <span className="font-black text-sm tracking-wide text-slate-900 dark:text-transparent dark:bg-gradient-to-r dark:from-white dark:via-slate-100 dark:to-cyan-300 dark:bg-clip-text truncate">
+                <span className="font-semibold text-xs text-text-primary whitespace-nowrap">
                   {t("app.title", "SHIP DESIGN AI")}
                 </span>
                 <span 
-                  className="text-[9.5px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 leading-snug line-clamp-2 break-words" 
+                  className="sr-only"
                   title="Offshore and Subsea Production Research Laboratory - opart"
                 >
                   Offshore and Subsea Production Research Laboratory - opart
                 </span>
               </div>
             </Link>
-            <button
+            <button aria-label={language === "en" ? "Close Sidebar" : "Tutup Menu"}
               type="button"
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors shrink-0 ml-2 cursor-pointer"
+              className="atelier-icon-button shrink-0"
               onClick={toggleSidebar}
               title={language === "en" ? "Close Sidebar" : "Tutup Menu"}
             >
@@ -290,9 +292,9 @@ export default function DashboardLayout({
           </div>
 
         {/* Sidebar Navigation Items */}
-        <nav className="flex-1 overflow-y-auto no-scrollbar px-3.5 py-6 space-y-6">
+        <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-8">
           <div>
-            <span className="px-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
+            <span className="px-3 text-xs font-semibold text-text-secondary tracking-normal block mb-2">
               {t("nav.main_menu", "Main Menu")}
             </span>
             <div className="space-y-1">
@@ -309,7 +311,7 @@ export default function DashboardLayout({
           </div>
 
           <div>
-            <span className="px-3 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">
+            <span className="px-3 text-xs font-semibold text-text-secondary tracking-normal block mb-2">
               {t("nav.stages_flow", "Design Stages Flow")}
             </span>
             <div className="space-y-1">
@@ -329,14 +331,14 @@ export default function DashboardLayout({
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-3.5 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/40 shrink-0">
-          <div className="flex items-center space-x-3 px-3 py-2 rounded-xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/50 shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-xs shrink-0 keep-white">
+        <div className="p-4 border-t border-border-default shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md text-text-secondary flex items-center justify-center font-medium text-xs shrink-0 border border-border-default">
               NA
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-900 dark:text-slate-200 truncate">{t("naval_architect", "Naval Architect")}</p>
-              <p className="text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400 truncate">
+              <p className="text-sm font-semibold text-text-primary truncate">{t("naval_architect", "Naval Architect")}</p>
+              <p className="text-xs text-text-secondary leading-relaxed">
                 {footerStatus}
               </p>
             </div>
@@ -346,13 +348,17 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-slate-50 dark:bg-[#070B12]">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 bg-surface-canvas dark:bg-surface-canvas">
         {/* Top Header */}
-        <header className="min-h-16 h-auto py-2.5 flex items-center justify-between px-4 sm:px-6 bg-white/95 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800/80 backdrop-blur-md shrink-0">
+        <header className="h-14 flex items-center justify-between px-3 sm:px-6 bg-surface-primary border-b border-border-default shrink-0">
           <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1 mr-4">
-            <button
+            <button aria-label={
+                sidebarCollapsed
+                  ? (language === "en" ? "Show Sidebar" : "Tampilkan Menu")
+                  : (language === "en" ? "Hide Sidebar" : "Sembunyikan Menu")
+              }
               type="button"
-              className="p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all shrink-0 border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-center cursor-pointer"
+              className="atelier-icon-button shrink-0"
               onClick={toggleSidebar}
               title={
                 sidebarCollapsed
@@ -362,37 +368,37 @@ export default function DashboardLayout({
             >
               <Menu size={18} />
             </button>
-            <h1 className="text-sm md:text-base font-bold text-slate-900 dark:text-white tracking-wide flex items-center space-x-3 min-w-0 flex-wrap gap-y-1">
-              <span className="font-extrabold tracking-wider truncate text-slate-900 dark:text-white">
+            <div className="flex flex-col xl:flex-row xl:items-center xl:gap-4 min-w-0">
+              <span className="sr-only">
                 {t("app.title", "SHIP DESIGN AI")}
               </span>
-              <span className="text-[11px] bg-blue-50 dark:bg-indigo-500/10 text-blue-700 dark:text-indigo-300 border border-blue-200 dark:border-indigo-500/20 px-2.5 py-0.5 rounded-full font-medium tracking-wide whitespace-nowrap">
+              <span className="text-sm font-medium text-text-primary truncate">
                 {headerBadge}
               </span>
               {projectId && (
-                <span className="text-[11px] font-mono font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-mono text-text-secondary">
                   {projectId}
                 </span>
               )}
-            </h1>
+            </div>
           </div>
           
           <div className="flex items-center space-x-3 shrink-0">
             {/* Light / Dark Mode Switcher */}
-            <button
+            <button aria-label={theme === "light" ? t("theme.toggle_to_dark", "Ganti ke Dark Mode") : t("theme.toggle_to_light", "Ganti ke Light Mode")}
               onClick={toggleTheme}
-              className="flex items-center space-x-2 text-xs bg-white hover:bg-slate-100 dark:bg-slate-900/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/80 px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer"
+              className="atelier-button atelier-button-secondary"
               title={theme === "light" ? t("theme.toggle_to_dark", "Ganti ke Dark Mode") : t("theme.toggle_to_light", "Ganti ke Light Mode")}
             >
               {theme === "light" ? (
                 <>
-                  <Moon size={14} className="text-slate-700" />
-                  <span className="font-semibold text-slate-700 hidden sm:inline">{t("theme.dark", "Dark Mode")}</span>
+                  <Moon size={14} className="text-text-primary" />
+                  <span className="font-semibold text-text-primary hidden sm:inline">{t("theme.dark", "Dark Mode")}</span>
                 </>
               ) : (
                 <>
-                  <Sun size={14} className="text-amber-400" />
-                  <span className="font-semibold text-slate-200 hidden sm:inline">{t("theme.light", "Light Mode")}</span>
+                  <Sun size={14} className="text-status-warning" />
+                  <span className="font-semibold text-text-primary hidden sm:inline">{t("theme.light", "Light Mode")}</span>
                 </>
               )}
             </button>
@@ -400,7 +406,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Main Content Window */}
-        <main className={`flex-1 ${isStage2 ? "overflow-hidden p-0" : isStage3 ? "overflow-y-auto p-0" : "overflow-y-auto p-5 md:p-8"}`}>
+        <main id="main-content" tabIndex={-1} className={`min-h-0 flex-1 ${isStage2 ? "overflow-hidden p-0" : isStage3 ? "overflow-y-auto p-0" : "overflow-y-auto atelier-main-padding"} `}>
           {children}
         </main>
       </div>

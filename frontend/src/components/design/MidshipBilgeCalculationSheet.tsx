@@ -1,5 +1,7 @@
 "use client";
 
+import { engineeringColor } from "./EngineeringPalette";
+
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
@@ -1333,25 +1335,25 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     });
 
     return (
-      <div className={`w-full flex flex-col space-y-3.5 select-text ${embeddedInReport ? "" : "h-full min-h-[460px] p-2 sm:p-4 bg-white dark:bg-slate-950/95 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"}`}>
+      <div className={`w-full flex flex-col space-y-3.5 select-text ${embeddedInReport ? "" : "h-full min-h-[460px] p-2 sm:p-4 bg-surface-primary rounded-lg border border-border-default"} `}>
         {/* Top Control Bar: Search, Zone Filters, Format Switcher & Exports */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200 dark:border-slate-800/80">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-border-default">
           <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
             <div className="relative">
-              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary" />
+              <input aria-label="Cari gading / WL / zona..."
                 type="text"
                 placeholder="Cari gading / WL / zona..."
                 value={xyzSearchTerm}
                 onChange={(e) => setXyzSearchTerm(e.target.value)}
-                className="pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs font-mono text-cyan-700 dark:text-cyan-300 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-44 sm:w-56 transition-all"
+                className="pl-8 pr-3 py-1.5 bg-surface-canvas border border-border-default rounded-md text-sm font-mono text-accent-primary placeholder-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default w-44 sm:w-56 transition-colors min-h-10"
               />
               {xyzSearchTerm && (
                 <button
                   type="button"
                   onClick={() => setXyzSearchTerm("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary cursor-pointer min-h-9"
                 >
                   <X size={12} />
                 </button>
@@ -1359,40 +1361,40 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             </div>
 
             {/* Zone Filter Buttons */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-900/90 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-mono">
+            <div className="flex items-center bg-surface-secondary p-0.5 rounded-lg border border-border-default text-xs font-mono">
               <button
                 type="button"
                 onClick={() => setXyzFilterZone("all")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  xyzFilterZone === "all" ? "bg-cyan-600 text-white shadow" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                  xyzFilterZone === "all" ? "bg-accent-primary text-on-accent min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                } `}
               >
                 Semua Zona ({activeStationsConfig.length})
               </button>
               <button
                 type="button"
                 onClick={() => setXyzFilterZone("afterbody")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  xyzFilterZone === "afterbody" ? "bg-cyan-600 text-white shadow" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                  xyzFilterZone === "afterbody" ? "bg-accent-primary text-on-accent min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                } `}
               >
                 ◀ AFTERBODY ({AFTERBODY_STATIONS.length})
               </button>
               <button
                 type="button"
                 onClick={() => setXyzFilterZone("pmb")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  xyzFilterZone === "pmb" ? "bg-cyan-600 text-white shadow" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                  xyzFilterZone === "pmb" ? "bg-accent-primary text-on-accent min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                } `}
               >
                 PMB (St.6-15)
               </button>
               <button
                 type="button"
                 onClick={() => setXyzFilterZone("forebody")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                  xyzFilterZone === "forebody" ? "bg-cyan-600 text-white shadow" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+                  xyzFilterZone === "forebody" ? "bg-accent-primary text-on-accent min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                } `}
               >
                 FOREBODY ({FOREBODY_STATIONS.length}) ▶
               </button>
@@ -1400,9 +1402,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
             {/* Station Dropdown */}
             <select
-              value={xyzFilterStation}
+              aria-label="Station filter" value={xyzFilterStation}
               onChange={(e) => setXyzFilterStation(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-2.5 py-1.5 text-[11px] font-mono font-bold text-slate-700 dark:text-slate-300 focus:outline-none focus:border-cyan-500 cursor-pointer"
+              className="bg-surface-canvas border border-border-default rounded-md px-2.5 py-1.5 text-sm font-sans font-semibold text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring focus:border-border-default cursor-pointer min-h-10"
             >
               <option value="all">All Frames (St. B - 21)</option>
               {activeStationsConfig.map((cfg) => (
@@ -1416,26 +1418,26 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           {/* Right Action Controls: Format Switcher & 3 Export Buttons */}
           <div className="flex flex-wrap items-center gap-1.5">
             {/* View Format Switcher */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-900/90 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-mono">
+            <div className="flex items-center bg-surface-secondary p-0.5 rounded-lg border border-border-default text-xs font-mono">
               <button
                 type="button"
                 onClick={() => setXyzViewFormat("matrix")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                  xyzViewFormat === "matrix" ? "bg-cyan-600 text-white shadow" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center space-x-1 cursor-pointer ${
+                  xyzViewFormat === "matrix" ? "bg-accent-primary text-on-accent min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                } `}
                 title="Classic Table of Offsets matrix (waterlines by column, frames by row)"
-              >
+               aria-label="Classic Table of Offsets matrix (waterlines by column, frames by row)">
                 <TableIcon size={12} />
                 <span>Matriks Grid</span>
               </button>
               <button
                 type="button"
                 onClick={() => setXyzViewFormat("pointCloud")}
-                className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                  xyzViewFormat === "pointCloud" ? "bg-cyan-600 text-white shadow" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-colors flex items-center space-x-1 cursor-pointer ${
+                  xyzViewFormat === "pointCloud" ? "bg-accent-primary text-on-accent min-h-9" : "text-text-secondary hover:text-text-primary min-h-9"
+                } `}
                 title="Tampilan Daftar Titik Koordinat 3D Point Cloud (X, Y, Z)"
-              >
+               aria-label="Tampilan Daftar Titik Koordinat 3D Point Cloud (X, Y, Z)">
                 <FileText size={12} />
                 <span>3D List (XYZ)</span>
               </button>
@@ -1445,27 +1447,27 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <button
               type="button"
               onClick={handleExportXyzCSV}
-              className="flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-cyan-700 dark:text-cyan-300 rounded-xl text-[11px] font-mono font-bold transition-all border border-slate-200 dark:border-cyan-500/30 cursor-pointer shadow-sm"
+              className="flex items-center space-x-1 px-2.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-accent-primary rounded-md text-sm font-sans font-semibold transition-colors border border-border-default cursor-pointer min-h-9"
               title="Download 3D offset ordinates as CSV"
-            >
+             aria-label="Download 3D offset ordinates as CSV">
               <Download size={12} />
               <span>CSV</span>
             </button>
             <button
               type="button"
               onClick={handleExportXyzPointCloud}
-              className="flex items-center space-x-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-amber-700 dark:text-amber-300 rounded-xl text-[11px] font-mono font-bold transition-all border border-slate-200 dark:border-amber-500/30 cursor-pointer shadow-sm"
+              className="flex items-center space-x-1 px-2.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-status-warning rounded-md text-sm font-sans font-semibold transition-colors border border-border-default cursor-pointer min-h-9"
               title="Unduh 3D Point Cloud (.xyz) untuk Maxsurf / Rhino / AutoCAD"
-            >
+             aria-label="Unduh 3D Point Cloud (.xyz) untuk Maxsurf / Rhino / AutoCAD">
               <FileText size={12} />
               <span>.XYZ</span>
             </button>
             <button
               type="button"
               onClick={handleExportAutoCADScript}
-              className="flex items-center space-x-1 px-2.5 py-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white rounded-xl text-[11px] font-mono font-bold transition-all shadow cursor-pointer"
+              className="flex items-center space-x-1 px-2.5 py-1 text-on-accent rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer bg-accent-primary min-h-9"
               title="Unduh AutoCAD Script (.scr) untuk generate otomatis kurva gading 3D Spline"
-            >
+             aria-label="Unduh AutoCAD Script (.scr) untuk generate otomatis kurva gading 3D Spline">
               <Compass size={12} />
               <span>AutoCAD .SCR</span>
             </button>
@@ -1473,61 +1475,61 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         </div>
 
         {/* Legend / Coordinate Definition Info Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-slate-900/60 rounded-xl border border-slate-800/80 text-[11px] font-mono text-slate-400">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-surface-primary rounded-lg border border-border-default text-xs font-mono text-text-secondary">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span className="text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-surface-selected" />
+              <span className="text-text-primary">
                 <strong>Sumbu X (Memanjang):</strong> Posisi gading dari AP (X_AP = st &times; {stationSpacing_l} m)
               </span>
             </span>
             <span className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-status-success-subtle" />
+              <span className="text-text-primary">
                 <strong>Sumbu Y (Melintang):</strong> Ordinat 0.5 B (CL = 0.000 m)
               </span>
             </span>
             <span className="flex items-center space-x-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
-              <span className="text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-status-warning-subtle" />
+              <span className="text-text-primary">
                 <strong>Sumbu Z (Vertikal):</strong> Sarat / Tinggi dari Base Line (BL = 0.00 m, DWL = {T.toFixed(2)} m)
               </span>
             </span>
           </div>
-          <div className="text-slate-500 flex items-center space-x-2">
-              <span>Total 3D Points: <strong className="text-cyan-400">{filteredPoints.length} Points</strong></span>
+          <div className="text-text-secondary flex items-center space-x-2">
+              <span>Total 3D Points: <strong className="text-accent-primary">{filteredPoints.length} Points</strong></span>
             <span>&bull;</span>
-            <span>Total Frames: <strong className="text-white">{filteredMatrix.length} Frames</strong></span>
+            <span>Total Frames: <strong className="text-text-primary">{filteredMatrix.length} Frames</strong></span>
           </div>
         </div>
 
         {/* TABLE CONTENT AREA */}
         {xyzViewFormat === "matrix" ? (
           /* MATRIX GRID VIEW (TABLE OF OFFSETS) */
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner max-h-[540px] overflow-y-auto no-scrollbar">
-            <table className="w-full text-left text-xs font-mono border-collapse min-w-[900px]">
-              <thead className="sticky top-0 z-20 bg-slate-100 dark:bg-slate-950 shadow-md">
-                <tr className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                  <th className="py-2.5 px-3 font-bold text-center border-r border-slate-200 dark:border-slate-800/80 sticky left-0 z-30 bg-slate-100 dark:bg-slate-950 w-16">
+          <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default max-h-[540px] overflow-y-auto">
+            <table className="w-full text-left text-sm font-mono border-collapse min-w-[900px]">
+              <thead className="sticky top-0 z-20 bg-surface-secondary">
+                <tr className="bg-surface-secondary text-text-primary border-b border-border-default text-xs">
+                  <th className="py-2.5 px-3 font-semibold text-center border-r border-border-default sticky left-0 z-30 bg-surface-secondary w-16">
                     GADING
                   </th>
-                  <th className="py-2.5 px-2.5 font-bold text-center border-r border-slate-200 dark:border-slate-800/80 sticky left-16 z-30 bg-slate-100 dark:bg-slate-950 w-20">
+                  <th className="py-2.5 px-2.5 font-semibold text-center border-r border-border-default sticky left-16 z-30 bg-surface-secondary w-20">
                     LABEL
                   </th>
-                  <th className="py-2.5 px-3 font-bold text-cyan-700 dark:text-cyan-400 text-right border-r border-slate-200 dark:border-slate-800/60 w-24">
+                  <th className="py-2.5 px-3 font-semibold text-accent-primary text-right border-r border-border-default w-24">
                     X_AP (m)
                   </th>
-                  <th className="py-2.5 px-3 font-semibold text-slate-500 dark:text-slate-400 text-right border-r border-slate-200 dark:border-slate-800/60 w-24">
+                  <th className="py-2.5 px-3 font-semibold text-text-secondary text-right border-r border-border-default w-24">
                     X_MID (m)
                   </th>
-                  <th className="py-2.5 px-3 font-semibold text-slate-500 dark:text-slate-400 text-center border-r border-slate-200 dark:border-slate-800/60 w-24">
+                  <th className="py-2.5 px-3 font-semibold text-text-secondary text-center border-r border-border-default w-24">
                     ZONA
                   </th>
-                  <th className="py-2.5 px-3 font-semibold text-slate-500 dark:text-slate-400 text-center border-r border-slate-200 dark:border-slate-800/60 w-28">
+                  <th className="py-2.5 px-3 font-semibold text-text-secondary text-center border-r border-border-default w-28">
                     BODY PLAN
                   </th>
-                  <th className="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-300 text-right border-r border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900/50">
-                    BASE LINE<br /><span className="text-[9px] text-slate-400 dark:text-slate-500">(Z=0.00m)</span>
+                  <th className="py-2.5 px-3 font-semibold text-text-primary text-right border-r border-border-default bg-surface-canvas">
+                    BASE LINE<br /><span className="text-xs text-text-secondary">(Z=0.00m)</span>
                   </th>
                   {sortedWaterlines.map((wl) => {
                     const z = (wl.draftFraction * T).toFixed(2);
@@ -1535,24 +1537,24 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     return (
                       <th
                         key={`th-wl-${wl.id}`}
-                        className={`py-2.5 px-3 font-bold text-right border-r border-slate-200 dark:border-slate-800/60 transition-colors ${
-                          isActive ? "bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300" : "text-slate-700 dark:text-slate-300"
-                        }`}
+                        className={`py-2.5 px-3 font-semibold text-right border-r border-border-default transition-colors ${
+                          isActive ? "bg-surface-selected text-accent-primary" : "text-text-primary"
+                        } `}
                       >
                         <div className="flex items-center justify-end space-x-1">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: wl.color }} />
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
                           <span>{wl.shortName}</span>
                         </div>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">Z={z}m</span>
+                        <span className="text-xs text-text-secondary font-normal">Z={z}m</span>
                       </th>
                     );
                   })}
-                  <th className="py-2.5 px-3 font-bold text-amber-700 dark:text-amber-300 text-right bg-amber-50 dark:bg-amber-950/20">
-                    DECK<br /><span className="text-[9px] text-amber-600/70 dark:text-amber-500/70">(Z={H.toFixed(2)}m)</span>
+                  <th className="py-2.5 px-3 font-semibold text-status-warning text-right bg-status-warning-subtle">
+                    DECK<br /><span className="text-xs text-status-warning">(Z={H.toFixed(2)}m)</span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50 bg-white dark:bg-slate-950/30">
+              <tbody className="divide-y divide-border-default bg-surface-primary">
                 {filteredMatrix.map((row) => {
                   const isHovered = hoveredStation === row.station;
                   const isMid = row.station === 10.0;
@@ -1565,45 +1567,45 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       onMouseLeave={() => setHoveredStation(null)}
                       className={`transition-colors duration-100 ${
                         isHovered
-                          ? "bg-cyan-50 dark:bg-cyan-950/40 text-slate-900 dark:text-white"
+                          ? "bg-surface-selected text-text-primary"
                           : isMid
-                          ? "bg-amber-50 dark:bg-cyan-950/20 font-bold"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-900/60"
-                      }`}
+                          ? "bg-status-warning-subtle font-semibold"
+                          : "hover:bg-surface-canvas"
+                      } `}
                     >
                       <td
-                        className={`py-2 px-3 text-center border-r border-slate-200 dark:border-slate-800/80 sticky left-0 z-10 font-bold ${
-                          isHovered ? "bg-cyan-50 dark:bg-slate-900 text-cyan-700 dark:text-cyan-300" : isMid ? "bg-amber-50 dark:bg-slate-950 text-cyan-700 dark:text-cyan-400" : "bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300"
-                        }`}
+                        className={`py-2 px-3 text-center border-r border-border-default sticky left-0 z-10 font-semibold ${
+                          isHovered ? "bg-surface-selected text-accent-primary" : isMid ? "bg-status-warning-subtle text-accent-primary" : "bg-surface-primary text-text-primary"
+                        } `}
                       >
                         {row.station}
                       </td>
                       <td
-                        className={`py-2 px-2.5 text-center border-r border-slate-200 dark:border-slate-800/80 sticky left-16 z-10 font-bold ${
-                          isHovered ? "bg-amber-50 dark:bg-slate-900 text-amber-700 dark:text-amber-300" : isMid ? "bg-amber-50 dark:bg-slate-950 text-amber-700 dark:text-amber-400" : "bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300"
-                        }`}
+                        className={`py-2 px-2.5 text-center border-r border-border-default sticky left-16 z-10 font-semibold ${
+                          isHovered ? "bg-status-warning-subtle text-status-warning" : isMid ? "bg-status-warning-subtle text-status-warning" : "bg-surface-primary text-text-primary"
+                        } `}
                       >
                         {row.stationLabel}
                       </td>
-                      <td className="py-2 px-3 text-right text-cyan-700 dark:text-cyan-300 font-bold border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-right text-accent-primary font-semibold border-r border-border-default">
                         {row.x_ap.toFixed(3)}
                       </td>
-                      <td className="py-2 px-3 text-right text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-right text-text-secondary border-r border-border-default">
                         {row.x_mid >= 0 ? `+${row.x_mid.toFixed(3)}` : row.x_mid.toFixed(3)}
                       </td>
-                      <td className="py-2 px-3 text-center text-slate-500 dark:text-slate-400 text-[10px] border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-center text-text-secondary text-sm border-r border-border-default">
                         {row.zoneName}
                       </td>
-                      <td className="py-2 px-3 text-center text-[10px] border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-2 px-3 text-center text-sm border-r border-border-default">
                         <span
-                          className={`px-1.5 py-0.5 rounded font-bold ${
-                            isAfter ? "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30" : "bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-500/30"
-                          }`}
+                          className={`px-1.5 py-0.5 rounded font-semibold ${
+                            isAfter ? "bg-surface-selected text-accent-primary border border-border-default" : "bg-surface-selected text-accent-primary border border-border-default"
+                          } `}
                         >
                           {isAfter ? "Port (Buritan)" : "Stbd (Haluan)"}
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-right text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900/30">
+                      <td className="py-2 px-3 text-right text-text-secondary border-r border-border-default bg-surface-canvas">
                         {row.base_y.toFixed(3)}
                       </td>
                       {sortedWaterlines.map((wl) => {
@@ -1613,21 +1615,21 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                         return (
                           <td
                             key={`mat-cell-${row.station}-${wl.id}`}
-                            className={`py-2 px-3 text-right border-r border-slate-200 dark:border-slate-800/60 ${
+                            className={`py-2 px-3 text-right border-r border-border-default ${
                               isActive
-                                ? "bg-cyan-50 dark:bg-cyan-950/30 font-bold text-cyan-700 dark:text-cyan-300"
+                                ? "bg-surface-selected font-semibold text-accent-primary"
                                 : isZero
-                                ? "text-slate-400 dark:text-slate-600"
+                                ? "text-text-secondary"
                                 : isMid
-                                ? "text-emerald-700 dark:text-emerald-300 font-bold"
-                                : "text-slate-700 dark:text-slate-200"
-                            }`}
+                                ? "text-status-success font-semibold"
+                                : "text-text-primary"
+                            } `}
                           >
                             {yVal.toFixed(3)}
                           </td>
                         );
                       })}
-                      <td className="py-2 px-3 text-right font-medium text-amber-700 dark:text-amber-300 bg-amber-50/50 dark:bg-amber-950/10">
+                      <td className="py-2 px-3 text-right font-medium text-status-warning bg-status-warning-subtle">
                         {row.deck_y.toFixed(3)}
                       </td>
                     </tr>
@@ -1638,23 +1640,23 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
         ) : (
           /* 3D POINT CLOUD LIST VIEW */
-          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner max-h-[540px] overflow-y-auto no-scrollbar">
-            <table className="w-full text-left text-xs font-mono border-collapse min-w-[760px]">
-              <thead className="sticky top-0 z-20 bg-slate-100 dark:bg-slate-950 shadow-md">
-                <tr className="bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                  <th className="py-2.5 px-3 font-bold text-center border-r border-slate-200 dark:border-slate-800/80 w-14">NO</th>
-                  <th className="py-2.5 px-3 font-bold text-center border-r border-slate-200 dark:border-slate-800/80 w-20">GADING</th>
-                  <th className="py-2.5 px-3 font-bold text-center border-r border-slate-200 dark:border-slate-800/80 w-24">LABEL</th>
-                  <th className="py-2.5 px-3 font-semibold text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60 w-32">ZONA</th>
-                  <th className="py-2.5 px-3 font-semibold text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60 w-36">SISI BODY PLAN</th>
-                  <th className="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800/60 min-w-[140px]">LEVEL ELEVASI</th>
-                  <th className="py-2.5 px-3 font-bold text-cyan-700 dark:text-cyan-400 text-right border-r border-slate-200 dark:border-slate-800/60 w-28">X (AP) [m]</th>
-                  <th className="py-2.5 px-3 font-semibold text-slate-500 dark:text-slate-400 text-right border-r border-slate-200 dark:border-slate-800/60 w-28">X (MID) [m]</th>
-                  <th className="py-2.5 px-3 font-bold text-emerald-700 dark:text-emerald-400 text-right border-r border-slate-200 dark:border-slate-800/60 w-28">Y (0.5B) [m]</th>
-                  <th className="py-2.5 px-3 font-bold text-amber-700 dark:text-amber-400 text-right w-28">Z (Draft) [m]</th>
+          <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default max-h-[540px] overflow-y-auto">
+            <table className="w-full text-left text-sm font-mono border-collapse min-w-[760px]">
+              <thead className="sticky top-0 z-20 bg-surface-secondary">
+                <tr className="bg-surface-secondary text-text-primary border-b border-border-default text-xs">
+                  <th className="py-2.5 px-3 font-semibold text-center border-r border-border-default w-14">NO</th>
+                  <th className="py-2.5 px-3 font-semibold text-center border-r border-border-default w-20">GADING</th>
+                  <th className="py-2.5 px-3 font-semibold text-center border-r border-border-default w-24">LABEL</th>
+                  <th className="py-2.5 px-3 font-semibold text-text-secondary border-r border-border-default w-32">ZONA</th>
+                  <th className="py-2.5 px-3 font-semibold text-text-secondary border-r border-border-default w-36">SISI BODY PLAN</th>
+                  <th className="py-2.5 px-3 font-semibold text-text-primary border-r border-border-default min-w-[140px]">LEVEL ELEVASI</th>
+                  <th className="py-2.5 px-3 font-semibold text-accent-primary text-right border-r border-border-default w-28">X (AP) [m]</th>
+                  <th className="py-2.5 px-3 font-semibold text-text-secondary text-right border-r border-border-default w-28">X (MID) [m]</th>
+                  <th className="py-2.5 px-3 font-semibold text-status-success text-right border-r border-border-default w-28">Y (0.5B) [m]</th>
+                  <th className="py-2.5 px-3 font-semibold text-status-warning text-right w-28">Z (Draft) [m]</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50 bg-white dark:bg-slate-950/30">
+              <tbody className="divide-y divide-border-default bg-surface-primary">
                 {filteredPoints.map((pt, idx) => {
                   const isHovered = hoveredStation === pt.station;
                   const isMid = pt.station === 10.0;
@@ -1669,52 +1671,52 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       onMouseLeave={() => setHoveredStation(null)}
                       className={`transition-colors duration-100 ${
                         isHovered
-                          ? "bg-cyan-50 dark:bg-cyan-950/40 text-slate-900 dark:text-white"
+                          ? "bg-surface-selected text-text-primary"
                           : isMid
-                          ? "bg-amber-50 dark:bg-cyan-950/20"
+                          ? "bg-status-warning-subtle"
                           : isDWL
-                          ? "bg-emerald-50 dark:bg-emerald-950/15"
+                          ? "bg-status-success-subtle"
                           : isDeck
-                          ? "bg-amber-50 dark:bg-amber-950/15"
-                          : "hover:bg-slate-50 dark:hover:bg-slate-900/50"
-                      }`}
+                          ? "bg-status-warning-subtle"
+                          : "hover:bg-surface-canvas"
+                      } `}
                     >
-                      <td className="py-1.5 px-3 text-center text-slate-400 dark:text-slate-500 border-r border-slate-200 dark:border-slate-800/80">
+                      <td className="py-1.5 px-3 text-center text-text-secondary border-r border-border-default">
                         {idx + 1}
                       </td>
-                      <td className="py-1.5 px-3 text-center font-bold text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800/80">
+                      <td className="py-1.5 px-3 text-center font-semibold text-text-primary border-r border-border-default">
                         {pt.station}
                       </td>
-                      <td className="py-1.5 px-3 text-center font-bold text-amber-700 dark:text-amber-300 border-r border-slate-200 dark:border-slate-800/80">
+                      <td className="py-1.5 px-3 text-center font-semibold text-status-warning border-r border-border-default">
                         {pt.stationLabel}
                       </td>
-                      <td className="py-1.5 px-3 text-slate-500 dark:text-slate-400 text-[10px] border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-1.5 px-3 text-text-secondary text-sm border-r border-border-default">
                         {pt.zoneName}
                       </td>
-                      <td className="py-1.5 px-3 border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-1.5 px-3 border-r border-border-default">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
                             pt.station <= 10.0
-                              ? "bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-500/30"
-                              : "bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-500/30"
-                          }`}
+                              ? "bg-surface-selected text-accent-primary border border-border-default"
+                              : "bg-surface-selected text-accent-primary border border-border-default"
+                          } `}
                         >
                           {pt.bodySide}
                         </span>
                       </td>
-                      <td className="py-1.5 px-3 font-semibold text-slate-700 dark:text-slate-200 border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-1.5 px-3 font-semibold text-text-primary border-r border-border-default">
                         {pt.waterlineName}
                       </td>
-                      <td className="py-1.5 px-3 text-right text-cyan-700 dark:text-cyan-300 font-bold border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-1.5 px-3 text-right text-accent-primary font-semibold border-r border-border-default">
                         {pt.x_ap.toFixed(3)}
                       </td>
-                      <td className="py-1.5 px-3 text-right text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-1.5 px-3 text-right text-text-secondary border-r border-border-default">
                         {pt.x_mid >= 0 ? `+${pt.x_mid.toFixed(3)}` : pt.x_mid.toFixed(3)}
                       </td>
-                      <td className="py-1.5 px-3 text-right text-emerald-700 dark:text-emerald-300 font-bold border-r border-slate-200 dark:border-slate-800/60">
+                      <td className="py-1.5 px-3 text-right text-status-success font-semibold border-r border-border-default">
                         {pt.y.toFixed(3)}
                       </td>
-                      <td className="py-1.5 px-3 text-right text-amber-700 dark:text-amber-300 font-bold">
+                      <td className="py-1.5 px-3 text-right text-status-warning font-semibold">
                         {pt.z.toFixed(3)}
                       </td>
                     </tr>
@@ -1771,44 +1773,44 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
     return (
       <g className="body-plan-group">
-        <rect x="2" y="2" width="196" height="139" fill="none" stroke="#94a3b8" strokeWidth="0.35" opacity="0.65" />
+        <rect x="2" y="2" width="196" height="139" fill="none" stroke={engineeringColor("#94a3b8")} strokeWidth="0.35" opacity="0.65" />
 
         {/* Title Header Block - Clean Drawing Metadata */}
         <g className="drawing-header">
-          <text x={ox} y="13" fill="#94a3b8" fontSize="1.8" fontFamily="monospace" textAnchor="middle">
+          <text x={ox} y="13" fill={engineeringColor("#94a3b8", "text")} fontSize="1.8" fontFamily="monospace" textAnchor="middle">
             LBP = {LBP.toFixed(2)}m &bull; B = {B.toFixed(2)}m &bull; T = {T.toFixed(2)}m &bull; H = {H.toFixed(2)}m &bull; {activeStationsConfig.length} Frames &bull; {effectiveWaterlineLevels.length} Waterlines
           </text>
         </g>
 
         {/* TOP CENTERLINE ARROW & BACKBOARD FACE (Authentic Gambar 1 Layout) */}
         <g className="backboard-face-indicator">
-          <text x={ox} y="4.5" fill="#f8fafc" fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" letterSpacing="0.04em">
+          <text x={ox} y="4.5" fill={engineeringColor("#f8fafc", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" letterSpacing="0.04em">
             BACKBOARD
           </text>
-          <text x={ox} y="7.2" fill="#f8fafc" fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" letterSpacing="0.04em">
+          <text x={ox} y="7.2" fill={engineeringColor("#f8fafc", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" letterSpacing="0.04em">
             FACE
           </text>
           {/* Prominent Upward Arrow */}
           <path
             d={`M ${ox},8.2 L ${ox - 1.6},10.5 L ${ox - 0.5},10.5 L ${ox - 0.5},13.2 L ${ox + 0.5},13.2 L ${ox + 0.5},10.5 L ${ox + 1.6},10.5 Z`}
-            fill="#f8fafc"
+            fill={engineeringColor("#f8fafc")}
           />
         </g>
 
         {/* Centerline Red Axis & Red CL Label */}
-        <line x1={ox} y1={13.5} x2={ox} y2={oy + 6} stroke="#ef4444" strokeWidth="1.2" />
-        <text x={ox + 2.5} y="16.5" fill="#ef4444" fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
+        <line x1={ox} y1={13.5} x2={ox} y2={oy + 6} stroke={engineeringColor("#ef4444")} strokeWidth="1.2" />
+        <text x={ox + 2.5} y="16.5" fill={engineeringColor("#ef4444", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
           CL
         </text>
-        <text x={ox} y={oy + 5.5} fill="#ef4444" fontSize="1.8" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
+        <text x={ox} y={oy + 5.5} fill={engineeringColor("#ef4444", "text")} fontSize="1.8" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
           0
         </text>
 
         {/* Section Classification Badges (Port Afterbody vs Starboard Forebody) */}
-        <text x={ox - 45} y="22" fill="#a78bfa" fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
+        <text x={ox - 45} y="22" fill={engineeringColor("#a78bfa", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
           ◀ AFTERBODY (Port)
         </text>
-        <text x={ox + 45} y="22" fill="#2dd4bf" fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
+        <text x={ox + 45} y="22" fill={engineeringColor("#2dd4bf", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
           FOREBODY (Starboard) ▶
         </text>
 
@@ -1834,7 +1836,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     y1="16"
                     x2={bxRight}
                     y2={oy + 2}
-                    stroke="#475569"
+                    stroke={engineeringColor("#475569")}
                     strokeWidth={isOuter ? 0.6 : 0.28}
                     strokeDasharray="none"
                   />
@@ -1844,7 +1846,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     y1="16"
                     x2={bxLeft}
                     y2={oy + 2}
-                    stroke="#475569"
+                    stroke={engineeringColor("#475569")}
                     strokeWidth={isOuter ? 0.6 : 0.28}
                     strokeDasharray="none"
                   />
@@ -1853,7 +1855,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   <text
                     x={bxLeft}
                     y={oy + 4.5}
-                    fill="#94a3b8"
+                    fill={engineeringColor("#94a3b8", "text")}
                     fontSize="1.9"
                     fontFamily="sans-serif"
                     fontWeight="bold"
@@ -1864,7 +1866,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   <text
                     x={bxRight}
                     y={oy + 4.5}
-                    fill="#94a3b8"
+                    fill={engineeringColor("#94a3b8", "text")}
                     fontSize="1.9"
                     fontFamily="sans-serif"
                     fontWeight="bold"
@@ -1877,7 +1879,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   <text
                     x={bxLeft}
                     y={oy + 7.5}
-                    fill="#64748b"
+                    fill={engineeringColor("#64748b", "text")}
                     fontSize="1.3"
                     fontFamily="monospace"
                     textAnchor="middle"
@@ -1887,7 +1889,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   <text
                     x={bxRight}
                     y={oy + 7.5}
-                    fill="#64748b"
+                    fill={engineeringColor("#64748b", "text")}
                     fontSize="1.3"
                     fontFamily="monospace"
                     textAnchor="middle"
@@ -1903,9 +1905,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         {/* DIAGONAL BILGE RAY (Sent Lines) at 45 degrees */}
         {showDiagonals && (
           <g opacity="0.45">
-            <line x1={ox} y1={oy} x2={ox + halfB * scaleX + 6} y2={oy - halfB * scaleZ - 6} stroke="#f59e0b" strokeWidth="0.35" strokeDasharray="none" />
-            <line x1={ox} y1={oy} x2={ox - halfB * scaleX - 6} y2={oy - halfB * scaleZ - 6} stroke="#f59e0b" strokeWidth="0.35" strokeDasharray="none" />
-            <text x={ox + halfB * scaleX + 7} y={oy - halfB * scaleZ - 6} fill="#f59e0b" fontSize="1.8" fontFamily="monospace">
+            <line x1={ox} y1={oy} x2={ox + halfB * scaleX + 6} y2={oy - halfB * scaleZ - 6} stroke={engineeringColor("#f59e0b")} strokeWidth="0.35" strokeDasharray="none" />
+            <line x1={ox} y1={oy} x2={ox - halfB * scaleX - 6} y2={oy - halfB * scaleZ - 6} stroke={engineeringColor("#f59e0b")} strokeWidth="0.35" strokeDasharray="none" />
+            <text x={ox + halfB * scaleX + 7} y={oy - halfB * scaleZ - 6} fill={engineeringColor("#f59e0b", "text")} fontSize="1.8" fontFamily="monospace">
               Sent / Diag
             </text>
           </g>
@@ -1921,7 +1923,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           return (
             <g
               key={`body-wl-${wl.id}`}
-              className="cursor-pointer transition-all"
+              className="cursor-pointer transition-colors"
               onClick={() => onSelectWlId?.(wl.id)}
               onPointerEnter={() => setHoverWlId(wl.id)}
               onPointerLeave={() => setHoverWlId(null)}
@@ -1931,7 +1933,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={yPos}
                 x2={outerX + 3}
                 y2={yPos}
-                stroke={isActive ? "#38bdf8" : wl.color}
+                stroke={engineeringColor(isActive ? "#38bdf8" : wl.color)}
                 strokeWidth={isActive ? 0.75 : isHovered ? 0.55 : 0.22}
                 strokeDasharray="none"
                 opacity={isActive ? 0.9 : isHovered ? 0.7 : 0.16}
@@ -1941,7 +1943,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <text
                 x={mirrorOuterX - 4.5}
                 y={yPos + 0.6}
-                fill={isActive ? "#38bdf8" : "#cbd5e1"}
+                fill={engineeringColor(isActive ? "#38bdf8" : "#cbd5e1", "text")}
                 fontSize="1.8"
                 fontFamily="sans-serif"
                 fontWeight={isActive ? "bold" : "600"}
@@ -1954,7 +1956,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <text
                 x={outerX + 4.5}
                 y={yPos + 0.6}
-                fill={isActive ? "#38bdf8" : "#cbd5e1"}
+                fill={engineeringColor(isActive ? "#38bdf8" : "#cbd5e1", "text")}
                 fontSize="1.8"
                 fontFamily="sans-serif"
                 fontWeight={isActive ? "bold" : "600"}
@@ -1981,14 +1983,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           return (
             <g
               key={`body-after-st-${st}`}
-              className="transition-all cursor-pointer"
+              className="transition-colors cursor-pointer"
               onPointerEnter={() => setHoveredStation(st)}
               onPointerLeave={() => setHoveredStation(null)}
             >
               <path
                 d={pathD}
                 fill="none"
-                stroke={isHovered ? "#f59e0b" : "#8b5cf6"}
+                stroke={engineeringColor(isHovered ? "#f59e0b" : "#8b5cf6")}
                 strokeWidth={isHovered ? 2.5 : isInteger ? 1.3 : 0.75}
                 strokeDasharray="none"
                 opacity={isHovered ? 1.0 : isInteger ? 0.95 : 0.75}
@@ -1997,7 +1999,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <text
                   x={topPt.x}
                   y={topPt.y - 1.6}
-                  fill={isHovered ? "#f59e0b" : isInteger ? "#c4b5fd" : "#94a3b8"}
+                  fill={engineeringColor(isHovered ? "#f59e0b" : isInteger ? "#c4b5fd" : "#94a3b8", "text")}
                   fontSize={isInteger ? "1.9" : "1.4"}
                   fontFamily="sans-serif"
                   fontWeight={isHovered ? "bold" : isInteger ? "600" : "normal"}
@@ -2023,14 +2025,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           return (
             <g
               key={`body-fore-st-${st}`}
-              className="transition-all cursor-pointer"
+              className="transition-colors cursor-pointer"
               onPointerEnter={() => setHoveredStation(st)}
               onPointerLeave={() => setHoveredStation(null)}
             >
               <path
                 d={pathD}
                 fill="none"
-                stroke={isHovered ? "#f59e0b" : "#06b6d4"}
+                stroke={engineeringColor(isHovered ? "#f59e0b" : "#06b6d4")}
                 strokeWidth={isHovered ? 2.5 : isInteger ? 1.3 : 0.75}
                 strokeDasharray="none"
                 opacity={isHovered ? 1.0 : isInteger ? 0.95 : 0.75}
@@ -2039,7 +2041,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <text
                   x={topPt.x}
                   y={topPt.y - 1.6}
-                  fill={isHovered ? "#f59e0b" : isInteger ? "#5eead4" : "#94a3b8"}
+                  fill={engineeringColor(isHovered ? "#f59e0b" : isInteger ? "#5eead4" : "#94a3b8", "text")}
                   fontSize={isInteger ? "1.9" : "1.4"}
                   fontFamily="sans-serif"
                   fontWeight={isHovered ? "bold" : isInteger ? "600" : "normal"}
@@ -2058,13 +2060,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <path
               d={smoothPath(foreSheerPts, 0.25)}
               fill="none"
-              stroke="#f59e0b"
+              stroke={engineeringColor("#f59e0b")}
               strokeWidth="1.2"
               strokeLinecap="round"
               opacity="0.9"
             />
             {/* Labeled 'SHEER' with pointer arrow */}
-            <text x={ox + 20} y={deckY - 14} fill="#f59e0b" fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
+            <text x={ox + 20} y={deckY - 14} fill={engineeringColor("#f59e0b", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
               SHEER
             </text>
             <line
@@ -2072,11 +2074,11 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               y1={deckY - 12}
               x2={foreSheerPts[Math.min(3, foreSheerPts.length - 1)].x}
               y2={foreSheerPts[Math.min(3, foreSheerPts.length - 1)].y}
-              stroke="#f59e0b"
+              stroke={engineeringColor("#f59e0b")}
               strokeWidth="0.6"
               markerEnd="url(#arrowAmber)"
             />
-            <text x={ox + 50} y={deckY - 18} fill="#2dd4bf" fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
+            <text x={ox + 50} y={deckY - 18} fill={engineeringColor("#2dd4bf", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
               STATIONS
             </text>
             <line
@@ -2084,7 +2086,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               y1={deckY - 16}
               x2={foreSheerPts[Math.min(6, foreSheerPts.length - 1)].x}
               y2={foreSheerPts[Math.min(6, foreSheerPts.length - 1)].y - 3}
-              stroke="#2dd4bf"
+              stroke={engineeringColor("#2dd4bf")}
               strokeWidth="0.5"
               markerEnd="url(#arrowCyan)"
             />
@@ -2097,13 +2099,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <path
               d={smoothPath(aftSheerPts, 0.25)}
               fill="none"
-              stroke="#f59e0b"
+              stroke={engineeringColor("#f59e0b")}
               strokeWidth="1.2"
               strokeLinecap="round"
               opacity="0.9"
             />
             {/* Labeled 'SHEER' with pointer arrow */}
-            <text x={ox - 20} y={deckY - 14} fill="#f59e0b" fontSize="2.4" fontFamily="sans-serif" fontWeight="bold" textAnchor="end">
+            <text x={ox - 20} y={deckY - 14} fill={engineeringColor("#f59e0b", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold" textAnchor="end">
               SHEER
             </text>
             <line
@@ -2111,11 +2113,11 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               y1={deckY - 12}
               x2={aftSheerPts[Math.min(3, aftSheerPts.length - 1)].x}
               y2={aftSheerPts[Math.min(3, aftSheerPts.length - 1)].y}
-              stroke="#f59e0b"
+              stroke={engineeringColor("#f59e0b")}
               strokeWidth="0.6"
               markerEnd="url(#arrowAmber)"
             />
-            <text x={ox - 50} y={deckY - 18} fill="#a78bfa" fontSize="2.4" fontFamily="sans-serif" fontWeight="bold" textAnchor="end">
+            <text x={ox - 50} y={deckY - 18} fill={engineeringColor("#a78bfa", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold" textAnchor="end">
               STATIONS
             </text>
             <line
@@ -2123,7 +2125,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               y1={deckY - 16}
               x2={aftSheerPts[Math.min(6, aftSheerPts.length - 1)].x}
               y2={aftSheerPts[Math.min(6, aftSheerPts.length - 1)].y - 3}
-              stroke="#a78bfa"
+              stroke={engineeringColor("#a78bfa")}
               strokeWidth="0.5"
               markerEnd="url(#arrowIndigo)"
             />
@@ -2136,14 +2138,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             <path
               d={smoothPath(knucklePts, 0.25)}
               fill="none"
-              stroke="#c7d2fe"
+              stroke={engineeringColor("#c7d2fe")}
               strokeWidth="1.0"
               strokeDasharray="none"
             />
-            <text x={ox - 45} y={deckY - 6} fill="#c7d2fe" fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
+            <text x={ox - 45} y={deckY - 6} fill={engineeringColor("#c7d2fe", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
               TRANSOM
             </text>
-            <text x={ox - 45} y={deckY - 3.2} fill="#c7d2fe" fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
+            <text x={ox - 45} y={deckY - 3.2} fill={engineeringColor("#c7d2fe", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
               KNUCKLE
             </text>
             <line
@@ -2151,7 +2153,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               y1={deckY - 2}
               x2={knucklePts[0].x}
               y2={knucklePts[0].y}
-              stroke="#c7d2fe"
+              stroke={engineeringColor("#c7d2fe")}
               strokeWidth="0.5"
               markerEnd="url(#arrowIndigo)"
             />
@@ -2169,7 +2171,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           return (
             <g
               key="body-st-10-symmetrical"
-              className="transition-all cursor-pointer"
+              className="transition-colors cursor-pointer"
               onPointerEnter={() => setHoveredStation(10.0)}
               onPointerLeave={() => setHoveredStation(null)}
             >
@@ -2177,14 +2179,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <path
                 d={fairFramePath(ptsPort)}
                 fill="none"
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth={isHovered ? 3.5 : 2.6}
               />
               {/* Starboard Side Midship Frame */}
               <path
                 d={fairFramePath(ptsStbd)}
                 fill="none"
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth={isHovered ? 3.5 : 2.6}
               />
 
@@ -2193,7 +2195,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   <text
                     x={topPort.x}
                     y={topPort.y - 1.6}
-                    fill="#fbbf24"
+                    fill={engineeringColor("#fbbf24", "text")}
                     fontSize="2.1"
                     fontFamily="sans-serif"
                     fontWeight="bold"
@@ -2204,7 +2206,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   <text
                     x={topStbd.x}
                     y={topStbd.y - 1.6}
-                    fill="#fbbf24"
+                    fill={engineeringColor("#fbbf24", "text")}
                     fontSize="2.1"
                     fontFamily="sans-serif"
                     fontWeight="bold"
@@ -2228,7 +2230,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={oy - R * scaleZ}
                 x2={ox + flatOfBottom * scaleX + 1.5}
                 y2={oy - R * scaleZ}
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth="0.45"
               />
               <line
@@ -2236,7 +2238,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={oy - R * scaleZ - 1.5}
                 x2={ox + flatOfBottom * scaleX}
                 y2={oy - R * scaleZ + 1.5}
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth="0.45"
               />
               {/* Port Bilge Center (+) */}
@@ -2245,7 +2247,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={oy - R * scaleZ}
                 x2={ox - flatOfBottom * scaleX + 1.5}
                 y2={oy - R * scaleZ}
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth="0.45"
               />
               <line
@@ -2253,7 +2255,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={oy - R * scaleZ - 1.5}
                 x2={ox - flatOfBottom * scaleX}
                 y2={oy - R * scaleZ + 1.5}
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth="0.45"
               />
 
@@ -2263,13 +2265,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={oy - R * scaleZ}
                 x2={ox + flatOfBottom * scaleX + (R * scaleX) / Math.SQRT2}
                 y2={oy - R * scaleZ + (R * scaleZ) / Math.SQRT2}
-                stroke="#f59e0b"
+                stroke={engineeringColor("#f59e0b")}
                 strokeWidth="0.5"
               />
               <text
                 x={ox + flatOfBottom * scaleX + (R * scaleX) / Math.SQRT2 + 2}
                 y={oy - R * scaleZ + (R * scaleZ) / Math.SQRT2 + 1}
-                fill="#f59e0b"
+                fill={engineeringColor("#f59e0b", "text")}
                 fontSize="2.2"
                 fontFamily="monospace"
                 fontWeight="bold"
@@ -2285,7 +2287,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           <text
             x={ox}
             y="141"
-            fill="#ffffff"
+            fill={engineeringColor("#ffffff", "text")}
             fontSize="4.0"
             fontFamily="'Times New Roman', Georgia, serif"
             fontWeight="800"
@@ -2331,7 +2333,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                               cy={yPos}
                               r="3.0"
                               fill="none"
-                              stroke="#f59e0b"
+                              stroke={engineeringColor("#f59e0b")}
                               strokeWidth="0.5"
                               strokeDasharray="none"
                             />
@@ -2344,7 +2346,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                               cy={yPos}
                               r={isHovered ? 2.0 : isInteger ? 1.4 : 1.0}
                               fill="none"
-                              stroke={isAfter ? "#a78bfa" : "#2dd4bf"}
+                              stroke={engineeringColor(isAfter ? "#a78bfa" : "#2dd4bf")}
                               strokeWidth="0.28"
                               opacity={isHovered ? 0.9 : 0.4}
                             />
@@ -2368,7 +2370,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                                 : 0.5
                             }
                             fill={
-                              isDragging
+                              engineeringColor(isDragging
                                 ? "#f59e0b"
                                 : isActiveWl
                                 ? isHovered
@@ -2378,9 +2380,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                                   : "#0891b2"
                                 : isHovered
                                 ? "#f59e0b"
-                                : wl.color || (isAfter ? "#7c3aed" : "#0891b2")
+                                : wl.color || (isAfter ? "#7c3aed" : "#0891b2"))
                             }
-                            stroke="#ffffff"
+                            stroke={engineeringColor("#ffffff")}
                             strokeWidth={isDragging ? 0.5 : isActiveWl ? 0.25 : 0.15}
                             opacity={isActiveWl || isHovered || isDragging ? 1.0 : 0.7}
                             className="cursor-ew-resize transition-transform"
@@ -2408,8 +2410,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         )}
 
         {/* BASELINE AXIS */}
-        <line x1={mirrorOuterX - 6} y1={oy} x2={outerX + 6} y2={oy} stroke="#475569" strokeWidth="0.8" />
-        <text x={mirrorOuterX - 7} y={oy + 0.6} fill="#94a3b8" fontSize="1.6" fontFamily="monospace" fontWeight="bold" textAnchor="end">
+        <line x1={mirrorOuterX - 6} y1={oy} x2={outerX + 6} y2={oy} stroke={engineeringColor("#475569")} strokeWidth="0.8" />
+        <text x={mirrorOuterX - 7} y={oy + 0.6} fill={engineeringColor("#94a3b8", "text")} fontSize="1.6" fontFamily="monospace" fontWeight="bold" textAnchor="end">
           BASE LINE
         </text>
       </g>
@@ -2486,21 +2488,21 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
       return (
         <g>
-          <path d={subHullPath} fill="rgba(56, 189, 248, 0.08)" />
+          <path d={subHullPath} fill={engineeringColor("rgba(56, 189, 248, 0.08)")} />
           <path
             d={hullPath}
-            fill={isPreviewMode ? "rgba(6, 182, 212, 0.18)" : "rgba(6, 182, 212, 0.08)"}
-            stroke="#06b6d4"
+            fill={engineeringColor(isPreviewMode ? "rgba(6, 182, 212, 0.18)" : "rgba(6, 182, 212, 0.08)")}
+            stroke={engineeringColor("#06b6d4")}
             strokeWidth="1.2"
           />
 
           {isFullHullView && (
             <g transform={`translate(${2 * ox}, 0) scale(-1, 1)`}>
-              <path d={subHullPath} fill="rgba(56, 189, 248, 0.08)" />
+              <path d={subHullPath} fill={engineeringColor("rgba(56, 189, 248, 0.08)")} />
               <path
                 d={hullPath}
-                fill={isPreviewMode ? "rgba(6, 182, 212, 0.18)" : "rgba(6, 182, 212, 0.08)"}
-                stroke="#06b6d4"
+                fill={engineeringColor(isPreviewMode ? "rgba(6, 182, 212, 0.18)" : "rgba(6, 182, 212, 0.08)")}
+                stroke={engineeringColor("#06b6d4")}
                 strokeWidth="1.2"
               />
             </g>
@@ -2520,7 +2522,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               return (
                 <g
                   key={`wl-proj-${wl.id}`}
-                  className="transition-all duration-150 cursor-pointer"
+                  className="transition-colors duration-150 cursor-pointer"
                   onClick={() => onSelectWlId?.(wl.id)}
                 >
                   <line
@@ -2528,7 +2530,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     y1={yPos}
                     x2={midPtX}
                     y2={yPos}
-                    stroke={isActive ? "#38bdf8" : wl.color}
+                    stroke={engineeringColor(isActive ? "#38bdf8" : wl.color)}
                     strokeWidth={isActive ? "0.9" : "0.5"}
                     opacity={isActive ? 1.0 : 0.85}
                   />
@@ -2539,7 +2541,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       cy={yPos}
                       r="2.6"
                       fill="none"
-                      stroke="#38bdf8"
+                      stroke={engineeringColor("#38bdf8")}
                       strokeWidth="0.5"
                       opacity="0.85"
                       strokeDasharray="none"
@@ -2550,8 +2552,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     cx={midPtX}
                     cy={yPos}
                     r={isActive ? "1.4" : isHovered ? "1.2" : "0.95"}
-                    fill={isActive ? "#38bdf8" : wl.color}
-                    stroke="#ffffff"
+                    fill={engineeringColor(isActive ? "#38bdf8" : wl.color)}
+                    stroke={engineeringColor("#ffffff")}
                     strokeWidth={isActive ? "0.4" : "0.25"}
                     className="cursor-ew-resize"
                     onPointerDown={(e) => handleWlPointerDown(e, wl.id, z)}
@@ -2566,8 +2568,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       cx={mirroredPtX}
                       cy={yPos}
                       r={isActive ? "1.4" : "0.95"}
-                      fill={isActive ? "#38bdf8" : wl.color}
-                      stroke="#ffffff"
+                      fill={engineeringColor(isActive ? "#38bdf8" : wl.color)}
+                      stroke={engineeringColor("#ffffff")}
                       strokeWidth="0.25"
                       className="opacity-75"
                     />
@@ -2578,8 +2580,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
           {!isPreviewMode && (
             <>
-              <line x1={ox} y1="4" x2={ox} y2={oy + 8} stroke="#64748b" strokeWidth="0.8" />
-              <text x={ox - 2} y="7" fill="#64748b" fontSize="2.8" textAnchor="end" fontFamily="monospace" fontWeight="bold">
+              <line x1={ox} y1="4" x2={ox} y2={oy + 8} stroke={engineeringColor("#64748b")} strokeWidth="0.8" />
+              <text x={ox - 2} y="7" fill={engineeringColor("#64748b", "text")} fontSize="2.8" textAnchor="end" fontFamily="monospace" fontWeight="bold">
                 CL
               </text>
 
@@ -2588,7 +2590,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 y1={oy}
                 x2={outerX + 16}
                 y2={oy}
-                stroke="#64748b"
+                stroke={engineeringColor("#64748b")}
                 strokeWidth="0.8"
               />
             </>
@@ -2611,18 +2613,18 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       {/* FULLSCREEN STUDIO OVERLAY FOR RADIUS BILGA & BODY PLAN     */}
       {/* ========================================================= */}
       {isFullscreenPlot && (
-        <div className="fixed inset-0 z-50 bg-slate-950/98 backdrop-blur-3xl flex flex-col p-2 sm:p-3 overflow-hidden select-none animate-in fade-in duration-200">
-          <div className="w-full bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5 mb-2 shadow-2xl space-y-2 shrink-0">
+        <div className="fixed inset-0 z-50 bg-surface-inset flex flex-col p-2 sm:p-3 overflow-hidden select-none duration-200">
+          <div className="w-full bg-surface-primary border border-border-default rounded-lg p-2.5 mb-2 space-y-2 shrink-0">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center space-x-2.5">
-                <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                <div className="text-text-secondary shrink-0">
                   <Activity size={16} />
                 </div>
                 <div className="flex items-center space-x-2">
-                  <h2 className="text-sm font-bold text-white tracking-wide whitespace-nowrap">
-                    Body Plan Studio &mdash; <span className="text-cyan-400">Station Sections & Bilge Radius</span>
+                  <h2 className="text-sm font-semibold text-text-primary tracking-normal whitespace-nowrap">
+                    Body Plan Studio &mdash; <span className="text-accent-primary">Station Sections & Bilge Radius</span>
                   </h2>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase whitespace-nowrap">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-selected text-accent-primary border border-border-default font-semibold whitespace-nowrap">
                     R = {R.toFixed(3)} m
                   </span>
                 </div>
@@ -2642,15 +2644,15 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                         : "active"
                     )
                   }
-                  className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition-all border shadow cursor-pointer flex items-center space-x-1.5 ${
+                  className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer flex items-center space-x-1.5 ${
                     handlesDisplayMode === "all"
-                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-amber-500/10"
+                      ? "bg-status-warning-subtle text-status-warning border-status-warning-border min-h-9"
                       : handlesDisplayMode === "active"
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                      : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
-                  }`}
+                      ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
+                      : "bg-surface-secondary text-text-secondary border-border-default hover:text-text-primary min-h-9"
+                  } `}
                   title="Cycle through: Active WL only, All WLs, or No Points (Clean Curves)"
-                >
+                 aria-label="Cycle through: Active WL only, All WLs, or No Points (Clean Curves)">
                   <span>
                     {handlesDisplayMode === "all"
                       ? "Points: All WLs"
@@ -2658,7 +2660,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       ? "Points: Active WL"
                       : "Points: Hidden"}
                   </span>
-                  <span className="text-[10px] px-1 rounded bg-slate-900/60 font-semibold">
+                  <span className="text-xs px-1 rounded bg-surface-primary font-semibold">
                     {handlesDisplayMode === "all"
                       ? `${effectiveWaterlineLevels.length * activeStationsConfig.length}`
                       : handlesDisplayMode === "active"
@@ -2671,41 +2673,41 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <button
                   type="button"
                   onClick={() => handleDensityChange(stationDensity === "all" ? "standard" : "all")}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-mono font-bold transition-all border shadow cursor-pointer flex items-center space-x-1 ${
+                  className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer flex items-center space-x-1 ${
                     stationDensity === "all"
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                      : "bg-slate-800 text-slate-300 border-slate-700 hover:text-white"
-                  }`}
+                      ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
+                      : "bg-surface-secondary text-text-primary border-border-default hover:text-text-primary min-h-9"
+                  } `}
                   title="Toggle between all frames (36 points) and standard frames (23 points)"
-                >
-                  <SlidersHorizontal size={12} className="text-cyan-400" />
+                 aria-label="Toggle between all frames (36 points) and standard frames (23 points)">
+                  <SlidersHorizontal size={12} className="text-accent-primary" />
                   <span>{stationDensity === "all" ? "All Frames (36)" : "Standard Frames (23)"}</span>
                 </button>
 
                 {/* Mode Switcher Pills */}
-                <div className="flex items-center bg-slate-950/80 p-0.5 rounded-xl border border-slate-800 text-xs font-mono">
+                <div className="flex items-center bg-surface-inset p-0.5 rounded-lg border border-border-default text-sm font-mono">
                   <button
                     type="button"
                     onClick={() => {
                       setIsFullHullView(true);
                       setStudioMode("bodyPlan");
                     }}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
                       studioMode === "bodyPlan"
-                        ? "bg-cyan-600 text-white shadow"
-                        : "text-slate-400 hover:text-white"
-                    }`}
+                        ? "bg-accent-primary text-on-accent min-h-9"
+                        : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     Body Plan
                   </button>
                   <button
                     type="button"
                     onClick={() => setStudioMode("xyzTable")}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
                       studioMode === "xyzTable"
-                        ? "bg-cyan-600 text-white shadow"
-                        : "text-slate-400 hover:text-white"
-                    }`}
+                        ? "bg-accent-primary text-on-accent min-h-9"
+                        : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     XYZ Offsets Table
                   </button>
@@ -2715,11 +2717,11 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       setIsFullHullView(false);
                       setStudioMode("midshipDetail");
                     }}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
                       studioMode === "midshipDetail"
-                        ? "bg-cyan-600 text-white shadow"
-                        : "text-slate-400 hover:text-white"
-                    }`}
+                        ? "bg-accent-primary text-on-accent min-h-9"
+                        : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                   >
                     Station 10 Section
                   </button>
@@ -2728,44 +2730,44 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 {/* Actions */}
                 <button
                   onClick={handleAutoFineTune}
-                  className="px-2.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-mono text-xs font-bold transition-all shadow-md flex items-center space-x-1 cursor-pointer"
+                  className="px-2.5 py-1.5 text-on-accent rounded-md font-sans text-sm font-semibold transition-colors flex items-center space-x-1 cursor-pointer bg-accent-primary min-h-9"
                   title="Automatically fair and balance the curve until the deviation is <= ±0.05%"
-                >
+                 aria-label="Automatically fair and balance the curve until the deviation is <= ±0.05%">
                   <Wand2 size={13} />
                   <span>Auto-Fit</span>
                 </button>
                 <button
                   onClick={handleReset}
-                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition-all cursor-pointer"
+                  className="p-1.5 bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary rounded-md transition-colors cursor-pointer min-h-9"
                   title="Reset ke Posisi Desain Awal"
-                >
+                 aria-label="Reset ke Posisi Desain Awal">
                   <RotateCcw size={15} />
                 </button>
                 <button
                   onClick={() => setIsPreviewMode(!isPreviewMode)}
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                     isPreviewMode
-                      ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
-                      : "bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-300"
-                  }`}
+                      ? "bg-status-warning-subtle border border-status-warning-border text-status-warning min-h-9"
+                      : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-accent-primary min-h-9"
+                  } `}
                   title={isPreviewMode ? "Show construction guides (Edit Mode)" : "Hide construction guides (Preview Mode)"}
-                >
+                 aria-pressed={isPreviewMode} aria-label={isPreviewMode ? "Show construction guides (Edit Mode)" : "Hide construction guides (Preview Mode)"}>
                   {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
                 <button
                   onClick={() => setIsFullscreenPlot(false)}
-                  className="p-1.5 bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 text-rose-300 hover:text-white rounded-lg transition-all cursor-pointer ml-1"
+                  className="p-1.5 bg-status-danger-subtle hover:bg-status-danger border border-status-danger-border text-status-danger hover:text-text-primary rounded-md transition-colors cursor-pointer ml-1 min-h-9"
                   title="Tutup Mode Layar Penuh (Esc)"
-                >
+                 aria-label="Tutup Mode Layar Penuh (Esc)">
                   <X size={16} />
                 </button>
               </div>
             </div>
 
             {/* Waterlines Quick-Switch & Presets Bar in Fullscreen */}
-            <div className="flex flex-wrap items-center justify-between gap-1 pt-1.5 border-t border-slate-800/70 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-1 pt-1.5 border-t border-border-default text-sm">
               <div className="flex flex-wrap items-center gap-1">
-                <span className="text-[10px] font-mono text-slate-400 mr-1 font-semibold uppercase">
+                <span className="text-xs font-mono text-text-secondary mr-1 font-semibold">
                   Waterline Count:
                 </span>
                 {[4, 7, 11, 13, 21].map((cnt) => (
@@ -2773,13 +2775,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     key={`fs-mid-cnt-${cnt}`}
                     type="button"
                     onClick={() => handleApplyWaterlinePreset(cnt)}
-                    className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all border cursor-pointer ${
+                    className={`px-2 py-0.5 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer ${
                       effectiveWaterlineLevels.length === cnt
-                        ? "bg-cyan-500/25 text-cyan-300 border-cyan-500/50 shadow-sm"
-                        : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800"
-                    }`}
+                        ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
+                        : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary min-h-9"
+                    } `}
                     title={`Terapkan ${cnt} Garis Air`}
-                  >
+                   aria-label={`Terapkan ${cnt} Garis Air`}>
                     {cnt} WL {cnt === 7 ? "(Std)" : ""}
                   </button>
                 ))}
@@ -2787,7 +2789,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
               {/* Active WL Selector Chips */}
               <div className="flex flex-wrap items-center gap-1">
-                <span className="text-[10px] font-mono text-slate-400 mr-1 font-semibold uppercase">
+                <span className="text-xs font-mono text-text-secondary mr-1 font-semibold">
                   Active WL:
                 </span>
                 {effectiveWaterlineLevels.map((wl) => {
@@ -2798,14 +2800,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       key={`fs-mid-wl-tab-${wl.id}`}
                       type="button"
                       onClick={() => onSelectWlId?.(wl.id)}
-                      className={`px-2 py-0.5 rounded-lg text-[10px] font-mono font-bold transition-all border flex items-center space-x-1 cursor-pointer ${
+                      className={`px-2 py-0.5 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1 cursor-pointer ${
                         isActive
-                          ? "bg-cyan-500 text-white border-cyan-400 shadow-sm"
-                          : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800"
-                      }`}
+                          ? "bg-accent-primary text-on-accent border-border-default min-h-9"
+                          : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary min-h-9"
+                      } `}
                       title={`${wl.name} (${zVal.toFixed(2)}m)`}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: wl.color }} />
+                     aria-label={`${wl.name} (${zVal.toFixed(2)}m)`}>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
                       <span>{wl.shortName}</span>
                     </button>
                   );
@@ -2815,32 +2817,32 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
 
           {/* Fullscreen Canvas or XYZ Table */}
-          <div className="flex-1 w-full min-h-0 bg-slate-900/95 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col items-center justify-center p-1 sm:p-2.5 shadow-2xl">
+          <div className="flex-1 w-full min-h-0 bg-surface-primary rounded-lg border border-border-default relative overflow-hidden flex flex-col items-center justify-center p-1 sm:p-2.5">
             {studioMode === "xyzTable" ? (
               renderXyzTableContent(false)
             ) : (
               <>
                 {draggingStation !== null && draggingWlId ? (
-                  <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-blue-500/20 border border-amber-500/50 px-3.5 py-1.5 rounded-full font-mono text-xs text-amber-300 backdrop-blur-md shadow-2xl animate-pulse">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                  <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 border border-status-warning-border px-3.5 py-1.5 rounded-full font-mono text-sm text-status-warning bg-accent-primary">
+                    <span className="w-2.5 h-2.5 rounded-full bg-status-warning-subtle animate-ping" />
                     <span>
                       Menggeser Gading <strong>{getStationDisplayLabel(draggingStation)}</strong> @{" "}
                       <strong>{effectiveWaterlineLevels.find((w) => w.id === draggingWlId)?.shortName || draggingWlId}</strong>{" "}
                       (Z = {(draggingDraft ?? 0).toFixed(2)}m):{" "}
-                      <strong className="text-white text-sm">
+                      <strong className="text-text-primary text-sm">
                         0.5 B = {(waterlinesData?.[draggingWlId]?.[draggingStation] ?? 0).toFixed(3)} m
                       </strong>
                     </span>
                   </div>
                 ) : hoveredStation !== null ? (
-                  <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-slate-900/80 border border-cyan-500/40 px-3 py-1 rounded-full font-mono text-xs text-cyan-300 backdrop-blur-md shadow-lg pointer-events-none">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-surface-primary border border-border-default px-3 py-1 rounded-full font-mono text-sm text-accent-primary pointer-events-none">
+                    <span className="w-2 h-2 rounded-full bg-surface-selected" />
                     <span>
                       Gading <strong>{getStationDisplayLabel(hoveredStation)}</strong>
                       {hoverWlId
                         ? ` @ ${effectiveWaterlineLevels.find((w) => w.id === hoverWlId)?.shortName || hoverWlId} (Z = ${(hoverDraft ?? 0).toFixed(2)}m)`
                         : ""}:{" "}
-                      <strong className="text-white">
+                      <strong className="text-text-primary">
                         0.5 B = {(getStationHalfB(
                           hoveredStation,
                           hoverWlId || activeWlId,
@@ -2863,7 +2865,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 >
                   <defs>
                     <pattern id="cadGridFs" width="10" height="10" patternUnits="userSpaceOnUse">
-                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#1e293b" strokeWidth="0.3" />
+                      <path d="M 10 0 L 0 0 0 10" fill="none" stroke={engineeringColor("#1e293b")} strokeWidth="0.3" />
                     </pattern>
                     <pattern
                       id="waterHatch"
@@ -2872,16 +2874,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       patternTransform="rotate(45 0 0)"
                       patternUnits="userSpaceOnUse"
                     >
-                      <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
+                      <line x1="0" y1="0" x2="0" y2="4" stroke={engineeringColor("#0284c7")} strokeWidth="0.4" strokeOpacity="0.25" />
                     </pattern>
                     <marker id="arrowAmber" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0,1 L 4,3 L 0,5 Z" fill="#f59e0b" />
+                      <path d="M 0,1 L 4,3 L 0,5 Z" fill={engineeringColor("#f59e0b")} />
                     </marker>
                     <marker id="arrowIndigo" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0,1 L 4,3 L 0,5 Z" fill="#c7d2fe" />
+                      <path d="M 0,1 L 4,3 L 0,5 Z" fill={engineeringColor("#c7d2fe")} />
                     </marker>
                     <marker id="arrowCyan" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                      <path d="M 0,1 L 4,3 L 0,5 Z" fill="#2dd4bf" />
+                      <path d="M 0,1 L 4,3 L 0,5 Z" fill={engineeringColor("#2dd4bf")} />
                     </marker>
                   </defs>
 
@@ -2892,12 +2894,12 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             )}
           </div>
 
-          <div className="w-full flex items-center justify-between pt-1 px-1 text-[11px] font-mono text-slate-400 shrink-0">
+          <div className="w-full flex items-center justify-between pt-1 px-1 text-xs font-mono text-text-secondary shrink-0">
             <span className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              <span className="w-2 h-2 rounded-full bg-surface-selected" />
               <span>
                 Jumlah station ({activeStationsConfig.length} gading) dan waterline ({effectiveWaterlineLevels.length} garis air) &bull;{" "}
-                <span className="text-cyan-300 font-bold">
+                <span className="text-accent-primary font-semibold">
                   {handlesDisplayMode === "all"
                     ? `${effectiveWaterlineLevels.length * activeStationsConfig.length} Titik Kontrol Interaktif (Semua Garis Air)`
                     : `${activeStationsConfig.length} Titik Kontrol Interaktif (Garis Air Aktif)`}
@@ -2905,7 +2907,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 selaras 100% dengan Waterline Plan &amp; 3D Offsets.
               </span>
             </span>
-            <span className="text-slate-500">NS Savannah Lines Plan Body Plan</span>
+            <span className="text-text-secondary">NS Savannah Lines Plan Body Plan</span>
           </div>
         </div>
       )}
@@ -2914,31 +2916,31 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       {/* EMBEDDED VIEW: HEADER TITLE BLOCK & PARTICULARS MATRIX     */}
       {/* ========================================================= */}
       {!visualOnly && (
-        <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-5">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 gap-4">
+        <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-border-default pb-4 gap-4">
             <div>
               <div className="flex items-center space-x-2.5">
-                <div className="p-2 rounded-xl bg-cyan-600/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+                <div className="text-text-secondary shrink-0">
                   <Activity size={20} />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                    <h2 className="text-base md:text-lg font-semibold text-text-primary tracking-tight">
                       {language === "en"
                         ? "Body Plan Transverse Sections & Bilge Radius Studio"
                         : "Body Plan Penampang Gading Melintang & Radius Bilga"}
                     </h2>
                     <span
-                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                      className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full border ${
                         isCorrectionValid
-                          ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border-emerald-500/40"
-                          : "bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-rose-500/40"
-                      }`}
+                          ? "bg-status-success-subtle text-status-success border-status-success-border"
+                          : "bg-status-danger-subtle text-status-danger border-status-danger-border"
+                      } `}
                     >
                       {isCorrectionValid ? "WITHIN TOLERANCE (≤ ±0.05%)" : "ADJUSTMENT REQUIRED"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-text-secondary">
                     Transverse Station Sections ({activeStationsConfig.length} Frames &bull; {effectiveWaterlineLevels.length} Waterlines) Bidirectionally Synchronized with the Waterplane Plan
                   </p>
                 </div>
@@ -2949,17 +2951,17 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <button
                 type="button"
                 onClick={() => setShowParticulars(!showParticulars)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 cursor-pointer"
-              >
-                {showParticulars ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors border bg-surface-secondary hover:bg-surface-secondary text-text-primary border-border-default cursor-pointer min-h-9"
+               aria-pressed={showParticulars}>
+                {showParticulars ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                 <span>{showParticulars ? "Hide" : "Show"}</span>
               </button>
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-cyan-700 dark:text-cyan-400 border-slate-200 dark:border-cyan-500/30 cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors border bg-surface-secondary hover:bg-surface-secondary text-accent-primary border-border-default cursor-pointer min-h-9"
                 title="Download midship integration data as CSV"
-              >
+               aria-label="Download midship integration data as CSV">
                 <Download size={14} />
                 <span>CSV</span>
               </button>
@@ -2969,53 +2971,53 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           {showParticulars && (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Breadth B (m)</span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{B.toFixed(2)} m</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary tracking-normal block">Breadth B (m)</span>
+                  <span className="text-sm font-semibold text-text-primary font-mono">{B.toFixed(2)} m</span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">0.5 B (m)</span>
-                  <span className="text-sm font-bold text-cyan-700 dark:text-cyan-400 font-mono">{halfB.toFixed(3)} m</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary tracking-normal block">0.5 B (m)</span>
+                  <span className="text-sm font-semibold text-accent-primary font-mono">{halfB.toFixed(3)} m</span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Draft T (m)</span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{T.toFixed(2)} m</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary tracking-normal block">Draft T (m)</span>
+                  <span className="text-sm font-semibold text-text-primary font-mono">{T.toFixed(2)} m</span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Depth H (m)</span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white font-mono">{H.toFixed(2)} m</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary tracking-normal block">Depth H (m)</span>
+                  <span className="text-sm font-semibold text-text-primary font-mono">{H.toFixed(2)} m</span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Midship Coefficient Cm</span>
-                  <span className="text-sm font-bold text-amber-700 dark:text-amber-400 font-mono">{Cm.toFixed(3)}</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary tracking-normal block">Midship Coefficient Cm</span>
+                  <span className="text-sm font-semibold text-status-warning font-mono">{Cm.toFixed(3)}</span>
                 </div>
-                <div className="bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-500/30 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-cyan-700 dark:text-cyan-400 uppercase tracking-wider block">Bilge Radius (R)</span>
-                  <span className="text-sm font-bold text-cyan-800 dark:text-cyan-300 font-mono">{R.toFixed(4)} m</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-accent-primary tracking-normal block">Bilge Radius (R)</span>
+                  <span className="text-sm font-semibold text-accent-primary font-mono">{R.toFixed(4)} m</span>
                 </div>
-                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 p-3 rounded-xl">
-                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Flat of Bottom</span>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300 font-mono">{flatOfBottom.toFixed(4)} m</span>
+                <div className="border-b border-border-subtle py-3 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary tracking-normal block">Flat of Bottom</span>
+                  <span className="text-sm font-semibold text-text-primary font-mono">{flatOfBottom.toFixed(4)} m</span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80 text-xs font-mono">
-                <div className="flex items-center space-x-3 text-slate-600 dark:text-slate-400">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border-default text-sm font-mono">
+                <div className="flex items-center space-x-3 text-text-secondary">
                   <span>
-                    Am Target: <strong className="text-slate-900 dark:text-white">{Am_rancangan.toFixed(2)} m²</strong>
+                    Am Target: <strong className="text-text-primary">{Am_rancangan.toFixed(2)} m²</strong>
                   </span>
                   <span>•</span>
                   <span>
-                    Am Hitung: <strong className="text-cyan-700 dark:text-cyan-400">{Am_calc.toFixed(2)} m²</strong>
+                    Am Hitung: <strong className="text-accent-primary">{Am_calc.toFixed(2)} m²</strong>
                   </span>
                 </div>
 
                 <div
-                  className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg border font-bold ${
+                  className={`flex items-center space-x-1.5 px-3 py-1 rounded-lg border font-semibold ${
                     isCorrectionValid
-                      ? "bg-emerald-50 dark:bg-emerald-950/70 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
-                      : "bg-rose-50 dark:bg-rose-950/70 border-rose-500/40 text-rose-700 dark:text-rose-300"
-                  }`}
+                      ? "bg-status-success-subtle border-status-success-border text-status-success"
+                      : "bg-status-danger-subtle border-status-danger-border text-status-danger"
+                  } `}
                 >
                   {isCorrectionValid ? <CheckCircle2 size={13} /> : <AlertCircle size={13} />}
                   <span>
@@ -3033,41 +3035,41 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       {/* ========================================================= */}
       {!tablesOnly && (
         <div className={`w-full flex flex-col ${
-          compact ? "p-0 space-y-2 flex-1 min-h-0 h-full border-0 bg-transparent shadow-none" : "bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl backdrop-blur-xl shadow-xl p-5 space-y-4"
-        }`}>
+          compact ? "p-0 space-y-2 flex-1 min-h-0 h-full border-0 bg-transparent" : "bg-surface-primary border border-border-default rounded-lg p-5 space-y-4"
+        } `}>
           {/* Header Bar: Sleek Unified 2-Tier Studio Control */}
-          <div className="bg-slate-50 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-800 rounded-2xl p-2.5 backdrop-blur-xl shadow-sm select-none shrink-0 space-y-2.5">
+          <div className="bg-surface-canvas border border-border-default rounded-lg p-2.5 select-none shrink-0 space-y-2.5">
             {/* TIER 1: Primary Controls & Actions Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5">
               {/* Left Group: View Mode Switcher + Waterline Presets */}
-              <div className="flex items-center space-x-2.5 overflow-x-auto">
+              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2.5 overflow-x-auto">
                 {/* Mode Segmented Control */}
-                <div className="flex items-center bg-white dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-inner shrink-0">
+                <div className="flex items-center bg-surface-primary p-1 rounded-lg border border-border-default shrink-0">
                   <button
                     type="button"
                     onClick={() => {
                       setIsFullHullView(true);
                       setStudioMode("bodyPlan");
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                    className={`px-3 py-1.5 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 ${
                       studioMode === "bodyPlan"
-                        ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-500/20"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                        ? "text-on-accent bg-accent-primary min-h-9"
+                        : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                     title="Body Plan view"
-                  >
+                   aria-label="Body Plan view">
                     <span>Body Plan</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setStudioMode("xyzTable")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                    className={`px-3 py-1.5 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 ${
                       studioMode === "xyzTable"
-                        ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-500/20"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                        ? "text-on-accent bg-accent-primary min-h-9"
+                        : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                     title="3D XYZ offsets table"
-                  >
+                   aria-label="3D XYZ offsets table">
                     <span>XYZ Offsets</span>
                   </button>
                   <button
@@ -3076,24 +3078,24 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       setIsFullHullView(false);
                       setStudioMode("midshipDetail");
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer flex items-center space-x-1.5 ${
+                    className={`px-3 py-1.5 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 ${
                       studioMode === "midshipDetail"
-                        ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md shadow-cyan-500/20"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                    }`}
+                        ? "text-on-accent bg-accent-primary min-h-9"
+                        : "text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
                     title="Station 10 midship detail"
-                  >
+                   aria-label="Station 10 midship detail">
                     <span>Station 10 Section</span>
                   </button>
                 </div>
 
                 {/* Subtle Divider */}
-                <div className="h-5 w-px bg-slate-200 dark:bg-slate-800 shrink-0 hidden sm:block" />
+                <div className="h-5 w-px bg-surface-secondary shrink-0 hidden sm:block" />
 
                 {/* Waterline Preset Group */}
-                <div className="flex items-center space-x-1 bg-white dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-inner shrink-0">
-                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 px-1.5 font-semibold flex items-center space-x-1">
-                    <Layers size={12} className="text-cyan-500 dark:text-cyan-400" />
+                <div className="flex items-center space-x-1 bg-surface-primary p-1 rounded-lg border border-border-default shrink-0">
+                  <span className="text-xs font-mono text-text-secondary px-1.5 font-semibold flex items-center space-x-1">
+                    <Layers size={12} className="text-accent-primary" />
                     <span className="hidden md:inline">Preset:</span>
                   </span>
                   {[4, 7, 11, 13, 21].map((cnt) => (
@@ -3101,19 +3103,19 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       key={`emb-mid-cnt-${cnt}`}
                       type="button"
                       onClick={() => handleApplyWaterlinePreset(cnt)}
-                      className={`px-2 py-1 rounded-lg text-[11px] font-mono font-bold transition-all border cursor-pointer ${
+                      className={`px-2 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer ${
                         effectiveWaterlineLevels.length === cnt
-                          ? "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/40 shadow-sm font-black"
-                          : "bg-transparent text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                      }`}
+                          ? "bg-surface-selected text-accent-primary border-border-default font-semibold min-h-9"
+                          : "bg-transparent text-text-secondary border-transparent hover:text-text-primary hover:bg-surface-secondary min-h-9"
+                      } `}
                       title={`Apply ${cnt} waterlines`}
-                    >
+                     aria-label={`Apply ${cnt} waterlines`}>
                       {cnt}
                     </button>
                   ))}
 
                   {/* Compact Stepper */}
-                  <div className="flex items-center pl-1 border-l border-slate-800 space-x-0.5">
+                  <div className="flex items-center pl-1 border-l border-border-default space-x-0.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -3121,12 +3123,12 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                         setDesiredWlCount(next);
                         handleApplyWaterlinePreset(next);
                       }}
-                      className="w-5 h-5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs cursor-pointer"
+                      className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer min-h-9 min-w-9"
                       title="Kurangi 1 WL"
-                    >
+                     aria-label="Kurangi 1 WL">
                       -
                     </button>
-                    <span className="w-5 text-center text-[11px] font-mono font-bold text-cyan-300">
+                    <span className="w-5 text-center text-xs font-mono font-semibold text-accent-primary">
                       {desiredWlCount}
                     </span>
                     <button
@@ -3136,9 +3138,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                         setDesiredWlCount(next);
                         handleApplyWaterlinePreset(next);
                       }}
-                      className="w-5 h-5 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs cursor-pointer"
+                      className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer min-h-9 min-w-9"
                       title="Add 1 WL"
-                    >
+                     aria-label="Add 1 WL">
                       +
                     </button>
                   </div>
@@ -3149,16 +3151,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <div className="flex items-center space-x-2 shrink-0">
                 {/* Accuracy Status Badge */}
                 <div
-                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl border text-[11px] font-mono font-bold transition-all shadow-sm ${
+                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold transition-colors ${
                     isCorrectionValid
-                      ? "bg-emerald-950/60 border-emerald-500/30 text-emerald-300"
-                      : "bg-rose-950/60 border-rose-500/30 text-rose-300"
-                  }`}
+                      ? "bg-status-success-subtle border-status-success-border text-status-success"
+                      : "bg-status-danger-subtle border-status-danger-border text-status-danger"
+                  } `}
                   title={`Luas Midship Target: ${Am_rancangan.toFixed(2)} m² | Hasil Hitung: ${Am_calc.toFixed(2)} m²`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isCorrectionValid ? "bg-emerald-400" : "bg-rose-400 animate-pulse"}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isCorrectionValid ? "bg-status-success-subtle" : "bg-status-danger-subtle"} `} />
                   <span>Correction: {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}</span>
-                  <span className="text-[10px] px-1 rounded bg-slate-900/60 text-slate-400 font-normal hidden sm:inline">
+                  <span className="text-xs px-1 rounded bg-surface-primary text-text-secondary font-normal hidden sm:inline">
                     {isCorrectionValid ? "VALID" : "DEVIATION"}
                   </span>
                 </div>
@@ -3167,9 +3169,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <button
                   type="button"
                   onClick={handleAutoFineTune}
-                  className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-mono text-xs font-bold transition-all shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 cursor-pointer ring-1 ring-emerald-400/30 active:scale-95"
+                  className="px-3 py-1.5 text-on-accent rounded-md font-sans text-sm font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer ring-1 ring-status-success bg-accent-primary min-h-9"
                   title="Otomatis ratakan & seimbangkan kurva bilga (≤ ±0.05%)"
-                >
+                 aria-label="Otomatis ratakan & seimbangkan kurva bilga (≤ ±0.05%)">
                   <Wand2 size={13} />
                   <span>Auto-Fit</span>
                 </button>
@@ -3178,9 +3180,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="p-1.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer border border-slate-800 shadow-sm"
+                  className="p-1.5 bg-surface-inset hover:bg-surface-secondary text-text-secondary hover:text-text-primary rounded-md transition-colors cursor-pointer border border-border-default min-h-9"
                   title="Reset ordinat midship ke desain teoritis awal"
-                >
+                 aria-label="Reset ordinat midship ke desain teoritis awal">
                   <RotateCcw size={14} />
                 </button>
 
@@ -3196,15 +3198,15 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                         : "active"
                     )
                   }
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold transition-all border shadow-sm cursor-pointer flex items-center space-x-1 ${
+                  className={`px-2.5 py-1.5 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer flex items-center space-x-1 ${
                     handlesDisplayMode === "all"
-                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                      ? "bg-status-warning-subtle text-status-warning border-status-warning-border min-h-9"
                       : handlesDisplayMode === "active"
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
-                      : "bg-slate-950 text-slate-400 border-slate-800 hover:text-white"
-                  }`}
+                      ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
+                      : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary min-h-9"
+                  } `}
                   title="Cycle handle visibility: Active WL / All WLs / Hidden"
-                >
+                 aria-label="Cycle handle visibility: Active WL / All WLs / Hidden">
                   <span>{handlesDisplayMode === "all" ? "All Points" : handlesDisplayMode === "active" ? "Active WL" : "Clean Curves"}</span>
                 </button>
 
@@ -3212,19 +3214,19 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <button
                   type="button"
                   onClick={() => setIsFullscreenPlot(true)}
-                  className="p-1.5 bg-slate-950 hover:bg-cyan-950/60 text-slate-400 hover:text-cyan-300 rounded-xl transition-all cursor-pointer border border-slate-800 hover:border-cyan-500/40 shadow-sm"
+                  className="p-1.5 bg-surface-inset hover:bg-surface-selected text-text-secondary hover:text-accent-primary rounded-md transition-colors cursor-pointer border border-border-default hover:border-border-default min-h-9"
                   title="Open fullscreen"
-                >
+                 aria-label="Open fullscreen">
                   <Maximize2 size={14} />
                 </button>
               </div>
             </div>
 
             {/* TIER 2: Waterline Navigation Ribbon */}
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-              <div className="flex items-center space-x-2 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800">
-                <span className="text-[11px] font-mono text-slate-400 font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
-                  <Compass size={12} className="text-cyan-400" />
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-default">
+              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800">
+                <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
+                  <Compass size={12} className="text-accent-primary" />
                   <span>Select Waterline ({effectiveWaterlineLevels.length}):</span>
                 </span>
                 {effectiveWaterlineLevels.map((wl) => {
@@ -3235,16 +3237,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       key={`emb-mid-wl-tab-${wl.id}`}
                       type="button"
                       onClick={() => onSelectWlId?.(wl.id)}
-                      className={`px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold transition-all border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
+                      className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
                         isActive
-                          ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 border-cyan-400 ring-1 ring-cyan-400/40 shadow-sm"
-                          : "bg-slate-950/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800/60"
-                      }`}
+                          ? "text-accent-primary border-border-default ring-1 ring-focus-ring bg-accent-primary min-h-9"
+                          : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary min-h-9"
+                      } `}
                       title={`${wl.name} (${zVal.toFixed(2)}m)`}
-                    >
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: wl.color }} />
+                     aria-label={`${wl.name} (${zVal.toFixed(2)}m)`}>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
                       <span>{wl.shortName}</span>
-                      <span className={isActive ? "text-cyan-200" : "text-slate-500 font-normal"}>
+                      <span className={isActive ? "text-accent-primary" : "text-text-secondary font-normal"}>
                         {zVal.toFixed(2)}m
                       </span>
                     </button>
@@ -3253,14 +3255,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               </div>
 
               {/* Quick Vessel Parameters Strip */}
-              <div className="hidden lg:flex items-center space-x-2 font-mono text-[11px] text-slate-600 dark:text-slate-400 shrink-0 bg-white dark:bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-800/90 shadow-inner">
-                <span>B: <strong className="text-slate-900 dark:text-white">{B.toFixed(1)}m</strong></span>
-                <span className="text-slate-300 dark:text-slate-700">•</span>
-                <span>T: <strong className="text-slate-900 dark:text-white">{T.toFixed(1)}m</strong></span>
-                <span className="text-slate-300 dark:text-slate-700">•</span>
-                <span>R: <strong className="text-cyan-600 dark:text-cyan-400">{R.toFixed(2)}m</strong></span>
-                <span className="text-slate-300 dark:text-slate-700">•</span>
-                <span>Am: <strong className="text-emerald-600 dark:text-emerald-400">{Am_calc.toFixed(1)}m²</strong></span>
+              <div className="hidden lg:flex items-center space-x-2 font-mono text-xs text-text-secondary shrink-0 bg-surface-primary px-2.5 py-1 rounded-lg border border-border-default">
+                <span>B: <strong className="text-text-primary">{B.toFixed(1)}m</strong></span>
+                <span className="text-text-primary">•</span>
+                <span>T: <strong className="text-text-primary">{T.toFixed(1)}m</strong></span>
+                <span className="text-text-primary">•</span>
+                <span>R: <strong className="text-accent-primary">{R.toFixed(2)}m</strong></span>
+                <span className="text-text-primary">•</span>
+                <span>Am: <strong className="text-status-success">{Am_calc.toFixed(1)}m²</strong></span>
               </div>
             </div>
           </div>
@@ -3269,32 +3271,32 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           {studioMode === "xyzTable" ? (
             renderXyzTableContent(false)
           ) : showVisualPlot ? (
-            <div className={`bg-slate-50 dark:bg-slate-950/95 rounded-xl relative overflow-hidden border border-slate-200 dark:border-slate-800/90 flex items-center justify-center group select-none shadow-xl ${
+            <div className={`bg-surface-canvas rounded-lg relative overflow-hidden border border-border-default flex items-center justify-center group select-none ${
               compact
                 ? "w-full max-w-[1100px] aspect-[200/132] max-h-[560px] p-2 mx-auto"
                 : "w-full h-96 sm:h-[440px] md:h-[480px] p-3"
-            }`}>
+            } `}>
               {/* Floating Blueprint Controls Overlay */}
-              <div className={`absolute top-2 right-2 z-20 flex items-center space-x-1 bg-white/90 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-600/80 rounded-lg shadow-lg backdrop-blur-sm ${
+              <div className={`absolute top-2 right-2 z-20 flex items-center space-x-1 bg-surface-primary border border-border-default rounded-lg ${
                 compact ? "p-0.5 scale-90 origin-top-right" : "p-1"
-              }`}>
+              } `}>
                 {/* Readout Pill */}
-                <div className="flex items-center space-x-1.5 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-500/30 px-2.5 py-1 rounded-md font-mono text-[10px]">
-                  <span className="text-cyan-700 dark:text-cyan-300 font-bold">0.5B: <strong className="text-slate-900 dark:text-white">{activeHoverHalfB.toFixed(2)}m</strong></span>
-                  <span className="text-slate-400 dark:text-slate-600">|</span>
-                  <span className="text-amber-700 dark:text-amber-300 font-bold">R: <strong className="text-slate-900 dark:text-white">{R.toFixed(2)}m</strong></span>
+                <div className="flex items-center space-x-1.5 bg-surface-selected border border-border-default px-2.5 py-1 rounded-md font-mono text-xs">
+                  <span className="text-accent-primary font-semibold">0.5B: <strong className="text-text-primary">{activeHoverHalfB.toFixed(2)}m</strong></span>
+                  <span className="text-text-secondary">|</span>
+                  <span className="text-status-warning font-semibold">R: <strong className="text-text-primary">{R.toFixed(2)}m</strong></span>
                 </div>
 
                 {/* Buttock */}
                 <button
                   onClick={() => setShowButtocks(!showButtocks)}
-                  className={`px-2 py-1 rounded text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 ${
+                  className={`px-2 py-1 rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 ${
                     showButtocks
-                      ? "bg-purple-100 dark:bg-purple-600/30 border border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                  }`}
+                      ? "bg-surface-selected border border-border-default text-accent-primary min-h-9"
+                      : "bg-surface-secondary hover:bg-surface-secondary text-text-secondary hover:text-text-primary min-h-9"
+                  } `}
                   title="Show / hide buttock lines"
-                >
+                 aria-pressed={showButtocks} aria-label="Show / hide buttock lines">
                   <Layers size={13} />
                   <span>Buttock</span>
                 </button>
@@ -3302,44 +3304,44 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 {/* Edit / Preview Mode */}
                 <button
                   onClick={() => setIsPreviewMode(!isPreviewMode)}
-                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-300 transition-all cursor-pointer"
+                  className="p-1.5 hover:bg-surface-secondary rounded text-text-secondary hover:text-accent-primary transition-colors cursor-pointer min-h-9"
                       title={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}
-                >
+                 aria-pressed={isPreviewMode} aria-label={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}>
                   {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
 
                 {/* Fullscreen */}
                 <button
                   onClick={() => setIsFullscreenPlot(true)}
-                  className="px-2 py-1 bg-cyan-100 dark:bg-cyan-600/20 hover:bg-cyan-200 dark:hover:bg-cyan-600/40 border border-cyan-300 dark:border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:text-cyan-900 dark:hover:text-white rounded text-[11px] font-mono font-medium transition-all cursor-pointer flex items-center space-x-1 shadow-sm"
+                  className="px-2 py-1 bg-surface-selected hover:bg-surface-selected border border-border-default text-accent-primary hover:text-accent-primary rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 min-h-9"
                   title="Fullscreen"
-                >
+                 aria-label="Fullscreen">
                   <Maximize size={13} />
                 </button>
               </div>
 
               {/* Dynamic HUD Coordinate Banner */}
               {draggingStation !== null && draggingWlId ? (
-                <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-gradient-to-r from-amber-500/20 via-cyan-500/20 to-blue-500/20 border border-amber-500/50 px-3 py-1 rounded-full font-mono text-[11px] text-amber-700 dark:text-amber-300 backdrop-blur-md shadow-2xl animate-pulse">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 border border-status-warning-border px-3 py-1 rounded-full font-mono text-xs text-status-warning bg-accent-primary">
+                  <span className="w-2 h-2 rounded-full bg-status-warning-subtle animate-ping" />
                   <span>
                     Moving Frame <strong>{getStationDisplayLabel(draggingStation)}</strong> @{" "}
                     <strong>{effectiveWaterlineLevels.find((w) => w.id === draggingWlId)?.shortName || draggingWlId}</strong>{" "}
                     (Z = {(draggingDraft ?? 0).toFixed(2)}m):{" "}
-                    <strong className="text-slate-900 dark:text-white text-xs">
+                    <strong className="text-text-primary text-sm">
                       0.5 B = {(waterlinesData?.[draggingWlId]?.[draggingStation] ?? 0).toFixed(3)} m
                     </strong>
                   </span>
                 </div>
               ) : hoveredStation !== null ? (
-                <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-white/95 dark:bg-slate-900/80 border border-cyan-500/40 px-2.5 py-1 rounded-full font-mono text-[11px] text-cyan-700 dark:text-cyan-300 backdrop-blur-md shadow-lg pointer-events-none">
-                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-500" />
+                <div className="absolute top-3 left-3 z-30 flex items-center space-x-2 bg-surface-primary border border-border-default px-2.5 py-1 rounded-full font-mono text-xs text-accent-primary pointer-events-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
                   <span>
                       Frame <strong>{getStationDisplayLabel(hoveredStation)}</strong>
                     {hoverWlId
                       ? ` @ ${effectiveWaterlineLevels.find((w) => w.id === hoverWlId)?.shortName || hoverWlId} (Z = ${(hoverDraft ?? 0).toFixed(2)}m)`
                       : ""}:{" "}
-                    <strong className="text-slate-900 dark:text-white">
+                    <strong className="text-text-primary">
                       0.5 B = {(getStationHalfB(
                         hoveredStation,
                         hoverWlId || activeWlId,
@@ -3351,33 +3353,33 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               ) : null}
 
               {/* Zoom Controls at bottom-right */}
-              <div className="absolute right-3 bottom-3 flex items-center space-x-1 bg-white/90 dark:bg-slate-900/80 p-1 rounded-lg border border-slate-200 dark:border-slate-700 backdrop-blur-md z-10 opacity-70 group-hover:opacity-100 transition-opacity shadow-lg">
+              <div className="absolute right-3 bottom-3 flex items-center space-x-1 bg-surface-primary p-1 rounded-lg border border-border-default z-10 opacity-70 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => setZoomLevel((z) => Math.max(z - 0.5, 1))}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded transition-colors flex justify-center items-center cursor-pointer"
+                  className="p-1 hover:bg-surface-secondary text-text-secondary rounded transition-colors flex justify-center items-center cursor-pointer min-h-9"
                   title="Zoom Out"
-                >
+                 aria-label="Zoom Out">
                   <ZoomOut size={14} />
                 </button>
                 <button
                   onClick={() => setZoomLevel(1)}
-                  className="px-1.5 py-0.5 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded transition-colors text-[10px] font-mono font-bold text-center cursor-pointer"
+                  className="px-1.5 py-0.5 hover:bg-surface-secondary text-text-secondary rounded transition-colors text-sm font-sans font-semibold text-center cursor-pointer min-h-9"
                   title="Reset Zoom"
-                >
+                 aria-label="Reset Zoom">
                   {Math.round(zoomLevel * 100)}%
                 </button>
                 <button
                   onClick={() => setZoomLevel((z) => Math.min(z + 0.5, 4))}
-                  className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded transition-colors flex justify-center items-center cursor-pointer"
+                  className="p-1 hover:bg-surface-secondary text-text-secondary rounded transition-colors flex justify-center items-center cursor-pointer min-h-9"
                   title="Zoom In"
-                >
+                 aria-label="Zoom In">
                   <ZoomIn size={14} />
                 </button>
               </div>
 
               <svg
                 ref={svgRef}
-                className="w-full h-full cursor-crosshair transition-all duration-300 ease-in-out select-none"
+                className="w-full h-full cursor-crosshair transition-colors duration-300 ease-in-out select-none"
                 viewBox={studioMode === "bodyPlan" ? "0 0 200 144" : studioMode === "midshipDetail" ? "28 10 100 80" : "0 0 200 144"}
                 preserveAspectRatio="xMidYMid meet"
                 style={{ touchAction: "none" }}
@@ -3387,7 +3389,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               >
                 <defs>
                   <pattern id="cadGridEmbedded" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M 10 0 L 0 0 0 10" fill="none" className="stroke-slate-200 dark:stroke-[#1e293b]" strokeWidth="0.3" />
+                    <path d="M 10 0 L 0 0 0 10" fill="none" className="stroke-border-subtle" strokeWidth="0.3" />
                   </pattern>
                   <pattern
                     id="waterHatch"
@@ -3396,16 +3398,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     patternTransform="rotate(45 0 0)"
                     patternUnits="userSpaceOnUse"
                   >
-                    <line x1="0" y1="0" x2="0" y2="4" stroke="#0284c7" strokeWidth="0.4" strokeOpacity="0.25" />
+                    <line x1="0" y1="0" x2="0" y2="4" stroke={engineeringColor("#0284c7")} strokeWidth="0.4" strokeOpacity="0.25" />
                   </pattern>
                   <marker id="arrowAmber" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                    <path d="M 0,1 L 4,3 L 0,5 Z" fill="#f59e0b" />
+                    <path d="M 0,1 L 4,3 L 0,5 Z" fill={engineeringColor("#f59e0b")} />
                   </marker>
                   <marker id="arrowIndigo" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                    <path d="M 0,1 L 4,3 L 0,5 Z" fill="#c7d2fe" />
+                    <path d="M 0,1 L 4,3 L 0,5 Z" fill={engineeringColor("#c7d2fe")} />
                   </marker>
                   <marker id="arrowCyan" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-                    <path d="M 0,1 L 4,3 L 0,5 Z" fill="#2dd4bf" />
+                    <path d="M 0,1 L 4,3 L 0,5 Z" fill={engineeringColor("#2dd4bf")} />
                   </marker>
                 </defs>
 
@@ -3414,14 +3416,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               </svg>
             </div>
           ) : (
-            <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
-                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+            <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+              <div className="flex items-center space-x-3 text-text-secondary">
+                <div className="text-text-secondary shrink-0">
                   <TrendingUp size={16} />
                 </div>
                 <div>
-                  <span className="font-bold text-slate-900 dark:text-white">Plot Visual Body Plan Disembunyikan</span>
-                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                  <span className="font-semibold text-text-primary">Plot Visual Body Plan Disembunyikan</span>
+                  <p className="text-sm text-text-secondary font-sans mt-0.5">
                     {activeStationsConfig.length} Frames &bull; {effectiveWaterlineLevels.length} Waterlines &bull; R = {R.toFixed(4)} m &bull; Flat of Bottom = {flatOfBottom.toFixed(4)} m
                   </p>
                 </div>
@@ -3429,7 +3431,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <button
                 type="button"
                 onClick={() => setShowVisualPlot(true)}
-                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 text-xs font-bold border border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-surface-selected hover:bg-surface-selected text-accent-primary text-sm font-semibold border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
               >
                 <Eye size={13} />
                 <span>Buka Plot Visual</span>
@@ -3443,20 +3445,20 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       {/* SECTION: 3D OFFSET COORDINATES TABLE (X, Y, Z)            */}
       {/* ========================================================= */}
       {!visualOnly && (
-        <div id="section-xyz-table" className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4 scroll-mt-24">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div id="section-xyz-table" className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-4 scroll-mt-24">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-3">
             <div className="flex items-center space-x-2.5">
-              <div className="p-2 rounded-xl bg-cyan-600/10 dark:bg-cyan-600/20 border border-cyan-500/30 text-cyan-600 dark:text-cyan-400">
+              <div className="text-text-secondary shrink-0">
                 <TableIcon size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <h3 className="text-sm font-semibold text-text-primary flex items-center space-x-2">
                   <span>3D Offset Ordinates Table (X, Y, Z) for Body Plan Sections</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/40 font-bold">
+                  <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-selected text-accent-primary border border-border-default font-semibold">
                     {activeStationsConfig.length} Frames &bull; {effectiveWaterlineLevels.length} Waterlines
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm text-text-secondary mt-0.5">
                   Koordinat 3D lengkap (X: Jarak dari AP/Midship, Y: Separuh Lebar 0.5B, Z: Sarat Vertikal) dari konversi garis air untuk penentuan lokasi gading di Body Plan.
                 </p>
               </div>
@@ -3465,9 +3467,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <button
                 type="button"
                 onClick={() => setShowXyzTableSection(!showXyzTableSection)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shadow bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 cursor-pointer"
-              >
-                {showXyzTableSection ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors border bg-surface-secondary hover:bg-surface-secondary text-text-primary border-border-default cursor-pointer min-h-9"
+               aria-pressed={showXyzTableSection}>
+                {showXyzTableSection ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                 <span>{showXyzTableSection ? "Hide Table" : "Show Table"}</span>
               </button>
             </div>
@@ -3482,14 +3484,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       {/* ========================================================= */}
       {!visualOnly && (
         <>
-          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-4">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                  <TableIcon size={16} className="text-cyan-600 dark:text-cyan-400" />
+                <h3 className="text-sm font-semibold text-text-primary flex items-center space-x-2">
+                  <TableIcon size={16} className="text-accent-primary" />
                   <span>Station 10 Ordinate Integration by Draft (z)</span>
                 </h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-sm text-text-secondary mt-0.5">
                   Integrasi ordinat separuh lebar gading 10 pada tiap level garis horizontal sarat air. Nilai 0.5 B (m) dapat diedit langsung atau ditarik pada grafik.
                 </p>
               </div>
@@ -3497,32 +3499,32 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <button
                   type="button"
                   onClick={() => setShowDraftIntegrationTable(!showDraftIntegrationTable)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default transition-colors cursor-pointer min-h-9"
                   title={showDraftIntegrationTable ? "Hide Table" : "Show Table"}
-                >
-                  {showDraftIntegrationTable ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                 aria-pressed={showDraftIntegrationTable} aria-label={showDraftIntegrationTable ? "Hide Table" : "Show Table"}>
+                  {showDraftIntegrationTable ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                   <span>{showDraftIntegrationTable ? "Hide" : "Show"}</span>
                 </button>
 
                 <button
                   onClick={handleRemoveDraftStep}
                   disabled={sortedDraftSteps.length <= 4}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg ${
+                  className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
                     sortedDraftSteps.length <= 4
-                      ? "bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700/50 cursor-not-allowed opacity-50"
-                      : "bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/20 dark:hover:bg-rose-500/30 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-500/50 cursor-pointer active:scale-95"
-                  }`}
+                      ? "bg-surface-secondary text-text-secondary border border-border-default cursor-not-allowed opacity-50 min-h-9"
+                      : "bg-status-danger-subtle hover:bg-status-danger-subtle text-status-danger border border-status-danger-border cursor-pointer min-h-9"
+                  } `}
                   title="Kurangi 1 baris sarat (z) paling rapat"
-                >
+                 aria-label="Kurangi 1 baris sarat (z) paling rapat">
                   <Minus size={14} />
                   <span>Remove Draft Level (z)</span>
                 </button>
 
                 <button
                   onClick={handleAddDraftStep}
-                  className="flex items-center space-x-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-500/50 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg cursor-pointer active:scale-95"
+                  className="flex items-center space-x-1.5 bg-status-warning-subtle hover:bg-status-warning-subtle text-status-warning border border-status-warning-border px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer min-h-9"
                   title="Add a new draft level (z)"
-                >
+                 aria-label="Add a new draft level (z)">
                   <Plus size={14} />
                   <span>Add Draft Level (z)</span>
                 </button>
@@ -3531,31 +3533,31 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
             {/* Table Container */}
             {showDraftIntegrationTable ? (
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner no-scrollbar">
-                <table className="w-full text-left text-xs font-mono border-collapse">
+              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default">
+                <table className="w-full text-left text-sm font-mono border-collapse">
                   <thead>
-                    <tr className="bg-slate-100 dark:bg-slate-950/90 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                      <th className="py-3 px-3.5 font-bold text-center border-r border-slate-200 dark:border-slate-800/60 w-24">
+                    <tr className="bg-surface-secondary text-text-primary border-b border-border-default text-xs">
+                      <th className="py-3 px-3.5 font-semibold text-center border-r border-border-default w-24">
                         (I)<br />GADING
                       </th>
-                      <th className="py-3 px-3.5 font-bold text-center text-amber-700 dark:text-amber-400 border-r border-slate-200 dark:border-slate-800/60 w-32">
+                      <th className="py-3 px-3.5 font-semibold text-center text-status-warning border-r border-border-default w-32">
                         (II)<br />SARAT z (m)
                       </th>
-                      <th className="py-3 px-3.5 font-bold text-cyan-700 dark:text-cyan-300 border-r border-slate-200 dark:border-slate-800/60 min-w-[140px]">
+                      <th className="py-3 px-3.5 font-semibold text-accent-primary border-r border-border-default min-w-[140px]">
                         (III)<br />0.5 B (m)
                       </th>
-                      <th className="py-3 px-3 font-semibold text-slate-500 dark:text-slate-400 text-center border-r border-slate-200 dark:border-slate-800/60 w-28">
+                      <th className="py-3 px-3 font-semibold text-text-secondary text-center border-r border-border-default w-28">
                         (IV)<br />FAKTOR PENGALI
                       </th>
-                      <th className="py-3 px-4 font-bold text-emerald-700 dark:text-emerald-400 text-right border-r border-slate-200 dark:border-slate-800/60 min-w-[140px]">
+                      <th className="py-3 px-4 font-semibold text-status-success text-right border-r border-border-default min-w-[140px]">
                         (V) = (III)&times;(IV)<br />HASIL KALI
                       </th>
-                      <th className="py-3 px-2 font-semibold text-slate-500 dark:text-slate-400 text-center w-14">
+                      <th className="py-3 px-2 font-semibold text-text-secondary text-center w-14">
                         (VI)<br />AKSI
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800/50 bg-white dark:bg-slate-950/40">
+                  <tbody className="divide-y divide-border-default bg-surface-primary">
                     {calculatedRows.map((r, idx) => {
                       const isDraftT = Math.abs(r.draft_z - T) < 0.01;
                       const isBase = r.draft_z === 0;
@@ -3564,45 +3566,45 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       return (
                         <tr
                           key={idx}
-                          className={`hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors ${
-                            isDraftT ? "bg-emerald-50 dark:bg-emerald-950/20 font-bold" : isBase ? "bg-slate-50 dark:bg-slate-900/60" : ""
-                          }`}
+                          className={`hover:bg-surface-canvas transition-colors ${
+                            isDraftT ? "bg-status-success-subtle font-semibold" : isBase ? "bg-surface-canvas" : ""
+                          } `}
                         >
-                          <td className="py-2 px-3 text-center border-r border-slate-200 dark:border-slate-800/60 text-slate-700 dark:text-slate-300">
+                          <td className="py-2 px-3 text-center border-r border-border-default text-text-primary">
                             {idx === 0 ? "10 (Midship)" : `"`}
                           </td>
-                          <td className="py-2 px-3 text-center border-r border-slate-200 dark:border-slate-800/60 text-amber-700 dark:text-amber-300 font-bold">
+                          <td className="py-2 px-3 text-center border-r border-border-default text-status-warning font-semibold">
                             {r.label}
-                            {isDraftT && <span className="ml-1 text-[10px] text-emerald-700 dark:text-emerald-400">(T)</span>}
+                            {isDraftT && <span className="ml-1 text-xs text-status-success">(T)</span>}
                           </td>
-                          <td className="py-1 px-2 border-r border-slate-200 dark:border-slate-800/60">
-                            <input
+                          <td className="py-1 px-2 border-r border-border-default">
+                            <input aria-label="draft z"
                               type="number"
                               step="0.001"
                               min="0"
                               max={halfB * 1.5}
                               value={draftOrdinates[r.draft_z] ?? 0}
                               onChange={(e) => handleCellChange(r.draft_z, e.target.value)}
-                              className="w-full bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/80 rounded-lg py-1 px-2 text-cyan-700 dark:text-cyan-300 font-bold font-mono text-xs focus:border-cyan-500 focus:bg-white dark:focus:bg-slate-950 focus:outline-none text-right transition-all"
+                              className="w-full bg-surface-canvas border border-border-default rounded-md py-1 px-2 text-accent-primary font-semibold font-mono text-sm focus:border-border-default focus:bg-surface-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring text-right transition-colors min-h-10"
                             />
                           </td>
-                          <td className="py-2 px-3 text-center text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800/60">
+                          <td className="py-2 px-3 text-center text-text-secondary border-r border-border-default">
                             {r.fs.toFixed(1)}
                           </td>
-                          <td className="py-2 px-4 text-right text-emerald-700 dark:text-emerald-400 font-medium border-r border-slate-200 dark:border-slate-800/60">
+                          <td className="py-2 px-4 text-right text-status-success font-medium border-r border-border-default">
                             {r.product.toFixed(4)}
                           </td>
                           <td className="py-2 px-2 text-center">
                             {canDelete ? (
                               <button
                                 onClick={() => handleDeleteSingleDraftStep(r.draft_z)}
-                                className="p-1 rounded text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all cursor-pointer inline-flex items-center justify-center"
+                                className="p-1 rounded text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle transition-colors cursor-pointer inline-flex items-center justify-center min-h-9"
                                 title={`Hapus baris sarat z = ${r.label} m`}
-                              >
+                               aria-label={`Hapus baris sarat z = ${r.label} m`}>
                                 <Trash2 size={13} />
                               </button>
                             ) : (
-                              <span className="text-[10px] text-slate-400 dark:text-slate-600 font-sans select-none">
+                              <span className="text-xs text-text-secondary font-sans select-none">
                                 {isBase ? "BL" : isDraftT ? "DWL" : "—"}
                               </span>
                             )}
@@ -3611,42 +3613,42 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       );
                     })}
 
-                    <tr className="bg-slate-100 dark:bg-slate-950 border-t-2 border-slate-300 dark:border-slate-700 font-bold text-xs text-slate-900 dark:text-white">
-                      <td colSpan={4} className="py-3 px-4 text-right uppercase tracking-wider text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800">
+                    <tr className="bg-surface-secondary border-t-2 border-border-default font-semibold text-sm text-text-primary">
+                      <td colSpan={4} className="py-3 px-4 text-right tracking-normal text-text-primary border-r border-border-default">
                         Total Sigma Hasil Kali (Σ):
                       </td>
-                      <td className="py-3 px-4 text-right text-emerald-700 dark:text-emerald-400 text-sm border-r border-slate-200 dark:border-slate-800">
-                        <div className="text-[9px] text-slate-500 uppercase">Luas (1 Sisi) =</div>
+                      <td className="py-3 px-4 text-right text-status-success text-sm border-r border-border-default">
+                        <div className="text-xs text-text-secondary">Luas (1 Sisi) =</div>
                         <div>{(Am_calc / 2).toFixed(4)}</div>
                       </td>
-                      <td className="py-3 px-2 bg-slate-50 dark:bg-slate-950/80"></td>
+                      <td className="py-3 px-2 bg-surface-canvas"></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             ) : (
-              <div className="bg-slate-50 dark:bg-slate-950/60 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
-                  <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+              <div className="bg-surface-canvas border border-dashed border-border-default rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <div className="flex items-center space-x-3 text-text-secondary">
+                  <div className="text-text-secondary shrink-0">
                     <TableIcon size={18} />
                   </div>
                   <div>
-                    <span className="font-bold text-slate-900 dark:text-white">Station 10 Draft Integration Table Hidden</span>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5 flex flex-wrap items-center gap-2">
-                      <span>Total Level: <strong className="text-amber-700 dark:text-amber-400">{sortedDraftSteps.length} garis</strong></span>
+                    <span className="font-semibold text-text-primary">Station 10 Draft Integration Table Hidden</span>
+                    <div className="text-xs text-text-secondary font-mono mt-0.5 flex flex-wrap items-center gap-2">
+                      <span>Total Level: <strong className="text-status-warning">{sortedDraftSteps.length} garis</strong></span>
                       <span>•</span>
-                      <span>Am_calc: <strong className="text-emerald-700 dark:text-emerald-400">{Am_calc.toFixed(3)} m²</strong></span>
+                      <span>Am_calc: <strong className="text-status-success">{Am_calc.toFixed(3)} m²</strong></span>
                       <span>•</span>
-                      <span>Target Am: <strong className="text-slate-700 dark:text-slate-300">{Am_rancangan.toFixed(3)} m²</strong></span>
+                      <span>Target Am: <strong className="text-text-primary">{Am_rancangan.toFixed(3)} m²</strong></span>
                       <span>•</span>
-                      <span>Deviasi: <strong className={isCorrectionValid ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}>{correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}</strong></span>
+                      <span>Deviasi: <strong className={isCorrectionValid ? "text-status-success" : "text-status-danger"}>{correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}</strong></span>
                     </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowDraftIntegrationTable(true)}
-                  className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-50 dark:bg-cyan-500/15 hover:bg-cyan-100 dark:hover:bg-cyan-500/25 text-cyan-700 dark:text-cyan-300 text-xs font-bold border border-cyan-200 dark:border-cyan-500/30 transition-all cursor-pointer shadow-sm shrink-0"
+                  className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-md bg-surface-selected hover:bg-surface-selected text-accent-primary text-sm font-semibold border border-border-default transition-colors cursor-pointer shrink-0 min-h-9"
                 >
                   <Eye size={14} />
                   <span>Open Table</span>
@@ -3656,26 +3658,26 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
 
           {/* SUMMARY RESULT CARDS & VERIFICATION FORMULAS */}
-          <div className="bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-5 md:p-6 backdrop-blur-xl shadow-xl space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+          <div className="bg-surface-primary border border-border-default rounded-lg p-5 md:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-3">
               <div className="flex items-center space-x-2">
-                <Sparkles size={18} className="text-cyan-600 dark:text-cyan-400" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                <Sparkles size={18} className="text-accent-primary" />
+                <h3 className="text-sm font-semibold text-text-primary">
                   Midship Section Area Integration & Correction Results (Station 10 Verification)
                 </h3>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="text-xs font-mono hidden md:block">
-                <span className="text-slate-500 dark:text-slate-400">Maximum Target Deviation: </span>
-                  <strong className="text-emerald-700 dark:text-emerald-400">&le; &plusmn;0.05%</strong>
+                <div className="text-sm font-mono hidden md:block">
+                <span className="text-text-secondary">Maximum Target Deviation: </span>
+                  <strong className="text-status-success">&le; &plusmn;0.05%</strong>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowAreaResults(!showAreaResults)}
-                  className="py-1.5 px-3 bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-600/15 dark:hover:bg-cyan-600/25 text-cyan-700 dark:text-cyan-300 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer border border-cyan-200 dark:border-cyan-500/30 shadow-sm"
+                  className="py-1.5 px-3 bg-surface-selected hover:bg-surface-selected text-accent-primary rounded-md text-sm font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer border border-border-default min-h-9"
                   title={showAreaResults ? "Hide calculation results" : "Show calculation results"}
-                >
-                  {showAreaResults ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                 aria-pressed={showAreaResults} aria-label={showAreaResults ? "Hide calculation results" : "Show calculation results"}>
+                  {showAreaResults ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                   <span>{showAreaResults ? "Hide Results" : "Show Results"}</span>
                 </button>
               </div>
@@ -3683,67 +3685,67 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
             {showAreaResults && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                  <div className="flex items-center justify-between text-sm text-text-secondary">
                     <span>Luas Midship Integrasi (Am_calc)</span>
-                    <span className="text-[10px] font-mono text-cyan-700 dark:text-cyan-400">2 · Luas (Satu Sisi)</span>
+                    <span className="text-xs font-mono text-accent-primary">2 · Luas (Satu Sisi)</span>
                   </div>
-                  <div className="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400">
-                    {Am_calc.toFixed(3)} <span className="text-sm font-normal text-slate-400">m&sup2;</span>
+                  <div className="text-2xl font-semibold font-mono text-status-success">
+                    {Am_calc.toFixed(3)} <span className="text-sm font-normal text-text-secondary">m&sup2;</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
+                  <div className="text-xs text-text-secondary font-mono">
                     = 2 &times; Luas Satu Sisi ({(Am_calc / 2).toFixed(3)})
                   </div>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                  <div className="flex items-center justify-between text-sm text-text-secondary">
                     <span>Luas Midship Target (Am)</span>
-                    <span className="text-[10px] font-mono text-cyan-700 dark:text-cyan-400">Am = B &middot; T &middot; Cm</span>
+                    <span className="text-xs font-mono text-accent-primary">Am = B &middot; T &middot; Cm</span>
                   </div>
-                  <div className="text-2xl font-black font-mono text-cyan-700 dark:text-cyan-300">
-                    {Am_rancangan.toFixed(3)} <span className="text-sm font-normal text-slate-400">m&sup2;</span>
+                  <div className="text-2xl font-semibold font-mono text-accent-primary">
+                    {Am_rancangan.toFixed(3)} <span className="text-sm font-normal text-text-secondary">m&sup2;</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
+                  <div className="text-xs text-text-secondary font-mono">
                     = {B.toFixed(2)} &times; {T.toFixed(2)} &times; {Cm.toFixed(3)}
                   </div>
                 </div>
 
-                <div className="bg-slate-50 dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-sm">
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <div className="bg-surface-canvas p-4 rounded-lg border border-border-default space-y-1.5">
+                  <div className="flex items-center justify-between text-sm text-text-secondary">
                     <span>Selisih Luas (ΔAm)</span>
-                    <span className="text-[10px] font-mono text-amber-700 dark:text-amber-400">|Am_calc - Am|</span>
+                    <span className="text-xs font-mono text-status-warning">|Am_calc - Am|</span>
                   </div>
-                  <div className="text-2xl font-black font-mono text-amber-700 dark:text-amber-300">
-                    {Math.abs(Am_calc - Am_rancangan).toFixed(4)} <span className="text-sm font-normal text-slate-400">m&sup2;</span>
+                  <div className="text-2xl font-semibold font-mono text-status-warning">
+                    {Math.abs(Am_calc - Am_rancangan).toFixed(4)} <span className="text-sm font-normal text-text-secondary">m&sup2;</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 font-mono">
+                  <div className="text-xs text-text-secondary font-mono">
                     = |{Am_calc.toFixed(3)} - {Am_rancangan.toFixed(3)}|
                   </div>
                 </div>
 
                 <div
-                  className={`p-4 rounded-xl border space-y-1.5 shadow-sm backdrop-blur-md transition-all ${
+                  className={`p-4 rounded-lg border space-y-1.5 transition-colors ${
                     isCorrectionValid
-                      ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
-                      : "bg-rose-50 dark:bg-rose-950/30 border-rose-500/40 text-rose-700 dark:text-rose-300"
-                  }`}
+                      ? "bg-status-success-subtle border-status-success-border text-status-success"
+                      : "bg-status-danger-subtle border-status-danger-border text-status-danger"
+                  } `}
                 >
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold flex items-center space-x-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold flex items-center space-x-1.5">
                       {isCorrectionValid ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
                       <span>Midship Correction</span>
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default">
                       Syarat: ≤ ±0.05%
                     </span>
                   </div>
-                  <div className="text-2xl font-black font-mono">
+                  <div className="text-2xl font-semibold font-mono">
                     {correctionPercent > 0 ? `+${correctionPercent.toFixed(3)}%` : `${correctionPercent.toFixed(3)}%`}
                   </div>
-                  <div className="text-[11px] opacity-90 font-mono flex items-center justify-between">
+                  <div className="text-xs opacity-90 font-mono flex items-center justify-between">
                     <span>Target: ≤ ±0.05%</span>
-                    <span className={`font-bold ${isCorrectionValid ? "text-emerald-700 dark:text-emerald-400" : "text-rose-700 dark:text-rose-400"}`}>
+                    <span className={`font-semibold ${isCorrectionValid ? "text-status-success" : "text-status-danger"} `}>
                       {isCorrectionValid ? "WITHIN TOLERANCE" : "DEVIATION EXCEEDS 0.05%"}
                     </span>
                   </div>
@@ -3753,35 +3755,35 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
 
           {/* TABEL KORELASI GARIS AIR & MIDSHIP GADING 10 */}
-          <div className="bg-white dark:bg-slate-950/90 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/80 pb-3">
+          <div className="bg-surface-primary p-5 rounded-lg border border-border-default space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-default pb-3">
               <div className="flex items-center space-x-2">
-                <Layers size={18} className="text-cyan-600 dark:text-cyan-400" />
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                <Layers size={18} className="text-accent-primary" />
+                <h3 className="text-sm font-semibold text-text-primary tracking-normal">
                   Waterline & Midship (Station 10) Bilge Radius Correlation
                 </h3>
               </div>
               <div className="flex items-center space-x-2.5">
-                <div className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">
+                <div className="text-sm text-text-secondary font-mono hidden sm:inline">
                   Total {effectiveWaterlineLevels.length} Linked Waterlines
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowWlAlignmentTable(!showWlAlignmentTable)}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-sm"
-                >
-                  {showWlAlignmentTable ? <EyeOff size={14} className="text-cyan-600 dark:text-cyan-400" /> : <Eye size={14} className="text-cyan-600 dark:text-cyan-400" />}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-sm font-semibold bg-surface-secondary hover:bg-surface-secondary text-text-primary border border-border-default transition-colors cursor-pointer min-h-9"
+                 aria-pressed={showWlAlignmentTable}>
+                  {showWlAlignmentTable ? <EyeOff size={14} className="text-accent-primary" /> : <Eye size={14} className="text-accent-primary" />}
                   <span>{showWlAlignmentTable ? "Hide" : "Show"}</span>
                 </button>
               </div>
             </div>
 
             {showWlAlignmentTable && (
-              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
-                <table className="w-full text-left text-xs font-mono border-collapse min-w-[620px]">
+              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto rounded-lg border border-border-default">
+                <table className="w-full text-left text-sm font-mono border-collapse min-w-[620px]">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/90 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 text-[11px]">
-                      <th className="py-2.5 px-3 font-bold">GARIS AIR</th>
+                    <tr className="bg-surface-canvas text-text-primary border-b border-border-default text-xs">
+                      <th className="py-2.5 px-3 font-semibold">GARIS AIR</th>
                       <th className="py-2.5 px-3 text-center">SARAT Z (m)</th>
                       <th className="py-2.5 px-3 text-center">FRAKSI SARAT (%T)</th>
                       <th className="py-2.5 px-3 text-right">0.5B MIDSHIP (m)</th>
@@ -3789,7 +3791,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       <th className="py-2.5 px-3 text-center">STATUS KESELARASAN</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 bg-white dark:bg-slate-950/40">
+                  <tbody className="divide-y divide-border-default bg-surface-primary">
                     {effectiveWaterlineLevels.map((wl) => {
                       const z = wl.draftFraction * T;
                       const b_mid_bilge = getTheoreticalOrdinateAtZ(z, R);
@@ -3798,31 +3800,31 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       const isMatch = diff <= 0.01;
 
                       return (
-                        <tr key={`mid-wl-${wl.id}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                        <tr key={`mid-wl-${wl.id}`} className="hover:bg-surface-canvas transition-colors">
                           <td className="py-2 px-3 flex items-center space-x-2">
-                            <span className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: wl.color }} />
-                            <span className="font-bold text-slate-900 dark:text-white">{wl.name}</span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400">({wl.shortName})</span>
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: engineeringColor(wl.color) }} />
+                            <span className="font-semibold text-text-primary">{wl.name}</span>
+                            <span className="text-xs text-text-secondary">({wl.shortName})</span>
                           </td>
-                          <td className="py-2 px-3 text-center text-cyan-700 dark:text-cyan-300 font-bold">
+                          <td className="py-2 px-3 text-center text-accent-primary font-semibold">
                             {z.toFixed(2)} m
                           </td>
-                          <td className="py-2 px-3 text-center text-slate-500 dark:text-slate-400">
+                          <td className="py-2 px-3 text-center text-text-secondary">
                             {(wl.draftFraction * 100).toFixed(1)}%
                           </td>
-                          <td className="py-2 px-3 text-right text-emerald-700 dark:text-emerald-300 font-bold">
+                          <td className="py-2 px-3 text-right text-status-success font-semibold">
                             {b_mid_bilge.toFixed(3)} m
                           </td>
-                          <td className="py-2 px-3 text-right text-cyan-700 dark:text-cyan-300 font-bold">
+                          <td className="py-2 px-3 text-right text-accent-primary font-semibold">
                             {b_mid_wl.toFixed(3)} m
                           </td>
                           <td className="py-2 px-3 text-center">
                             <span
-                              className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
                                 isMatch
-                                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30"
-                                  : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30"
-                              }`}
+                                  ? "bg-status-success-subtle text-status-success border border-status-success-border"
+                                  : "bg-status-warning-subtle text-status-warning border border-status-warning-border"
+                              } `}
                             >
                               <CheckCircle2 size={11} />
                               <span>{isMatch ? "100% SELARAS" : `Selisih ${diff.toFixed(3)}m`}</span>
@@ -3838,53 +3840,53 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           </div>
 
           {/* DETAILED PLAIN-TEXT MATHEMATICAL EXPLANATION BOX */}
-          <div className="bg-slate-50 dark:bg-slate-950/90 p-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-2 text-slate-700 dark:text-slate-300 font-mono leading-relaxed shadow-sm">
-            <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800">
-              <div className="text-[11px] font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center space-x-2">
-                <HelpCircle size={14} className="text-cyan-600 dark:text-cyan-400" />
+          <div className="bg-surface-canvas p-4 rounded-lg border border-border-default text-sm space-y-2 text-text-primary font-mono leading-relaxed">
+            <div className="flex items-center justify-between pb-1 border-b border-border-default">
+              <div className="text-xs font-semibold text-text-primary tracking-normal flex items-center space-x-2">
+                <HelpCircle size={14} className="text-accent-primary" />
                 <span>Midship & Bilge Radius Formula (Plain-Text Reference):</span>
               </div>
               <button
                 type="button"
                 onClick={() => setShowFormulasBox(!showFormulasBox)}
-                className="text-xs text-cyan-600 dark:text-cyan-400 font-semibold hover:underline flex items-center space-x-1 cursor-pointer"
-              >
+                className="text-sm text-accent-primary font-semibold hover:underline flex items-center space-x-1 cursor-pointer min-h-9"
+               aria-pressed={showFormulasBox}>
                 {showFormulasBox ? <EyeOff size={13} /> : <Eye size={13} />}
                 <span>{showFormulasBox ? "Hide Formulas" : "Show Formulas"}</span>
               </button>
             </div>
             {showFormulasBox && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-[11px]">
-                <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <p className="text-cyan-700 dark:text-cyan-300 font-bold">1. Radius Kelengkungan Bilga (R):</p>
-                  <p className="text-slate-500 dark:text-slate-400">Radius_Bilga = Akar( (B * T * (1 - Cm)) / (2 - (pi / 2)) )</p>
-                  <p className="text-slate-600 dark:text-slate-400">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1 text-xs">
+                <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                  <p className="text-accent-primary font-semibold">1. Radius Kelengkungan Bilga (R):</p>
+                  <p className="text-text-secondary">Radius_Bilga = Akar( (B * T * (1 - Cm)) / (2 - (pi / 2)) )</p>
+                  <p className="text-text-secondary">
                     R = Akar( ({B} * {T} * (1 - {Cm})) / 0.4292 ) ={" "}
-                    <strong className="text-cyan-700 dark:text-cyan-300">{R.toFixed(4)} m</strong>
+                    <strong className="text-accent-primary">{R.toFixed(4)} m</strong>
                   </p>
                 </div>
-                <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <p className="text-cyan-700 dark:text-cyan-300 font-bold">2. Luas Midship Hasil Integrasi (Am_calc):</p>
-                  <p className="text-slate-500 dark:text-slate-400">Am_calc = 2 &times; Total Luas (Satu Sisi)</p>
-                  <p className="text-slate-600 dark:text-slate-400">
+                <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                  <p className="text-accent-primary font-semibold">2. Luas Midship Hasil Integrasi (Am_calc):</p>
+                  <p className="text-text-secondary">Am_calc = 2 &times; Total Luas (Satu Sisi)</p>
+                  <p className="text-text-secondary">
                     Am_calc = 2 &times; {(Am_calc / 2).toFixed(4)} ={" "}
-                    <strong className="text-emerald-700 dark:text-emerald-400">{Am_calc.toFixed(3)} m&sup2;</strong>
+                    <strong className="text-status-success">{Am_calc.toFixed(3)} m&sup2;</strong>
                   </p>
                 </div>
-                <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <p className="text-cyan-700 dark:text-cyan-300 font-bold">3. Luas Midship Target Rancangan:</p>
-                  <p className="text-slate-500 dark:text-slate-400">Am_rancangan = B * T * Cm</p>
-                  <p className="text-slate-600 dark:text-slate-400">
+                <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                  <p className="text-accent-primary font-semibold">3. Luas Midship Target Rancangan:</p>
+                  <p className="text-text-secondary">Am_rancangan = B * T * Cm</p>
+                  <p className="text-text-secondary">
                     Am_rancangan = {B} * {T} * {Cm} ={" "}
-                    <strong className="text-cyan-700 dark:text-cyan-300">{Am_rancangan.toFixed(3)} m&sup2;</strong>
+                    <strong className="text-accent-primary">{Am_rancangan.toFixed(3)} m&sup2;</strong>
                   </p>
                 </div>
-                <div className="space-y-1 bg-white dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-800/80">
-                  <p className="text-cyan-700 dark:text-cyan-300 font-bold">4. Persentase Koreksi Midship (Wajib ≤ ±0.05%):</p>
-                  <p className="text-slate-500 dark:text-slate-400">Koreksi = ((Am_calc - Am_rancangan) / Am_calc) * 100%</p>
-                  <p className="text-slate-600 dark:text-slate-400">
+                <div className="space-y-1 border-b border-border-subtle py-3 min-w-0">
+                  <p className="text-accent-primary font-semibold">4. Persentase Koreksi Midship (Wajib ≤ ±0.05%):</p>
+                  <p className="text-text-secondary">Koreksi = ((Am_calc - Am_rancangan) / Am_calc) * 100%</p>
+                  <p className="text-text-secondary">
                     Koreksi = (({Am_calc.toFixed(2)} - {Am_rancangan.toFixed(2)}) / {Am_calc.toFixed(2)}) * 100% ={" "}
-                    <strong className={isCorrectionValid ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-300"}>
+                    <strong className={isCorrectionValid ? "text-status-success" : "text-status-danger"}>
                       {correctionPercent.toFixed(3)}%
                     </strong>
                   </p>

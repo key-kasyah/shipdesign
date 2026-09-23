@@ -1,5 +1,7 @@
 "use client";
 
+import { engineeringColor } from "./EngineeringPalette";
+
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
@@ -659,26 +661,26 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
   const activeInterceptY = localOffsets[activeWl.id]?.[selectedStation] ?? 0;
 
   return (
-    <div className="bg-[#070B12] text-slate-100 space-y-6 font-sans">
+    <div className="bg-surface-canvas text-text-primary space-y-6 font-sans">
       {/* 1. TOP HEADER & COMPLIANCE SUMMARY CARD */}
-      <div className="bg-slate-900/80 border border-slate-800/90 p-5 md:p-6 rounded-2xl backdrop-blur-xl shadow-2xl space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+      <div className="bg-surface-primary border border-border-default p-5 md:p-6 rounded-lg space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border-default pb-4">
           <div className="flex items-center space-x-3.5">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-600/30 border border-cyan-500/40 text-cyan-300 shadow-lg shadow-cyan-950/40">
+            <div className="p-2.5 rounded-lg border border-border-default text-accent-primary bg-accent-primary">
               <Sparkles size={22} />
             </div>
             <div>
               <div className="flex items-center space-x-2.5 flex-wrap">
-                <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
+                <h2 className="text-base md:text-lg font-semibold text-text-primary tracking-tight">
                   {language === "en"
                     ? "Harmonized Waterplane & Bilge Studio"
                     : "Studio Harmonisasi Sinkron Garis Air & Radius Bilga"}
                 </h2>
-                <span className="text-[10px] font-mono font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-mono font-semibold bg-surface-selected text-accent-primary border border-border-default px-2.5 py-0.5 rounded-full">
                   Real-Time 2-Way CAD Sync
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-sm text-text-secondary mt-1">
                 {language === "en"
                   ? "Interactive link between frame cross-sections (Bilge) and waterplane curves (WL) with zero-loop parametric splines."
                   : "Editor grafis parametrik dua arah antara penampang gading (Body Plan) dan kurva garis air (Waterplane Plan) dengan interpolasi centripetal mulus."}
@@ -687,38 +689,38 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
           </div>
 
           {/* Action Toolbar */}
-          <div className="flex items-center flex-wrap gap-2.5 self-start lg:self-auto font-mono text-xs">
+          <div className="flex items-center flex-wrap gap-2.5 self-start lg:self-auto font-mono text-sm">
             {/* Presets dropdown */}
-            <div className="flex items-center space-x-1 bg-slate-950/80 border border-slate-800 rounded-xl px-2 py-1">
-              <Ship size={13} className="text-cyan-400" />
+            <div className="flex items-center space-x-1 bg-surface-inset border border-border-default rounded-lg px-2 py-1">
+              <Ship size={13} className="text-accent-primary" />
               <select
                 onChange={(e) => handleAutoHarmonizeAll(e.target.value as any)}
                 defaultValue={vesselType.toLowerCase().includes("tank") ? "tanker" : "cargo"}
-                className="bg-transparent text-xs text-slate-300 outline-none cursor-pointer pr-1"
+                className="bg-transparent text-sm text-text-primary outline-none cursor-pointer pr-1 min-h-10"
                 title="Pilih preset profil lambung standar"
               >
-                <option value="tanker" className="bg-slate-900 text-white">Preset: Tanker / Bulk (Cb 0.78)</option>
-                <option value="cargo" className="bg-slate-900 text-white">Preset: General Cargo (Cb 0.70)</option>
-                <option value="passenger" className="bg-slate-900 text-white">Preset: Fast Ferry / Tug (Cb 0.58)</option>
-                <option value="barge" className="bg-slate-900 text-white">Preset: Ponton / Tongkang</option>
+                <option value="tanker" className="bg-surface-primary text-text-primary">Preset: Tanker / Bulk (Cb 0.78)</option>
+                <option value="cargo" className="bg-surface-primary text-text-primary">Preset: General Cargo (Cb 0.70)</option>
+                <option value="passenger" className="bg-surface-primary text-text-primary">Preset: Fast Ferry / Tug (Cb 0.58)</option>
+                <option value="barge" className="bg-surface-primary text-text-primary">Preset: Ponton / Tongkang</option>
               </select>
             </div>
 
             <button
               onClick={() => handleAutoHarmonizeAll()}
-              className="px-3.5 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl font-bold transition-all flex items-center space-x-1.5 shadow-lg shadow-cyan-900/30 cursor-pointer active:scale-[0.98]"
+              className="px-3.5 py-2 text-on-accent rounded-md font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer  bg-accent-primary min-h-9"
               title="Harmonisasi otomatis seluruh gading dan garis air ke kurva bilga mulus"
-            >
+             aria-label="Harmonisasi otomatis seluruh gading dan garis air ke kurva bilga mulus">
               <Sparkles size={13} />
               <span>Harmonisasi Penuh (Auto-Fair)</span>
             </button>
 
             <button
               onClick={handleExportCadScript}
-              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold transition-all flex items-center space-x-1.5 border border-slate-700 cursor-pointer active:scale-[0.98]"
+              className="px-3 py-2 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded-md font-semibold transition-colors flex items-center space-x-1.5 border border-border-default cursor-pointer  min-h-9"
               title="Unduh file AutoCAD Script (.scr) untuk Lines Plan"
-            >
-              <Download size={13} className="text-cyan-400" />
+             aria-label="Unduh file AutoCAD Script (.scr) untuk Lines Plan">
+              <Download size={13} className="text-accent-primary" />
               <span>Ekspor SCR</span>
             </button>
 
@@ -726,7 +728,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all flex items-center space-x-1.5 shadow-lg shadow-emerald-950/40 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                className="px-3.5 py-2 bg-status-success hover:bg-status-success text-on-accent rounded-md font-semibold transition-colors flex items-center space-x-1.5 cursor-pointer  disabled:opacity-50 min-h-9"
               >
                 {isSaving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
                 <span>{isSaving ? "Menyimpan..." : "Simpan Desain"}</span>
@@ -736,99 +738,99 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
         </div>
 
         {/* Unified 3-Column Correction & Fairness Metrics Card */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-mono text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 font-mono text-sm">
           {/* Card 1: AWL Waterplane Correction */}
-          <div className={`p-4 rounded-xl border ${awlSimpsonCalc.isValid ? "bg-emerald-950/30 border-emerald-500/40" : "bg-rose-950/30 border-rose-500/40"} space-y-1.5`}>
-            <div className="flex items-center justify-between text-[11px] font-sans">
-              <span className="text-slate-400 uppercase font-semibold">1. Luas Garis Air (AWL {activeWl.shortName})</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${awlSimpsonCalc.isValid ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40"}`}>
+          <div className={`p-4 rounded-lg border ${awlSimpsonCalc.isValid ? "bg-status-success-subtle border-status-success-border" : "bg-status-danger-subtle border-status-danger-border"} space-y-1.5`}>
+            <div className="flex items-center justify-between text-xs font-sans">
+              <span className="text-text-secondary font-semibold">1. Luas Garis Air (AWL {activeWl.shortName})</span>
+              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${awlSimpsonCalc.isValid ? "bg-status-success-subtle text-status-success border border-status-success-border" : "bg-status-danger-subtle text-status-danger border border-status-danger-border"} `}>
                 {awlSimpsonCalc.isValid ? "✓ Sesuai Target (±0.05%)" : "⚠️ Deviasi > ±0.05%"}
               </span>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-xl font-black text-white">{awlSimpsonCalc.awlActual.toFixed(2)}</span>
-              <span className="text-xs text-slate-400">/ Target {awlSimpsonCalc.targetAWL.toFixed(2)} m&sup2;</span>
+              <span className="text-xl font-semibold text-text-primary">{awlSimpsonCalc.awlActual.toFixed(2)}</span>
+              <span className="text-sm text-text-secondary">/ Target {awlSimpsonCalc.targetAWL.toFixed(2)} m&sup2;</span>
             </div>
-            <div className="text-[11px] text-slate-300 flex items-center justify-between pt-0.5">
-              <span>Deviasi: <strong className={awlSimpsonCalc.isValid ? "text-emerald-400" : "text-rose-400"}>{awlSimpsonCalc.deviationPct > 0 ? `+${awlSimpsonCalc.deviationPct}%` : `${awlSimpsonCalc.deviationPct}%`}</strong></span>
-              <span className="text-cyan-300">Cw: {awlSimpsonCalc.actualCw.toFixed(3)} (Target {targetCw.toFixed(2)})</span>
+            <div className="text-xs text-text-primary flex items-center justify-between pt-0.5">
+              <span>Deviasi: <strong className={awlSimpsonCalc.isValid ? "text-status-success" : "text-status-danger"}>{awlSimpsonCalc.deviationPct > 0 ? `+${awlSimpsonCalc.deviationPct}%` : `${awlSimpsonCalc.deviationPct}%`}</strong></span>
+              <span className="text-accent-primary">Cw: {awlSimpsonCalc.actualCw.toFixed(3)} (Target {targetCw.toFixed(2)})</span>
             </div>
           </div>
 
           {/* Card 2: Midship Frame Area Correction */}
-          <div className={`p-4 rounded-xl border ${amMidshipCalc.isValid ? "bg-emerald-950/30 border-emerald-500/40" : "bg-rose-950/30 border-rose-500/40"} space-y-1.5`}>
-            <div className="flex items-center justify-between text-[11px] font-sans">
-              <span className="text-slate-400 uppercase font-semibold">2. Luas Penampang ({selectedStation === 10 ? "Midship Am" : `Station ${selectedStation}`})</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${amMidshipCalc.isValid ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40"}`}>
+          <div className={`p-4 rounded-lg border ${amMidshipCalc.isValid ? "bg-status-success-subtle border-status-success-border" : "bg-status-danger-subtle border-status-danger-border"} space-y-1.5`}>
+            <div className="flex items-center justify-between text-xs font-sans">
+              <span className="text-text-secondary font-semibold">2. Luas Penampang ({selectedStation === 10 ? "Midship Am" : `Station ${selectedStation}`})</span>
+              <span className={`px-2 py-0.5 rounded text-xs font-semibold ${amMidshipCalc.isValid ? "bg-status-success-subtle text-status-success border border-status-success-border" : "bg-status-danger-subtle text-status-danger border border-status-danger-border"} `}>
                 {amMidshipCalc.isValid ? "✓ Sesuai Target" : "⚠️ Deviasi"}
               </span>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-xl font-black text-white">{amMidshipCalc.amActual.toFixed(2)}</span>
-              <span className="text-xs text-slate-400">/ Target {amMidshipCalc.targetAm.toFixed(2)} m&sup2;</span>
+              <span className="text-xl font-semibold text-text-primary">{amMidshipCalc.amActual.toFixed(2)}</span>
+              <span className="text-sm text-text-secondary">/ Target {amMidshipCalc.targetAm.toFixed(2)} m&sup2;</span>
             </div>
-            <div className="text-[11px] text-slate-300 flex items-center justify-between pt-0.5">
-              <span>Cm: <strong className="text-white">{amMidshipCalc.actualCm.toFixed(3)}</strong> (Target {Cm.toFixed(2)})</span>
-              <span className="text-amber-300">Radius Bilga R: {R.toFixed(2)} m</span>
+            <div className="text-xs text-text-primary flex items-center justify-between pt-0.5">
+              <span>Cm: <strong className="text-text-primary">{amMidshipCalc.actualCm.toFixed(3)}</strong> (Target {Cm.toFixed(2)})</span>
+              <span className="text-status-warning">Radius Bilga R: {R.toFixed(2)} m</span>
             </div>
           </div>
 
           {/* Card 3: Two-Way Synchronization Intercept */}
-          <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/40 space-y-1.5">
-            <div className="flex items-center justify-between text-[11px] font-sans">
-              <span className="text-slate-400 uppercase font-semibold">3. Titik Temu (St {selectedStation} ∩ {activeWl.shortName})</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">
+          <div className="p-4 rounded-lg bg-surface-selected border border-border-default space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-sans">
+              <span className="text-text-secondary font-semibold">3. Titik Temu (St {selectedStation} ∩ {activeWl.shortName})</span>
+              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-surface-selected text-accent-primary border border-border-default">
                 ✓ 100% Sinkron (Δ = 0.000m)
               </span>
             </div>
             <div className="flex items-baseline space-x-2">
-              <span className="text-xl font-black text-cyan-300">{activeInterceptY.toFixed(3)} m</span>
-              <span className="text-xs text-slate-400">pada Z = {activeZ.toFixed(2)} m</span>
+              <span className="text-xl font-semibold text-accent-primary">{activeInterceptY.toFixed(3)} m</span>
+              <span className="text-sm text-text-secondary">pada Z = {activeZ.toFixed(2)} m</span>
             </div>
-            <div className="text-[11px] text-slate-300 flex items-center justify-between pt-0.5">
+            <div className="text-xs text-text-primary flex items-center justify-between pt-0.5">
               <span>Lebar Penuh: <strong>{(activeInterceptY * 2).toFixed(3)} m</strong></span>
-              <span className="text-slate-400">0.5B Maks: {halfB.toFixed(2)} m</span>
+              <span className="text-text-secondary">0.5B Maks: {halfB.toFixed(2)} m</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* 2. STATION & WATERLINE SELECTOR BARS & DISPLAY TOGGLES */}
-      <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl backdrop-blur-xl shadow-xl space-y-3 font-mono">
+      <div className="bg-surface-primary border border-border-default p-4 rounded-lg space-y-3 font-mono">
         {/* Row 1: Station Selector */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 uppercase font-semibold text-[11px] flex items-center space-x-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary font-semibold text-xs flex items-center space-x-1.5">
               <span>📍 Pilih Gading / Station Aktif (Penampang Melintang):</span>
-              <strong className="text-cyan-400">Station {selectedStation} {selectedStation === 10 ? "(Midship)" : ""}</strong>
+              <strong className="text-accent-primary">Station {selectedStation} {selectedStation === 10 ? "(Midship)" : ""}</strong>
             </span>
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleAutoHarmonizeStation}
-                className="text-[10px] text-amber-300 hover:text-amber-200 bg-amber-950/40 hover:bg-amber-900/40 border border-amber-500/40 px-2 py-0.5 rounded-lg flex items-center space-x-1 cursor-pointer transition-all"
+                className="text-sm text-status-warning hover:text-status-warning bg-status-warning-subtle hover:bg-status-warning-subtle border border-status-warning-border px-2 py-0.5 rounded-md flex items-center space-x-1 cursor-pointer transition-colors min-h-9"
                 title="Harmonisasi otomatis kurva gading ini ke radius bilga"
-              >
+               aria-label="Harmonisasi otomatis kurva gading ini ke radius bilga">
                 <Wand2 size={11} />
                 <span>Haluskan Gading {selectedStation}</span>
               </button>
             </div>
           </div>
-          <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-1">
+          <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-1 overflow-x-auto py-1">
             {STATIONS.filter((s) => s.isMain).map((st) => {
               const isSelected = st.id === selectedStation;
               return (
                 <button
                   key={`st-btn-${st.id}`}
                   onClick={() => setSelectedStation(st.id)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
+                  className={`px-2.5 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap border ${
                     isSelected
-                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white border-cyan-400 shadow-md shadow-cyan-900/40 scale-105"
+                      ? "text-on-accent border-border-default bg-accent-primary min-h-9"
                       : st.isMid
-                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+                      ? "bg-status-warning-subtle text-status-warning border-status-warning-border hover:bg-status-warning-subtle min-h-9"
                       : st.isAP || st.isFP
-                      ? "bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30"
-                      : "bg-slate-950/80 text-slate-400 border-slate-800 hover:text-slate-200 hover:bg-slate-900"
-                  }`}
+                      ? "bg-surface-selected text-accent-primary border-border-default hover:bg-surface-selected min-h-9"
+                      : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-primary min-h-9"
+                  } `}
                 >
                   {st.name}
                 </button>
@@ -838,24 +840,24 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
         </div>
 
         {/* Row 2: Waterline Selector */}
-        <div className="space-y-1.5 pt-2 border-t border-slate-800/80">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-400 uppercase font-semibold text-[11px] flex items-center space-x-1.5">
+        <div className="space-y-1.5 pt-2 border-t border-border-default">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary font-semibold text-xs flex items-center space-x-1.5">
               <span>🌊 Pilih Garis Air / Waterline Aktif (Bidang Horizontal):</span>
-              <strong className="text-cyan-400">{activeWl.name} (Z = {activeZ.toFixed(2)} m)</strong>
+              <strong className="text-accent-primary">{activeWl.name} (Z = {activeZ.toFixed(2)} m)</strong>
             </span>
             <div className="flex items-center space-x-2">
               <button
                 onClick={handleAutoFairWaterplane}
-                className="text-[10px] text-cyan-300 hover:text-cyan-200 bg-cyan-950/40 hover:bg-cyan-900/40 border border-cyan-500/40 px-2 py-0.5 rounded-lg flex items-center space-x-1 cursor-pointer transition-all"
+                className="text-sm text-accent-primary hover:text-accent-primary bg-surface-selected hover:bg-surface-selected border border-border-default px-2 py-0.5 rounded-md flex items-center space-x-1 cursor-pointer transition-colors min-h-9"
                 title="Fairing otomatis garis air aktif untuk menghilangkan ketidakmulusan"
-              >
+               aria-label="Fairing otomatis garis air aktif untuk menghilangkan ketidakmulusan">
                 <Wand2 size={11} />
                 <span>Haluskan WL {activeWl.shortName}</span>
               </button>
             </div>
           </div>
-          <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
+          <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2 overflow-x-auto py-1">
             {effectiveLevels.map((wl) => {
               const isSelected = wl.id === selectedWlId;
               const zVal = wl.draftFraction * T;
@@ -863,15 +865,15 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                 <button
                   key={`wl-btn-${wl.id}`}
                   onClick={() => setSelectedWlId(wl.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center space-x-2 border ${
+                  className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors cursor-pointer flex items-center space-x-2 border ${
                     isSelected
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-md shadow-blue-900/40 scale-105"
-                      : "bg-slate-950/80 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-900"
-                  }`}
+                      ? "text-on-accent border-border-default bg-accent-primary min-h-9"
+                      : "bg-surface-inset text-text-primary border-border-default hover:text-text-primary hover:bg-surface-primary min-h-9"
+                  } `}
                 >
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: wl.color }} />
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
                   <span>{wl.shortName}</span>
-                  <span className="text-[10px] text-slate-400 font-normal">Z={zVal.toFixed(2)}m</span>
+                  <span className="text-xs text-text-secondary font-normal">Z={zVal.toFixed(2)}m</span>
                 </button>
               );
             })}
@@ -879,41 +881,41 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
         </div>
 
         {/* Row 3: Visual Overlay Display Controls */}
-        <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
-          <div className="flex items-center space-x-3 text-slate-400">
-            <span className="font-semibold text-slate-300">Opsi Tampilan:</span>
-            <label className="flex items-center space-x-1.5 cursor-pointer hover:text-white transition-all">
+        <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-border-default text-xs">
+          <div className="flex items-center space-x-3 text-text-secondary">
+            <span className="font-semibold text-text-primary">Opsi Tampilan:</span>
+            <label className="flex items-center space-x-1.5 cursor-pointer hover:text-text-primary transition-colors">
               <input
                 type="checkbox"
                 checked={showMirrorSymmetry}
                 onChange={(e) => setShowMirrorSymmetry(e.target.checked)}
-                className="rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-0"
+                className="rounded bg-surface-inset border-border-default text-accent-primary focus:ring-0"
               />
               <span>Simetri Penuh (Port & Stbd)</span>
             </label>
 
-            <label className="flex items-center space-x-1.5 cursor-pointer hover:text-white transition-all">
+            <label className="flex items-center space-x-1.5 cursor-pointer hover:text-text-primary transition-colors">
               <input
                 type="checkbox"
                 checked={showGhostWaterlines}
                 onChange={(e) => setShowGhostWaterlines(e.target.checked)}
-                className="rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-0"
+                className="rounded bg-surface-inset border-border-default text-accent-primary focus:ring-0"
               />
               <span>Tampilkan Semua Waterline (Ghost)</span>
             </label>
 
-            <label className="flex items-center space-x-1.5 cursor-pointer hover:text-white transition-all">
+            <label className="flex items-center space-x-1.5 cursor-pointer hover:text-text-primary transition-colors">
               <input
                 type="checkbox"
                 checked={showCurvatureCombs}
                 onChange={(e) => setShowCurvatureCombs(e.target.checked)}
-                className="rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-0"
+                className="rounded bg-surface-inset border-border-default text-accent-primary focus:ring-0"
               />
               <span>Indikator Kelengkungan (Fairness Comb)</span>
             </label>
           </div>
 
-          <div className="text-[10px] text-slate-500">
+          <div className="text-xs text-text-secondary">
             💡 Tips: Seret titik kontrol pada kanvas untuk menyesuaikan bentuk lambung secara presisi.
           </div>
         </div>
@@ -924,21 +926,21 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
         {/* ════════════════════════════════════════════════════════════════════
             LEFT CANVAS: PENAMPANG GADING & RADIUS BILGA (BODY SECTION)
             ════════════════════════════════════════════════════════════════════ */}
-        <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-3 relative flex flex-col">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+        <div className="bg-surface-inset border border-border-default rounded-lg p-5 space-y-3 relative flex flex-col">
+          <div className="flex items-center justify-between border-b border-border-default pb-2.5">
             <div className="flex items-center space-x-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+              <div className="w-2.5 h-2.5 rounded-full bg-status-warning-subtle" />
+              <h3 className="text-sm font-semibold text-text-primary tracking-normal font-sans">
                 📐 Kanvas 1: Penampang Gading {selectedStation} (Bilga & Body Plan)
               </h3>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">
+            <span className="text-xs font-mono text-text-secondary">
               Tarik titik secara horizontal (0.5 B)
             </span>
           </div>
 
           {/* SVG Frame Canvas */}
-          <div className="flex-1 flex items-center justify-center p-2 bg-[#02050e] rounded-xl border border-slate-900 overflow-hidden relative select-none min-h-[300px]">
+          <div className="flex-1 flex items-center justify-center p-2 bg-surface-canvas rounded-lg border border-border-default overflow-hidden relative select-none min-h-[300px]">
             <svg
               ref={bilgeSvgRef}
               className="w-full h-auto max-h-[380px]"
@@ -948,24 +950,24 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
               {/* Coordinate Grid Background */}
               <defs>
                 <pattern id="bilgeGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" strokeWidth="0.5" strokeOpacity="0.4" />
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke={engineeringColor("#1e293b")} strokeWidth="0.5" strokeOpacity="0.4" />
                 </pattern>
                 <linearGradient id="sectionFillGradient" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.05" />
+                  <stop offset="0%" stopColor={engineeringColor("#0284c7")} stopOpacity="0.25" />
+                  <stop offset="100%" stopColor={engineeringColor("#38bdf8")} stopOpacity="0.05" />
                 </linearGradient>
               </defs>
               <rect x="60" y="30" width="360" height="270" fill="url(#bilgeGrid)" />
 
               {/* Centerline (CL) */}
-              <line x1="60" y1="20" x2="60" y2="310" stroke="#0284c7" strokeWidth="1.8" />
-              <text x="60" y="16" fill="#38bdf8" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              <line x1="60" y1="20" x2="60" y2="310" stroke={engineeringColor("#0284c7")} strokeWidth="1.8" />
+              <text x="60" y="16" fill={engineeringColor("#38bdf8", "text")} fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                 CL (Centerline)
               </text>
 
               {/* Baseline (BL) */}
-              <line x1="50" y1="300" x2="430" y2="300" stroke="#f43f5e" strokeWidth="1.5" />
-              <text x="435" y="303" fill="#f43f5e" fontSize="9" fontWeight="bold" fontFamily="monospace">
+              <line x1="50" y1="300" x2="430" y2="300" stroke={engineeringColor("#f43f5e")} strokeWidth="1.5" />
+              <text x="435" y="303" fill={engineeringColor("#f43f5e", "text")} fontSize="9" fontWeight="bold" fontFamily="monospace">
                 BL (0m)
               </text>
 
@@ -974,8 +976,8 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                 const yDeck = 300 - (H / Math.max(H, T * 1.25)) * 260;
                 return (
                   <g key="deck-line">
-                    <line x1="55" y1={yDeck} x2="425" y2={yDeck} stroke="#eab308" strokeWidth="1" strokeDasharray="4,2" />
-                    <text x="430" y={yDeck + 3} fill="#eab308" fontSize="8.5" fontFamily="monospace">Geladak ({H.toFixed(2)}m)</text>
+                    <line x1="55" y1={yDeck} x2="425" y2={yDeck} stroke={engineeringColor("#eab308")} strokeWidth="1" strokeDasharray="4,2" />
+                    <text x="430" y={yDeck + 3} fill={engineeringColor("#eab308", "text")} fontSize="8.5" fontFamily="monospace">Geladak ({H.toFixed(2)}m)</text>
                   </g>
                 );
               })()}
@@ -992,14 +994,14 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                       y1={yPos}
                       x2="420"
                       y2={yPos}
-                      stroke={isSelectedWl ? "#38bdf8" : "#334155"}
+                      stroke={engineeringColor(isSelectedWl ? "#38bdf8" : "#334155")}
                       strokeWidth={isSelectedWl ? 1.6 : 0.6}
                       strokeDasharray={isSelectedWl ? "none" : "3,2"}
                     />
                     <text
                       x="52"
                       y={yPos + 3}
-                      fill={isSelectedWl ? "#38bdf8" : "#64748b"}
+                      fill={engineeringColor(isSelectedWl ? "#38bdf8" : "#64748b", "text")}
                       fontSize={isSelectedWl ? "9.5" : "8.5"}
                       fontWeight={isSelectedWl ? "bold" : "normal"}
                       textAnchor="end"
@@ -1027,7 +1029,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                     key={`ghost-st-${stId}`}
                     d={pathD}
                     fill="none"
-                    stroke="#475569"
+                    stroke={engineeringColor("#475569")}
                     strokeWidth="1"
                     strokeDasharray="2,2"
                     strokeOpacity="0.4"
@@ -1089,7 +1091,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                         cy={300 - (R / Math.max(H, T * 1.25)) * 260}
                         r={(R / (halfB * 1.15)) * 360}
                         fill="none"
-                        stroke="#f59e0b"
+                        stroke={engineeringColor("#f59e0b")}
                         strokeWidth="1"
                         strokeDasharray="3,3"
                         strokeOpacity="0.5"
@@ -1100,7 +1102,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                     <path
                       d={pathD}
                       fill="none"
-                      stroke="#38bdf8"
+                      stroke={engineeringColor("#38bdf8")}
                       strokeWidth="2.8"
                       strokeLinecap="round"
                     />
@@ -1109,7 +1111,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                       <path
                         d={mirrorPathD}
                         fill="none"
-                        stroke="#38bdf8"
+                        stroke={engineeringColor("#38bdf8")}
                         strokeWidth="2.8"
                         strokeLinecap="round"
                         strokeOpacity="0.75"
@@ -1149,16 +1151,16 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                       cx={px}
                       cy={py}
                       r={isSelectedWl || isDragging ? "6.5" : "4.5"}
-                      fill={isSelectedWl ? "#38bdf8" : "#0284c7"}
-                      stroke="#ffffff"
+                      fill={engineeringColor(isSelectedWl ? "#38bdf8" : "#0284c7")}
+                      stroke={engineeringColor("#ffffff")}
                       strokeWidth={isSelectedWl ? 2.2 : 1}
                       className="cursor-ew-resize pointer-events-none"
                     />
                     {/* Tooltip Label on Hover / Drag */}
                     {(isSelectedWl || isDragging) && (
                       <g className="pointer-events-none">
-                        <rect x={px + 8} y={py - 16} width="66" height="15" rx="3" fill="#090d16" stroke="#38bdf8" strokeWidth="0.8" />
-                        <text x={px + 41} y={py - 6} fill="#7dd3fc" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                        <rect x={px + 8} y={py - 16} width="66" height="15" rx="3" fill="var(--surface-inset)" stroke={engineeringColor("#38bdf8")} strokeWidth="0.8" />
+                        <text x={px + 41} y={py - 6} fill={engineeringColor("#7dd3fc", "text")} fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                           {yVal.toFixed(3)}m
                         </text>
                       </g>
@@ -1169,22 +1171,22 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
             </svg>
           </div>
 
-          <div className="text-[11px] text-slate-300 font-mono flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+          <div className="text-xs text-text-primary font-mono flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border-default">
             <div className="flex items-center space-x-2">
-              <span className="text-slate-400">Gading {selectedStation} @ {activeWl.shortName}:</span>
-              <div className="flex items-center space-x-1 bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-700">
-                <span className="text-slate-400">0.5B =</span>
+              <span className="text-text-secondary">Gading {selectedStation} @ {activeWl.shortName}:</span>
+              <div className="flex items-center space-x-1 bg-surface-primary px-2 py-0.5 rounded-lg border border-border-default">
+                <span className="text-text-secondary">0.5B =</span>
                 <input
                   type="number"
                   step="0.01"
-                  value={activeInterceptY}
+                  aria-label="Intercept Y coordinate (m)" value={activeInterceptY}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
                     if (!isNaN(val)) handleUpdateOffset(activeWl.id, selectedStation, val, true);
                   }}
-                  className="w-16 bg-transparent text-cyan-300 font-bold outline-none text-center"
+                  className="w-16 bg-transparent text-accent-primary font-semibold outline-none text-center min-h-10"
                 />
-                <span className="text-slate-400">m</span>
+                <span className="text-text-secondary">m</span>
               </div>
             </div>
 
@@ -1192,33 +1194,33 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY - 0.1, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Kurangi 0.10 m"
-              >
+               aria-label="Kurangi 0.10 m">
                 -0.10m
               </button>
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY - 0.01, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Kurangi 0.01 m"
-              >
+               aria-label="Kurangi 0.01 m">
                 -0.01m
               </button>
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY + 0.01, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Tambah 0.01 m"
-              >
+               aria-label="Tambah 0.01 m">
                 +0.01m
               </button>
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY + 0.1, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Tambah 0.10 m"
-              >
+               aria-label="Tambah 0.10 m">
                 +0.10m
               </button>
             </div>
@@ -1228,21 +1230,21 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
         {/* ════════════════════════════════════════════════════════════════════
             RIGHT CANVAS: BIDANG GARIS AIR (WATERPLANE HALF-BREADTH PLAN)
             ════════════════════════════════════════════════════════════════════ */}
-        <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-3 relative flex flex-col">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+        <div className="bg-surface-inset border border-border-default rounded-lg p-5 space-y-3 relative flex flex-col">
+          <div className="flex items-center justify-between border-b border-border-default pb-2.5">
             <div className="flex items-center space-x-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50" />
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+              <div className="w-2.5 h-2.5 rounded-full bg-surface-selected" />
+              <h3 className="text-sm font-semibold text-text-primary tracking-normal font-sans">
                 🌊 Kanvas 2: Garis Air {activeWl.name} (Waterplane Plan)
               </h3>
             </div>
-            <span className="text-[11px] font-mono text-slate-400">
+            <span className="text-xs font-mono text-text-secondary">
               Tarik titik secara vertikal (0.5 B)
             </span>
           </div>
 
           {/* SVG Waterplane Canvas */}
-          <div className="flex-1 flex items-center justify-center p-2 bg-[#02050e] rounded-xl border border-slate-900 overflow-hidden relative select-none min-h-[300px]">
+          <div className="flex-1 flex items-center justify-center p-2 bg-surface-canvas rounded-lg border border-border-default overflow-hidden relative select-none min-h-[300px]">
             <svg
               ref={wlSvgRef}
               className="w-full h-auto max-h-[380px]"
@@ -1252,24 +1254,24 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
               {/* Background Grid */}
               <defs>
                 <pattern id="wlGrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" strokeWidth="0.5" strokeOpacity="0.4" />
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke={engineeringColor("#1e293b")} strokeWidth="0.5" strokeOpacity="0.4" />
                 </pattern>
                 <linearGradient id="wlFillGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.22" />
-                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.04" />
+                  <stop offset="0%" stopColor={engineeringColor("#06b6d4")} stopOpacity="0.22" />
+                  <stop offset="100%" stopColor={engineeringColor("#0284c7")} stopOpacity="0.04" />
                 </linearGradient>
               </defs>
               <rect x="40" y="30" width="460" height="200" fill="url(#wlGrid)" />
 
               {/* Centerline CL (Bottom baseline) */}
-              <line x1="30" y1="230" x2="510" y2="230" stroke="#0284c7" strokeWidth="1.8" />
-              <text x="270" y="248" fill="#38bdf8" fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+              <line x1="30" y1="230" x2="510" y2="230" stroke={engineeringColor("#0284c7")} strokeWidth="1.8" />
+              <text x="270" y="248" fill={engineeringColor("#38bdf8", "text")} fontSize="9.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                 Centerline (CL - Sumbu Panjang Kapal LBP)
               </text>
 
               {/* Maximum Breadth 0.5B Limit line */}
-              <line x1="35" y1="40" x2="505" y2="40" stroke="#64748b" strokeWidth="0.8" strokeDasharray="4,2" />
-              <text x="510" y="43" fill="#94a3b8" fontSize="8.5" fontFamily="monospace">
+              <line x1="35" y1="40" x2="505" y2="40" stroke={engineeringColor("#64748b")} strokeWidth="0.8" strokeDasharray="4,2" />
+              <text x="510" y="43" fill={engineeringColor("#94a3b8", "text")} fontSize="8.5" fontFamily="monospace">
                 0.5B ({halfB.toFixed(2)}m)
               </text>
 
@@ -1288,7 +1290,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                     key={`ghost-wl-${otherWl.id}`}
                     d={pathD}
                     fill="none"
-                    stroke={otherWl.color || "#475569"}
+                    stroke={engineeringColor(otherWl.color || "#475569")}
                     strokeWidth="0.9"
                     strokeDasharray="2,2"
                     strokeOpacity="0.35"
@@ -1307,14 +1309,14 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                       y1="35"
                       x2={xPos}
                       y2="230"
-                      stroke={isSelectedSt ? "#f59e0b" : st.isMid ? "#38bdf8" : "#334155"}
+                      stroke={engineeringColor(isSelectedSt ? "#f59e0b" : st.isMid ? "#38bdf8" : "#334155")}
                       strokeWidth={isSelectedSt ? 1.6 : st.isMid ? 1.2 : 0.6}
                       strokeDasharray={isSelectedSt ? "none" : "3,2"}
                     />
                     <text
                       x={xPos}
                       y="244"
-                      fill={isSelectedSt ? "#f59e0b" : st.isMid ? "#38bdf8" : "#64748b"}
+                      fill={engineeringColor(isSelectedSt ? "#f59e0b" : st.isMid ? "#38bdf8" : "#64748b", "text")}
                       fontSize={isSelectedSt ? "9.5" : "8"}
                       fontWeight={isSelectedSt || st.isMid ? "bold" : "normal"}
                       textAnchor="middle"
@@ -1388,7 +1390,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                         y1={line.y1}
                         x2={line.x2}
                         y2={line.y2}
-                        stroke="#a855f7"
+                        stroke={engineeringColor("#a855f7")}
                         strokeWidth="1.2"
                         strokeOpacity="0.75"
                       />
@@ -1398,7 +1400,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                     <path
                       d={pathD}
                       fill="none"
-                      stroke={activeWl.color || "#38bdf8"}
+                      stroke={engineeringColor(activeWl.color || "#38bdf8")}
                       strokeWidth="2.8"
                       strokeLinecap="round"
                     />
@@ -1407,7 +1409,7 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                       <path
                         d={mirrorPathD}
                         fill="none"
-                        stroke={activeWl.color || "#38bdf8"}
+                        stroke={engineeringColor(activeWl.color || "#38bdf8")}
                         strokeWidth="2.8"
                         strokeLinecap="round"
                         strokeOpacity="0.75"
@@ -1446,16 +1448,16 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
                       cx={xPos}
                       cy={yPos}
                       r={isSelectedSt || isDragging ? "6.5" : "4.5"}
-                      fill={isSelectedSt ? "#f59e0b" : activeWl.color || "#38bdf8"}
-                      stroke="#ffffff"
+                      fill={engineeringColor(isSelectedSt ? "#f59e0b" : activeWl.color || "#38bdf8")}
+                      stroke={engineeringColor("#ffffff")}
                       strokeWidth={isSelectedSt ? 2.2 : 1}
                       className="cursor-ns-resize pointer-events-none"
                     />
                     {/* Tooltip on active */}
                     {(isSelectedSt || isDragging) && (
                       <g className="pointer-events-none">
-                        <rect x={xPos - 30} y={yPos - 20} width="60" height="15" rx="3" fill="#090d16" stroke="#f59e0b" strokeWidth="0.8" />
-                        <text x={xPos} y={yPos - 10} fill="#fde047" fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+                        <rect x={xPos - 30} y={yPos - 20} width="60" height="15" rx="3" fill="var(--surface-inset)" stroke={engineeringColor("#f59e0b")} strokeWidth="0.8" />
+                        <text x={xPos} y={yPos - 10} fill={engineeringColor("#fde047", "text")} fontSize="8.5" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
                           {yVal.toFixed(3)}m
                         </text>
                       </g>
@@ -1466,44 +1468,44 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
             </svg>
           </div>
 
-          <div className="text-[11px] text-slate-300 font-mono flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+          <div className="text-xs text-text-primary font-mono flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border-default">
             <div className="flex items-center space-x-2">
-              <span className="text-slate-400">{activeWl.shortName} (Z={activeZ.toFixed(2)}m):</span>
-              <span className="text-emerald-400 font-bold">AWL = {awlSimpsonCalc.awlActual.toFixed(2)} m&sup2;</span>
-              <span className="text-slate-500 text-[10px]">LCF={awlSimpsonCalc.lcfFromMid.toFixed(2)}m</span>
+              <span className="text-text-secondary">{activeWl.shortName} (Z={activeZ.toFixed(2)}m):</span>
+              <span className="text-status-success font-semibold">AWL = {awlSimpsonCalc.awlActual.toFixed(2)} m&sup2;</span>
+              <span className="text-text-secondary text-xs">LCF={awlSimpsonCalc.lcfFromMid.toFixed(2)}m</span>
             </div>
 
             <div className="flex items-center space-x-1">
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY - 0.1, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Kurangi 0.10 m"
-              >
+               aria-label="Kurangi 0.10 m">
                 -0.10m
               </button>
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY - 0.01, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Kurangi 0.01 m"
-              >
+               aria-label="Kurangi 0.01 m">
                 -0.01m
               </button>
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY + 0.01, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Tambah 0.01 m"
-              >
+               aria-label="Tambah 0.01 m">
                 +0.01m
               </button>
               <button
                 type="button"
                 onClick={() => handleUpdateOffset(activeWl.id, selectedStation, activeInterceptY + 0.1, true)}
-                className="px-1.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-bold cursor-pointer transition-all active:scale-95"
+                className="px-1.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded text-sm font-semibold cursor-pointer transition-colors min-h-9"
                 title="Tambah 0.10 m"
-              >
+               aria-label="Tambah 0.10 m">
                 +0.10m
               </button>
             </div>
@@ -1512,72 +1514,73 @@ export const UnifiedWaterplaneBilgeHarmonizer: React.FC<UnifiedHarmonizerProps> 
       </div>
 
       {/* 4. HARMONIZED OFFSETS MATRIX TABLE */}
-      <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-xl shadow-xl space-y-3">
+      <div className="bg-surface-primary border border-border-default p-5 rounded-lg space-y-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center space-x-2">
-            <TableIcon size={16} className="text-cyan-400" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+            <TableIcon size={16} className="text-accent-primary" />
+            <h4 className="text-sm font-semibold text-text-primary tracking-normal font-mono">
               Matriks Ordinat Separuh Lebar Terpadu (0.5 B dalam meter)
             </h4>
           </div>
           <div className="flex items-center space-x-2">
             <button
               onClick={handleCopyMatrix}
-              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-mono flex items-center space-x-1 border border-slate-700 cursor-pointer transition-all"
+              className="px-2.5 py-1 bg-surface-secondary hover:bg-surface-secondary text-text-primary rounded-md text-sm font-sans flex items-center space-x-1 border border-border-default cursor-pointer transition-colors min-h-9"
             >
-              {copiedNotification ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+              {copiedNotification ? <Check size={12} className="text-status-success" /> : <Copy size={12} />}
               <span>{copiedNotification ? "Tersalin!" : "Salin Tabel"}</span>
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto no-scrollbar border border-slate-800 rounded-xl">
-          <table className="w-full text-xs font-mono text-center border-collapse">
-            <thead className="bg-slate-950 text-slate-300 text-[11px]">
+        <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="overflow-x-auto border border-border-default rounded-lg">
+          <table className="w-full text-sm font-mono text-center border-collapse">
+            <thead className="bg-surface-inset text-text-primary text-xs">
               <tr>
-                <th className="py-2.5 px-3 border-r border-slate-800 text-left">Level WL</th>
-                <th className="py-2.5 px-3 border-r border-slate-800">Sarat Z (m)</th>
+                <th className="py-2.5 px-3 border-r border-border-default text-left">Level WL</th>
+                <th className="py-2.5 px-3 border-r border-border-default">Sarat Z (m)</th>
                 {STATIONS.filter((s) => s.isMain).map((st) => (
                   <th
                     key={`th-st-${st.id}`}
-                    className={`py-2.5 px-2 border-r border-slate-800 ${st.id === selectedStation ? "bg-cyan-950/60 text-cyan-300 font-bold" : ""}`}
+                    className={`py-2.5 px-2 border-r border-border-default ${st.id === selectedStation ? "bg-surface-selected text-accent-primary font-semibold" : ""} `}
                   >
                     {st.name}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 bg-slate-900/40 text-slate-300 text-[11px]">
+            <tbody className="divide-y divide-border-default bg-surface-primary text-text-primary text-sm">
               {effectiveLevels.map((wl) => {
                 const zVal = wl.draftFraction * T;
                 const isSelectedWl = wl.id === selectedWlId;
                 return (
-                  <tr key={`matrix-row-${wl.id}`} className={isSelectedWl ? "bg-blue-950/30" : "hover:bg-slate-800/40"}>
-                    <td className="py-2 px-3 border-r border-slate-800 text-left font-bold text-white flex items-center space-x-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: wl.color }} />
+                  <tr key={`matrix-row-${wl.id}`} className={isSelectedWl ? "bg-surface-selected" : "hover:bg-surface-secondary"}>
+                    <td className="py-2 px-3 border-r border-border-default text-left font-semibold text-text-primary flex items-center space-x-1.5">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
                       <span>{wl.shortName}</span>
                     </td>
-                    <td className="py-2 px-3 border-r border-slate-800 text-slate-400 font-semibold">{zVal.toFixed(2)}</td>
+                    <td className="py-2 px-3 border-r border-border-default text-text-secondary font-semibold">{zVal.toFixed(2)}</td>
                     {STATIONS.filter((s) => s.isMain).map((st) => {
                       const val = localOffsets[wl.id]?.[st.id] ?? 0;
                       const isIntersect = isSelectedWl && st.id === selectedStation;
                       return (
                         <td
                           key={`matrix-cell-${wl.id}-${st.id}`}
-                          className={`py-2 px-2 border-r border-slate-800 ${
+                          className={`py-2 px-2 border-r border-border-default ${
                             isIntersect
-                              ? "bg-amber-500/20 text-amber-300 font-bold ring-1 ring-amber-500/50"
+                              ? "bg-status-warning-subtle text-status-warning font-semibold ring-1 ring-status-warning"
                               : st.id === selectedStation
-                              ? "bg-cyan-950/30 text-cyan-300"
+                              ? "bg-surface-selected text-accent-primary"
                               : ""
-                          }`}
+                          } `}
                         >
                           <input
                             type="number"
                             step="0.001"
+                            aria-label={`Waterline ${wl.id}, station ${st.id}: offset (m)`}
                             value={val}
                             onChange={(e) => handleUpdateOffset(wl.id, st.id, parseFloat(e.target.value) || 0, true)}
-                            className="w-14 bg-transparent text-center focus:bg-slate-950 focus:border focus:border-cyan-400 rounded outline-none"
+                            className="w-14 bg-transparent text-center focus:bg-surface-inset focus:border focus:border-border-default rounded outline-none min-h-10"
                           />
                         </td>
                       );
