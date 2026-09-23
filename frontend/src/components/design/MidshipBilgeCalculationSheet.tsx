@@ -1736,249 +1736,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   // Matching Standard Drawing Layout (Centerline, Sheer, Transom Knuckle, Buttocks, Waterlines)
   // =========================================================================
   const renderBodyPlanSvg = (ox = 100, oy = 130, scaleX = 86 / (halfB || 7.5), scaleZ = 96 / Math.max(H, 7.0)) => {
-    const deckY = oy - H * scaleZ;
-    const outerX = ox + halfB * scaleX;
-    const mirrorOuterX = ox - halfB * scaleX;
-
-    // Symmetrical Midship Section 10 paths
-    const st10AfterPts = getStationFramePoints(10.0, ox, oy, scaleX, scaleZ, true);
-    const st10ForePts = getStationFramePoints(10.0, ox, oy, scaleX, scaleZ, false);
-    const st10AfterPath = `${smoothPath(st10AfterPts, 0.25)} L ${mirrorOuterX},${deckY} L ${ox},${deckY} Z`;
-    const st10ForePath = `${smoothPath(st10ForePts, 0.25)} L ${outerX},${deckY} L ${ox},${deckY} Z`;
-
-    // 6 Buttock Lines (B1 to B6) spaced at 1/6 increments across half-breadth
-    const buttockFractions = [1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1.0];
-
-    // Compute Forebody Sheer line points (St 10 to 20/21)
-    const forebodyStations = FOREBODY_STATIONS.filter((st) => st >= 10.0);
-    const foreSheerPts = forebodyStations.map((st) => {
-      const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, false);
-      return pts[pts.length - 1];
-    });
-
-    // Compute Afterbody Sheer line points (St 10 down to -2)
-    const afterbodyStations = AFTERBODY_STATIONS.filter((st) => st <= 10.0);
-    const aftSheerPts = [...afterbodyStations].reverse().map((st) => {
-      const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, true);
-      return pts[pts.length - 1];
-    });
-
-    // Compute Transom Knuckle line points for aft stations (St <= 1.5)
-    const knucklePts: { x: number; y: number }[] = [];
-    afterbodyStations.filter((st) => st <= 1.5).forEach((st) => {
-      const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, true);
-      const kn = pts.find((p) => p.wlId === "KNUCKLE");
-      if (kn) knucklePts.push({ x: kn.x, y: kn.y });
-    });
-
     return (
       <g className="body-plan-group">
-        <rect x="2" y="2" width="196" height="139" fill="none" stroke={engineeringColor("#94a3b8")} strokeWidth="0.35" opacity="0.65" />
-
-        {/* Title Header Block - Clean Drawing Metadata */}
-        <g className="drawing-header">
-          <text x={ox} y="13" fill={engineeringColor("#94a3b8", "text")} fontSize="1.8" fontFamily="monospace" textAnchor="middle">
-            LBP = {LBP.toFixed(2)}m &bull; B = {B.toFixed(2)}m &bull; T = {T.toFixed(2)}m &bull; H = {H.toFixed(2)}m &bull; {activeStationsConfig.length} Frames &bull; {effectiveWaterlineLevels.length} Waterlines
-          </text>
-        </g>
-
-        {/* TOP CENTERLINE ARROW & BACKBOARD FACE (Authentic Gambar 1 Layout) */}
-        <g className="backboard-face-indicator">
-          <text x={ox} y="4.5" fill={engineeringColor("#f8fafc", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" letterSpacing="0.04em">
-            BACKBOARD
-          </text>
-          <text x={ox} y="7.2" fill={engineeringColor("#f8fafc", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle" letterSpacing="0.04em">
-            FACE
-          </text>
-          {/* Prominent Upward Arrow */}
-          <path
-            d={`M ${ox},8.2 L ${ox - 1.6},10.5 L ${ox - 0.5},10.5 L ${ox - 0.5},13.2 L ${ox + 0.5},13.2 L ${ox + 0.5},10.5 L ${ox + 1.6},10.5 Z`}
-            fill={engineeringColor("#f8fafc")}
-          />
-        </g>
-
-        {/* Centerline Red Axis & Red CL Label */}
-        <line x1={ox} y1={13.5} x2={ox} y2={oy + 6} stroke={engineeringColor("#ef4444")} strokeWidth="1.2" />
-        <text x={ox + 2.5} y="16.5" fill={engineeringColor("#ef4444", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
-          CL
-        </text>
-        <text x={ox} y={oy + 5.5} fill={engineeringColor("#ef4444", "text")} fontSize="1.8" fontFamily="monospace" fontWeight="bold" textAnchor="middle">
-          0
-        </text>
-
-        {/* Section Classification Badges (Port Afterbody vs Starboard Forebody) */}
-        <text x={ox - 45} y="22" fill={engineeringColor("#a78bfa", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
-          ◀ AFTERBODY (Port)
-        </text>
-        <text x={ox + 45} y="22" fill={engineeringColor("#2dd4bf", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
-          FOREBODY (Starboard) ▶
-        </text>
-
-        {/* Midship Section Underwater Shading */}
-        <path d={st10AfterPath} fill="url(#waterHatch)" opacity="0.30" />
-        <path d={st10ForePath} fill="url(#waterHatch)" opacity="0.30" />
-
-        {/* VERTICAL BUTTOCK LINES (B1 to B6 on both sides) */}
-        {showButtocks && (
-          <g className="buttock-lines-group" opacity="0.6">
-            {buttockFractions.map((factor, idx) => {
-              const bVal = halfB * factor;
-              const bxRight = ox + bVal * scaleX;
-              const bxLeft = ox - bVal * scaleX;
-              const bNum = idx + 1; // 1 to 6
-              const isOuter = idx === buttockFractions.length - 1;
-
-              return (
-                <g key={`buttock-col-${idx}`}>
-                  {/* Right Forebody Buttock Line */}
-                  <line
-                    x1={bxRight}
-                    y1="16"
-                    x2={bxRight}
-                    y2={oy + 2}
-                    stroke={engineeringColor("#475569")}
-                    strokeWidth={isOuter ? 0.6 : 0.28}
-                    strokeDasharray="none"
-                  />
-                  {/* Left Afterbody Buttock Line */}
-                  <line
-                    x1={bxLeft}
-                    y1="16"
-                    x2={bxLeft}
-                    y2={oy + 2}
-                    stroke={engineeringColor("#475569")}
-                    strokeWidth={isOuter ? 0.6 : 0.28}
-                    strokeDasharray="none"
-                  />
-
-                  {/* Bottom Buttock Labels (B1 to B6) */}
-                  <text
-                    x={bxLeft}
-                    y={oy + 4.5}
-                    fill={engineeringColor("#94a3b8", "text")}
-                    fontSize="1.9"
-                    fontFamily="sans-serif"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {`B${bNum}`}
-                  </text>
-                  <text
-                    x={bxRight}
-                    y={oy + 4.5}
-                    fill={engineeringColor("#94a3b8", "text")}
-                    fontSize="1.9"
-                    fontFamily="sans-serif"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {`B${bNum}`}
-                  </text>
-
-                  {/* Meter markers */}
-                  <text
-                    x={bxLeft}
-                    y={oy + 7.5}
-                    fill={engineeringColor("#64748b", "text")}
-                    fontSize="1.3"
-                    fontFamily="monospace"
-                    textAnchor="middle"
-                  >
-                    {`${bVal.toFixed(1)}m`}
-                  </text>
-                  <text
-                    x={bxRight}
-                    y={oy + 7.5}
-                    fill={engineeringColor("#64748b", "text")}
-                    fontSize="1.3"
-                    fontFamily="monospace"
-                    textAnchor="middle"
-                  >
-                    {`${bVal.toFixed(1)}m`}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        )}
-
-        {/* DIAGONAL BILGE RAY (Sent Lines) at 45 degrees */}
-        {showDiagonals && (
-          <g opacity="0.45">
-            <line x1={ox} y1={oy} x2={ox + halfB * scaleX + 6} y2={oy - halfB * scaleZ - 6} stroke={engineeringColor("#f59e0b")} strokeWidth="0.35" strokeDasharray="none" />
-            <line x1={ox} y1={oy} x2={ox - halfB * scaleX - 6} y2={oy - halfB * scaleZ - 6} stroke={engineeringColor("#f59e0b")} strokeWidth="0.35" strokeDasharray="none" />
-            <text x={ox + halfB * scaleX + 7} y={oy - halfB * scaleZ - 6} fill={engineeringColor("#f59e0b", "text")} fontSize="1.8" fontFamily="monospace">
-              Sent / Diag
-            </text>
-          </g>
-        )}
-
-        {/* HORIZONTAL WATERLINES EXTENDING ACROSS BOTH SIDES */}
-        {effectiveWaterlineLevels.map((wl) => {
-          const z = wl.draftFraction * T;
-          const yPos = oy - z * scaleZ;
-          const isActive = wl.id === activeWlId;
-          const isHovered = hoverWlId === wl.id;
-
-          return (
-            <g
-              key={`body-wl-${wl.id}`}
-              className="cursor-pointer transition-colors"
-              onClick={() => onSelectWlId?.(wl.id)}
-              onPointerEnter={() => setHoverWlId(wl.id)}
-              onPointerLeave={() => setHoverWlId(null)}
-            >
-              <line
-                x1={mirrorOuterX - 3}
-                y1={yPos}
-                x2={outerX + 3}
-                y2={yPos}
-                stroke={engineeringColor(isActive ? "#38bdf8" : wl.color)}
-                strokeWidth={isActive ? 0.75 : isHovered ? 0.55 : 0.22}
-                strokeDasharray="none"
-                opacity={isActive ? 0.9 : isHovered ? 0.7 : 0.16}
-              />
-
-              {/* Left Margin Waterline Label */}
-              <text
-                x={mirrorOuterX - 4.5}
-                y={yPos + 0.6}
-                fill={engineeringColor(isActive ? "#38bdf8" : "#cbd5e1", "text")}
-                fontSize="1.8"
-                fontFamily="sans-serif"
-                fontWeight={isActive ? "bold" : "600"}
-                textAnchor="end"
-              >
-                {wl.shortName}
-              </text>
-
-              {/* Right Margin Waterline Label */}
-              <text
-                x={outerX + 4.5}
-                y={yPos + 0.6}
-                fill={engineeringColor(isActive ? "#38bdf8" : "#cbd5e1", "text")}
-                fontSize="1.8"
-                fontFamily="sans-serif"
-                fontWeight={isActive ? "bold" : "600"}
-                textAnchor="start"
-              >
-                {wl.shortName}
-              </text>
-            </g>
-          );
-        })}
-
-        {/* AFTERBODY TRANSVERSE STATION CURVES (Left of CL - Port / Buritan) - St < 10 */}
-        {AFTERBODY_STATIONS.filter((st) => st < 10.0).map((st) => {
+        {/* AFTERBODY TRANSVERSE STATION CURVES (Port / Buritan - Left of CL) - St <= 10 */}
+        {AFTERBODY_STATIONS.filter((st) => st <= 10.0).map((st) => {
           const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, true);
           const isInteger = st % 1 === 0;
           const isHovered = hoveredStation === st || draggingStation === st;
-          // Lower tension keeps the fair curve close to the entered offsets and
-          // prevents spline overshoot near the bilge and sheer.
           const pathD = fairFramePath(pts);
-          const topPt = pts[pts.length - 1];
-          const showLabel = showStationLabels;
-          const labelText = getStationDisplayLabel(st);
 
           return (
             <g
@@ -1995,32 +1760,16 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 strokeDasharray="none"
                 opacity={isHovered ? 1.0 : isInteger ? 0.95 : 0.75}
               />
-              {showLabel && (
-                <text
-                  x={topPt.x}
-                  y={topPt.y - 1.6}
-                  fill={engineeringColor(isHovered ? "#f59e0b" : isInteger ? "#c4b5fd" : "#94a3b8", "text")}
-                  fontSize={isInteger ? "1.9" : "1.4"}
-                  fontFamily="sans-serif"
-                  fontWeight={isHovered ? "bold" : isInteger ? "600" : "normal"}
-                  textAnchor="middle"
-                >
-                  {labelText}
-                </text>
-              )}
             </g>
           );
         })}
 
-        {/* FOREBODY TRANSVERSE STATION CURVES (Right of CL - Starboard / Haluan) - St > 10 */}
-        {FOREBODY_STATIONS.filter((st) => st > 10.0).map((st) => {
+        {/* FOREBODY TRANSVERSE STATION CURVES (Starboard / Haluan - Right of CL) - St >= 10 */}
+        {FOREBODY_STATIONS.filter((st) => st >= 10.0).map((st) => {
           const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, false);
           const isInteger = st % 1 === 0;
           const isHovered = hoveredStation === st || draggingStation === st;
           const pathD = fairFramePath(pts);
-          const topPt = pts[pts.length - 1];
-          const showLabel = showStationLabels;
-          const labelText = getStationDisplayLabel(st);
 
           return (
             <g
@@ -2037,383 +1786,9 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 strokeDasharray="none"
                 opacity={isHovered ? 1.0 : isInteger ? 0.95 : 0.75}
               />
-              {showLabel && (
-                <text
-                  x={topPt.x}
-                  y={topPt.y - 1.6}
-                  fill={engineeringColor(isHovered ? "#f59e0b" : isInteger ? "#5eead4" : "#94a3b8", "text")}
-                  fontSize={isInteger ? "1.9" : "1.4"}
-                  fontFamily="sans-serif"
-                  fontWeight={isHovered ? "bold" : isInteger ? "600" : "normal"}
-                  textAnchor="middle"
-                >
-                  {labelText}
-                </text>
-              )}
             </g>
           );
         })}
-
-        {/* FOREBODY SHEER LINE & ANNOTATION (Exact Gambar 1) */}
-        {foreSheerPts.length >= 2 && (
-          <g className="forebody-sheer-annotation">
-            <path
-              d={smoothPath(foreSheerPts, 0.25)}
-              fill="none"
-              stroke={engineeringColor("#f59e0b")}
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-            {/* Labeled 'SHEER' with pointer arrow */}
-            <text x={ox + 20} y={deckY - 14} fill={engineeringColor("#f59e0b", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
-              SHEER
-            </text>
-            <line
-              x1={ox + 27}
-              y1={deckY - 12}
-              x2={foreSheerPts[Math.min(3, foreSheerPts.length - 1)].x}
-              y2={foreSheerPts[Math.min(3, foreSheerPts.length - 1)].y}
-              stroke={engineeringColor("#f59e0b")}
-              strokeWidth="0.6"
-              markerEnd="url(#arrowAmber)"
-            />
-            <text x={ox + 50} y={deckY - 18} fill={engineeringColor("#2dd4bf", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold">
-              STATIONS
-            </text>
-            <line
-              x1={ox + 62}
-              y1={deckY - 16}
-              x2={foreSheerPts[Math.min(6, foreSheerPts.length - 1)].x}
-              y2={foreSheerPts[Math.min(6, foreSheerPts.length - 1)].y - 3}
-              stroke={engineeringColor("#2dd4bf")}
-              strokeWidth="0.5"
-              markerEnd="url(#arrowCyan)"
-            />
-          </g>
-        )}
-
-        {/* AFTERBODY SHEER LINE & ANNOTATION (Exact Gambar 1) */}
-        {aftSheerPts.length >= 2 && (
-          <g className="afterbody-sheer-annotation">
-            <path
-              d={smoothPath(aftSheerPts, 0.25)}
-              fill="none"
-              stroke={engineeringColor("#f59e0b")}
-              strokeWidth="1.2"
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-            {/* Labeled 'SHEER' with pointer arrow */}
-            <text x={ox - 20} y={deckY - 14} fill={engineeringColor("#f59e0b", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold" textAnchor="end">
-              SHEER
-            </text>
-            <line
-              x1={ox - 27}
-              y1={deckY - 12}
-              x2={aftSheerPts[Math.min(3, aftSheerPts.length - 1)].x}
-              y2={aftSheerPts[Math.min(3, aftSheerPts.length - 1)].y}
-              stroke={engineeringColor("#f59e0b")}
-              strokeWidth="0.6"
-              markerEnd="url(#arrowAmber)"
-            />
-            <text x={ox - 50} y={deckY - 18} fill={engineeringColor("#a78bfa", "text")} fontSize="2.4" fontFamily="sans-serif" fontWeight="bold" textAnchor="end">
-              STATIONS
-            </text>
-            <line
-              x1={ox - 62}
-              y1={deckY - 16}
-              x2={aftSheerPts[Math.min(6, aftSheerPts.length - 1)].x}
-              y2={aftSheerPts[Math.min(6, aftSheerPts.length - 1)].y - 3}
-              stroke={engineeringColor("#a78bfa")}
-              strokeWidth="0.5"
-              markerEnd="url(#arrowIndigo)"
-            />
-          </g>
-        )}
-
-        {/* TRANSOM KNUCKLE LINE (Exact Gambar 1) */}
-        {knucklePts.length >= 2 && (
-          <g className="transom-knuckle-annotation">
-            <path
-              d={smoothPath(knucklePts, 0.25)}
-              fill="none"
-              stroke={engineeringColor("#c7d2fe")}
-              strokeWidth="1.0"
-              strokeDasharray="none"
-            />
-            <text x={ox - 45} y={deckY - 6} fill={engineeringColor("#c7d2fe", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
-              TRANSOM
-            </text>
-            <text x={ox - 45} y={deckY - 3.2} fill={engineeringColor("#c7d2fe", "text")} fontSize="2.2" fontFamily="sans-serif" fontWeight="bold" textAnchor="middle">
-              KNUCKLE
-            </text>
-            <line
-              x1={ox - 45}
-              y1={deckY - 2}
-              x2={knucklePts[0].x}
-              y2={knucklePts[0].y}
-              stroke={engineeringColor("#c7d2fe")}
-              strokeWidth="0.5"
-              markerEnd="url(#arrowIndigo)"
-            />
-          </g>
-        )}
-
-        {/* SYMMETRICAL MIDSHIP SECTION 10 (Both Port and Starboard in Bold Gold/Orange - Exact Gambar 1) */}
-        {(() => {
-          const ptsPort = getStationFramePoints(10.0, ox, oy, scaleX, scaleZ, true);
-          const ptsStbd = getStationFramePoints(10.0, ox, oy, scaleX, scaleZ, false);
-          const isHovered = hoveredStation === 10.0 || draggingStation === 10.0;
-          const topPort = ptsPort[ptsPort.length - 1];
-          const topStbd = ptsStbd[ptsStbd.length - 1];
-
-          return (
-            <g
-              key="body-st-10-symmetrical"
-              className="transition-colors cursor-pointer"
-              onPointerEnter={() => setHoveredStation(10.0)}
-              onPointerLeave={() => setHoveredStation(null)}
-            >
-              {/* Port Side Midship Frame */}
-              <path
-                d={fairFramePath(ptsPort)}
-                fill="none"
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth={isHovered ? 3.5 : 2.6}
-              />
-              {/* Starboard Side Midship Frame */}
-              <path
-                d={fairFramePath(ptsStbd)}
-                fill="none"
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth={isHovered ? 3.5 : 2.6}
-              />
-
-              {showStationLabels && (
-                <>
-                  <text
-                    x={topPort.x}
-                    y={topPort.y - 1.6}
-                    fill={engineeringColor("#fbbf24", "text")}
-                    fontSize="2.1"
-                    fontFamily="sans-serif"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    St. 10 (MID)
-                  </text>
-                  <text
-                    x={topStbd.x}
-                    y={topStbd.y - 1.6}
-                    fill={engineeringColor("#fbbf24", "text")}
-                    fontSize="2.1"
-                    fontFamily="sans-serif"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    St. 10 (MID)
-                  </text>
-                </>
-              )}
-            </g>
-          );
-        })()}
-
-        {/* BILGE RADIUS CIRCULAR ARC & TANGENT CALLOUT ON STATION 10 */}
-        {R > 0.1 && (
-          <g className="bilge-radius-indicator">
-            <g opacity="0.95">
-              {/* Starboard Bilge Center (+) */}
-              <line
-                x1={ox + flatOfBottom * scaleX - 1.5}
-                y1={oy - R * scaleZ}
-                x2={ox + flatOfBottom * scaleX + 1.5}
-                y2={oy - R * scaleZ}
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth="0.45"
-              />
-              <line
-                x1={ox + flatOfBottom * scaleX}
-                y1={oy - R * scaleZ - 1.5}
-                x2={ox + flatOfBottom * scaleX}
-                y2={oy - R * scaleZ + 1.5}
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth="0.45"
-              />
-              {/* Port Bilge Center (+) */}
-              <line
-                x1={ox - flatOfBottom * scaleX - 1.5}
-                y1={oy - R * scaleZ}
-                x2={ox - flatOfBottom * scaleX + 1.5}
-                y2={oy - R * scaleZ}
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth="0.45"
-              />
-              <line
-                x1={ox - flatOfBottom * scaleX}
-                y1={oy - R * scaleZ - 1.5}
-                x2={ox - flatOfBottom * scaleX}
-                y2={oy - R * scaleZ + 1.5}
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth="0.45"
-              />
-
-              {/* Radius Leader Line */}
-              <line
-                x1={ox + flatOfBottom * scaleX}
-                y1={oy - R * scaleZ}
-                x2={ox + flatOfBottom * scaleX + (R * scaleX) / Math.SQRT2}
-                y2={oy - R * scaleZ + (R * scaleZ) / Math.SQRT2}
-                stroke={engineeringColor("#f59e0b")}
-                strokeWidth="0.5"
-              />
-              <text
-                x={ox + flatOfBottom * scaleX + (R * scaleX) / Math.SQRT2 + 2}
-                y={oy - R * scaleZ + (R * scaleZ) / Math.SQRT2 + 1}
-                fill={engineeringColor("#f59e0b", "text")}
-                fontSize="2.2"
-                fontFamily="monospace"
-                fontWeight="bold"
-              >
-                R = {R.toFixed(3)} m (Radius Bilga)
-              </text>
-            </g>
-          </g>
-        )}
-
-        {/* BOTTOM CLASSIC TITLE: STATION VIEW (Exact Gambar 1) */}
-        <g className="drawing-footer">
-          <text
-            x={ox}
-            y="141"
-            fill={engineeringColor("#ffffff", "text")}
-            fontSize="4.0"
-            fontFamily="'Times New Roman', Georgia, serif"
-            fontWeight="800"
-            textAnchor="middle"
-            letterSpacing="0.12em"
-          >
-            STATION VIEW
-          </text>
-        </g>
-
-        {/* INTERACTIVE DRAGGABLE STATION CONTROL HANDLES ON WATERLINES (When toggled on) */}
-        {!isPreviewMode && handlesDisplayMode !== "none" && (
-          <g className="body-plan-station-handles">
-            {effectiveWaterlineLevels
-              .filter((wl) => handlesDisplayMode === "all" || wl.id === activeWlId)
-              .map((wl) => {
-                const isActiveWl = wl.id === activeWlId;
-                const z = wl.draftFraction * T;
-                const yPos = oy - z * scaleZ;
-
-                return (
-                  <g key={`body-wl-handles-${wl.id}`} className="waterline-handle-group">
-                    {activeStationsConfig.map((cfg) => {
-                      const st = cfg.station;
-                      const isAfter = st <= 10.0;
-                      const b = getStationHalfB(st, wl.id, z);
-                      const hx = isAfter ? ox - b * scaleX : ox + b * scaleX;
-                      const isHovered = (hoveredStation === st && hoverWlId === wl.id) || (hoveredStation === st && !hoverWlId);
-                      const isDragging = draggingStation === st && draggingWlId === wl.id;
-                      const isInteger = st % 1 === 0;
-
-                      // In active mode, only show nodes for the currently selected active waterline
-                      if (handlesDisplayMode === "active" && !isActiveWl && !isDragging) {
-                        return null;
-                      }
-
-                      return (
-                        <g key={`wl-handle-st-${st}-${wl.id}`} className="station-node-handle">
-                          {/* Pulsing ring indicator for active dragging node */}
-                          {isDragging && (
-                            <circle
-                              cx={hx}
-                              cy={yPos}
-                              r="3.0"
-                              fill="none"
-                              stroke={engineeringColor("#f59e0b")}
-                              strokeWidth="0.5"
-                              strokeDasharray="none"
-                            />
-                          )}
-
-                          {/* Halo highlight ring for active waterline nodes */}
-                          {isActiveWl && !isDragging && (
-                            <circle
-                              cx={hx}
-                              cy={yPos}
-                              r={isHovered ? 2.0 : isInteger ? 1.4 : 1.0}
-                              fill="none"
-                              stroke={engineeringColor(isAfter ? "#a78bfa" : "#2dd4bf")}
-                              strokeWidth="0.28"
-                              opacity={isHovered ? 0.9 : 0.4}
-                            />
-                          )}
-
-                          {/* Core Draggable Control Dot */}
-                          <circle
-                            cx={hx}
-                            cy={yPos}
-                            r={
-                              isDragging
-                                ? 1.75
-                                : isHovered
-                                ? 1.4
-                                : isActiveWl
-                                ? isInteger
-                                  ? 0.95
-                                  : 0.75
-                                : isInteger
-                                ? 0.7
-                                : 0.5
-                            }
-                            fill={
-                              engineeringColor(isDragging
-                                ? "#f59e0b"
-                                : isActiveWl
-                                ? isHovered
-                                  ? "#f59e0b"
-                                  : isAfter
-                                  ? "#7c3aed"
-                                  : "#0891b2"
-                                : isHovered
-                                ? "#f59e0b"
-                                : wl.color || (isAfter ? "#7c3aed" : "#0891b2"))
-                            }
-                            stroke={engineeringColor("#ffffff")}
-                            strokeWidth={isDragging ? 0.5 : isActiveWl ? 0.25 : 0.15}
-                            opacity={isActiveWl || isHovered || isDragging ? 1.0 : 0.7}
-                            className="cursor-ew-resize transition-transform"
-                            onPointerDown={(e) => handleStationPointerDown(e, st, wl.id, z)}
-                            onPointerEnter={() => {
-                              setHoveredStation(st);
-                              setHoverWlId(wl.id);
-                              setHoverDraft(z);
-                            }}
-                            onPointerLeave={() => {
-                              setHoveredStation(null);
-                              setHoverWlId(null);
-                              setHoverDraft(null);
-                            }}
-                          >
-                            <title>{`Gading ${getStationDisplayLabel(st)} @ ${wl.shortName} (${z.toFixed(2)}m): 0.5B = ${b.toFixed(3)}m`}</title>
-                          </circle>
-                        </g>
-                      );
-                    })}
-                  </g>
-                );
-              })}
-          </g>
-        )}
-
-        {/* BASELINE AXIS */}
-        <line x1={mirrorOuterX - 6} y1={oy} x2={outerX + 6} y2={oy} stroke={engineeringColor("#475569")} strokeWidth="0.8" />
-        <text x={mirrorOuterX - 7} y={oy + 0.6} fill={engineeringColor("#94a3b8", "text")} fontSize="1.6" fontFamily="monospace" fontWeight="bold" textAnchor="end">
-          BASE LINE
-        </text>
       </g>
     );
   };
@@ -2897,7 +2272,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                     </marker>
                   </defs>
 
-                  {!isPreviewMode && studioMode !== "midshipDetail" && <rect x="0" y="0" width="200" height="144" fill="url(#cadGridFs)" />}
+                  {/* Blank canvas background */}
                   {renderMidshipSvgContent()}
                 </svg>
               </>
@@ -3048,11 +2423,11 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           compact ? "p-0 space-y-2 flex-1 min-h-0 h-full border-0 bg-transparent" : "bg-surface-primary border border-border-default rounded-lg p-5 space-y-4"
         } `}>
           {/* Header Bar: Sleek Unified 2-Tier Studio Control */}
-          <div className="bg-surface-canvas border border-border-default rounded-lg p-2.5 select-none shrink-0 space-y-2.5">
+          <div className="bg-surface-canvas border border-border-default rounded-lg p-1.5 select-none shrink-0 space-y-1.5">
             {/* TIER 1: Primary Controls & Actions Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex flex-nowrap items-center justify-between gap-1.5 overflow-x-auto">
               {/* Left Group: View Mode Switcher + Waterline Presets */}
-              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2.5 overflow-x-auto">
+              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-1.5 overflow-x-auto shrink-0">
                 {/* Mode Segmented Control */}
                 <div className="flex items-center bg-surface-primary p-1 rounded-lg border border-border-default shrink-0">
                   <button
@@ -3158,7 +2533,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               </div>
 
               {/* Right Group: Accuracy Status + Auto-Fit + Reset + Controls */}
-              <div className="flex items-center space-x-2 shrink-0">
+              <div className="flex items-center space-x-1 shrink-0">
                 {/* Accuracy Status Badge */}
                 <div
                   className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-semibold transition-colors ${
@@ -3233,7 +2608,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             </div>
 
             {/* TIER 2: Waterline Navigation Ribbon */}
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-border-default">
+            <div className="flex items-center justify-between gap-1 pt-1 border-t border-border-default">
               <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800">
                 <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
                   <Compass size={12} className="text-accent-primary" />
@@ -3283,7 +2658,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           ) : showVisualPlot ? (
             <div className={`bg-surface-canvas rounded-lg relative overflow-hidden border border-border-default flex items-center justify-center group select-none ${
               compact
-                ? "w-full max-w-[1100px] aspect-[200/132] max-h-[560px] p-2 mx-auto"
+                ? "w-full flex-1 min-h-0 h-full max-w-none p-1 mx-auto"
                 : "w-full h-96 sm:h-[440px] md:h-[480px] p-3"
             } `}>
               {/* Floating Blueprint Controls Overlay */}
@@ -3421,7 +2796,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   </marker>
                 </defs>
 
-                {!isPreviewMode && studioMode !== "midshipDetail" && <rect x="0" y="0" width="200" height="144" fill="url(#cadGridEmbedded)" />}
+                {/* Blank canvas background */}
                 {renderMidshipSvgContent()}
               </svg>
             </div>
