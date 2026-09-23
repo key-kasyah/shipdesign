@@ -1505,111 +1505,211 @@ export default function Stage2PreliminaryDesign() {
                   )}
                 </div>
 
-                <div id="scaling-form-section" className="relative bg-surface-primary border border-border-default p-6 rounded-lg space-y-5 overflow-hidden">
-                  <div className="absolute -top-24 -left-24 w-72 h-72 bg-surface-selected rounded-full blur-3xl pointer-events-none" />
-                  
-                  <div className="flex items-center space-x-3 pb-3 border-b border-border-default">
-                    <div className="w-8 h-8 rounded-lg bg-surface-selected border border-border-default text-accent-primary flex items-center justify-center">
-                      <Scale size={16} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-text-primary">
-                        {language === "en" ? "Primary Reference Ship Specifications" : "Spesifikasi Kapal Pembanding Acuan"}
-                      </h3>
-                      <p className="text-xs text-text-secondary mt-0.5">
-                        {language === "en"
-                          ? "The system uses this primary reference ship to estimate main hull dimensions proportionally using DWT power 1/3 scaling formula."
-                          : "Sistem akan menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional menggunakan formula scaling rasio DWT pangkat 1/3."}
-                      </p>
-                    </div>
-                  </div>
+                {(() => {
+                  const liveScaleFactor = compForm.dwt_ton > 0 ? Math.cbrt(targetDwt / compForm.dwt_ton) : 1;
+                  const scaledLbp = (compForm.lbp_m * liveScaleFactor).toFixed(2);
+                  const scaledBreadth = (compForm.breadth_m * liveScaleFactor).toFixed(2);
+                  const scaledDraft = (compForm.draft_m * liveScaleFactor).toFixed(2);
+                  const scaledDepth = (compForm.depth_m * liveScaleFactor).toFixed(2);
+                  const scaledLoa = (compForm.loa_m * liveScaleFactor).toFixed(2);
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">{language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}</label>
-                      <input aria-label={language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}
-                        type="text"
-                        value={compForm.ship_name}
-                        onChange={(e) => setCompForm({ ...compForm, ship_name: e.target.value })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Target DWT (Ton) *</label>
-                      <input aria-label={["Target DWT (Ton) *"].join(" ")}
-                        type="number"
-                        value={compForm.dwt_ton}
-                        onChange={(e) => setCompForm({ ...compForm, dwt_ton: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">LBP (m) *</label>
-                      <input aria-label={["LBP (m) *"].join(" ")}
-                        type="number"
-                        value={compForm.lbp_m}
-                        onChange={(e) => setCompForm({ ...compForm, lbp_m: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Breadth (B) (m) *</label>
-                      <input aria-label={["Breadth (B) (m) *"].join(" ")}
-                        type="number"
-                        value={compForm.breadth_m}
-                        onChange={(e) => setCompForm({ ...compForm, breadth_m: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Draft (T) (m) *</label>
-                      <input aria-label={["Draft (T) (m) *"].join(" ")}
-                        type="number"
-                        value={compForm.draft_m}
-                        onChange={(e) => setCompForm({ ...compForm, draft_m: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Depth (H) (m) *</label>
-                      <input aria-label={["Depth (H) (m) *"].join(" ")}
-                        type="number"
-                        value={compForm.depth_m}
-                        onChange={(e) => setCompForm({ ...compForm, depth_m: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">Block Coeff (Cb) *</label>
-                      <input aria-label={["Block Coeff (Cb) *"].join(" ")}
-                        type="number"
-                        step="0.01"
-                        value={compForm.cb}
-                        onChange={(e) => setCompForm({ ...compForm, cb: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-text-primary mb-1.5">{language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}</label>
-                      <input aria-label={language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}
-                        type="number"
-                        value={compForm.service_speed_knots}
-                        onChange={(e) => setCompForm({ ...compForm, service_speed_knots: Number(e.target.value) })}
-                        className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
-                      />
-                    </div>
-                  </div>
+                  return (
+                    <div id="scaling-form-section" className="bg-surface-primary border border-border-default p-6 rounded-lg space-y-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border-default gap-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-lg bg-surface-secondary border border-border-default text-accent-primary flex items-center justify-center shrink-0">
+                            <Scale size={16} />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-text-primary">
+                              {language === "en" ? "Primary Reference Ship Specifications" : "Spesifikasi Kapal Pembanding Acuan"}
+                            </h3>
+                            <p className="text-xs text-text-secondary mt-0.5">
+                              {language === "en"
+                                ? "The system uses this primary reference ship to estimate main hull dimensions proportionally using DWT power 1/3 scaling formula."
+                                : "Sistem menggunakan data kapal pembanding utama ini untuk memperkirakan ukuran utama lambung secara proporsional dengan formula scaling rasio DWT pangkat 1/3."}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-2 bg-surface-canvas px-3 py-1.5 rounded-lg border border-border-default text-xs font-mono">
+                          <span className="text-text-secondary">{language === "en" ? "Project Target DWT:" : "Target DWT Proyek:"}</span>
+                          <span className="font-semibold text-accent-primary">{targetDwt.toLocaleString()} Ton</span>
+                        </div>
+                      </div>
 
-                  <div className="pt-3 flex justify-end">
-                    <button
-                      onClick={handleApplyScaling}
-                      className="py-2.5 px-6 text-on-accent rounded-lg transition-colors font-semibold flex items-center space-x-2 text-sm  cursor-pointer bg-accent-primary"
-                    >
-                      <Scale size={16} />
-                      <span>{language === "en" ? "Calculate & Apply DWT Scaling" : "Hitung & Terapkan Skala DWT"}</span>
-                    </button>
-                  </div>
-                </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-1">
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                            {language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}
+                          </label>
+                          <input
+                            aria-label={language === "en" ? "Comparable Ship Name *" : "Nama Kapal Pembanding *"}
+                            type="text"
+                            value={compForm.ship_name}
+                            onChange={(e) => setCompForm({ ...compForm, ship_name: e.target.value })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                            {language === "en" ? "Reference Ship DWT (Ton) *" : "DWT Kapal Pembanding (Ton) *"}
+                          </label>
+                          <input
+                            aria-label={language === "en" ? "Reference Ship DWT (Ton) *" : "DWT Kapal Pembanding (Ton) *"}
+                            type="number"
+                            step="any"
+                            value={compForm.dwt_ton}
+                            onChange={(e) => setCompForm({ ...compForm, dwt_ton: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">LOA (m) *</label>
+                          <input
+                            aria-label="LOA (m) *"
+                            type="number"
+                            step="any"
+                            value={compForm.loa_m}
+                            onChange={(e) => setCompForm({ ...compForm, loa_m: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">LBP (m) *</label>
+                          <input
+                            aria-label="LBP (m) *"
+                            type="number"
+                            step="any"
+                            value={compForm.lbp_m}
+                            onChange={(e) => setCompForm({ ...compForm, lbp_m: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">Breadth (B) (m) *</label>
+                          <input
+                            aria-label="Breadth (B) (m) *"
+                            type="number"
+                            step="any"
+                            value={compForm.breadth_m}
+                            onChange={(e) => setCompForm({ ...compForm, breadth_m: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">Draft (T) (m) *</label>
+                          <input
+                            aria-label="Draft (T) (m) *"
+                            type="number"
+                            step="any"
+                            value={compForm.draft_m}
+                            onChange={(e) => setCompForm({ ...compForm, draft_m: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">Depth (H) (m) *</label>
+                          <input
+                            aria-label="Depth (H) (m) *"
+                            type="number"
+                            step="any"
+                            value={compForm.depth_m}
+                            onChange={(e) => setCompForm({ ...compForm, depth_m: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">Block Coeff (Cb) *</label>
+                          <input
+                            aria-label="Block Coeff (Cb) *"
+                            type="number"
+                            step="any"
+                            value={compForm.cb}
+                            onChange={(e) => setCompForm({ ...compForm, cb: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                            {language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}
+                          </label>
+                          <input
+                            aria-label={language === "en" ? "Service Speed (Knots) *" : "Kecepatan Dinas (Knots) *"}
+                            type="number"
+                            step="any"
+                            value={compForm.service_speed_knots}
+                            onChange={(e) => setCompForm({ ...compForm, service_speed_knots: Number(e.target.value) })}
+                            className="w-full bg-surface-canvas hover:bg-surface-primary border border-border-default hover:border-border-default rounded-lg py-2.5 px-3.5 text-sm font-mono focus:bg-surface-primary focus:border-border-default focus:ring-2 focus:ring-focus-ring text-text-primary font-medium outline-none transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Live DWT Scaling Projection Preview */}
+                      <div className="bg-surface-canvas border border-border-default rounded-lg p-4 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-default pb-2.5">
+                          <div className="flex items-center space-x-2">
+                            <Sparkles size={14} className="text-accent-primary" />
+                            <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">
+                              {language === "en" ? "Live DWT Scaling Projection Preview" : "Pratinjau Proyeksi Skala DWT"}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-xs font-mono">
+                            <span className="text-text-secondary">
+                              {language === "en" ? "Scale Factor (λ):" : "Faktor Skala (λ):"}
+                            </span>
+                            <span className="font-semibold text-accent-primary bg-surface-primary px-2 py-0.5 rounded border border-border-default">
+                              λ = {liveScaleFactor.toFixed(4)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+                          <div className="bg-surface-primary p-2.5 rounded border border-border-default">
+                            <div className="text-[11px] text-text-secondary uppercase">{language === "en" ? "Target LBP" : "Hasil LBP"}</div>
+                            <div className="text-sm font-bold font-mono text-text-primary mt-0.5">{scaledLbp} m</div>
+                            <div className="text-[10px] text-text-secondary font-mono mt-0.5">ref: {compForm.lbp_m}m</div>
+                          </div>
+                          <div className="bg-surface-primary p-2.5 rounded border border-border-default">
+                            <div className="text-[11px] text-text-secondary uppercase">{language === "en" ? "Target Breadth" : "Hasil Breadth"}</div>
+                            <div className="text-sm font-bold font-mono text-text-primary mt-0.5">{scaledBreadth} m</div>
+                            <div className="text-[10px] text-text-secondary font-mono mt-0.5">ref: {compForm.breadth_m}m</div>
+                          </div>
+                          <div className="bg-surface-primary p-2.5 rounded border border-border-default">
+                            <div className="text-[11px] text-text-secondary uppercase">{language === "en" ? "Target Draft" : "Hasil Draft"}</div>
+                            <div className="text-sm font-bold font-mono text-text-primary mt-0.5">{scaledDraft} m</div>
+                            <div className="text-[10px] text-text-secondary font-mono mt-0.5">ref: {compForm.draft_m}m</div>
+                          </div>
+                          <div className="bg-surface-primary p-2.5 rounded border border-border-default">
+                            <div className="text-[11px] text-text-secondary uppercase">{language === "en" ? "Target Depth" : "Hasil Depth"}</div>
+                            <div className="text-sm font-bold font-mono text-text-primary mt-0.5">{scaledDepth} m</div>
+                            <div className="text-[10px] text-text-secondary font-mono mt-0.5">ref: {compForm.depth_m}m</div>
+                          </div>
+                          <div className="bg-surface-primary p-2.5 rounded border border-border-default col-span-2 sm:col-span-1">
+                            <div className="text-[11px] text-text-secondary uppercase">{language === "en" ? "Target LOA" : "Hasil LOA"}</div>
+                            <div className="text-sm font-bold font-mono text-text-primary mt-0.5">{scaledLoa} m</div>
+                            <div className="text-[10px] text-text-secondary font-mono mt-0.5">ref: {compForm.loa_m}m</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="text-xs text-text-secondary">
+                          {language === "en"
+                            ? "Applying scaling will update preliminary hull dimensions and unlock the Dimensions & Hydrostatics module."
+                            : "Menerapkan scaling akan memperbarui ukuran utama lambung dan membuka modul Ukuran & Hidrostatis."}
+                        </div>
+                        <button
+                          id="apply-dwt-scaling-btn"
+                          onClick={handleApplyScaling}
+                          className="py-2.5 px-6 bg-accent-primary hover:bg-accent-primary/90 text-on-accent rounded-lg transition-colors font-semibold flex items-center justify-center space-x-2 text-sm shadow-sm cursor-pointer shrink-0"
+                        >
+                          <Scale size={16} />
+                          <span>{language === "en" ? "Calculate & Apply DWT Scaling" : "Hitung & Terapkan Skala DWT"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
