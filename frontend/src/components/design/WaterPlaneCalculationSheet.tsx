@@ -850,11 +850,25 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     return initialActiveWlId || waterlineLevels[0]?.id || "WL6";
   });
 
+  const handleSelectWlId = (id: string) => {
+    setActiveWlId(id);
+    if (onSelectWlId) {
+      onSelectWlId(id);
+    }
+  };
+
   useEffect(() => {
-    if (initialActiveWlId && initialActiveWlId !== activeWlId) {
+    if (initialActiveWlId && waterlineLevels.some((w) => w.id === initialActiveWlId)) {
       setActiveWlId(initialActiveWlId);
     }
-  }, [initialActiveWlId]);
+  }, [initialActiveWlId, waterlineLevels]);
+
+  useEffect(() => {
+    if (waterlineLevels.length > 0 && !waterlineLevels.some((w) => w.id === activeWlId)) {
+      const fallbackId = waterlineLevels[0].id;
+      handleSelectWlId(fallbackId);
+    }
+  }, [waterlineLevels]);
   const [showAllWlOverlay, setShowAllWlOverlay] = useState<boolean>(true);
   const waterlineFocusMode = false;
 
@@ -976,23 +990,35 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
   const waterlineRibbonDragRef = useRef<{ startX: number; startScrollLeft: number } | null>(null);
 
   const handleWaterlineRibbonPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest("button")) {
+      return;
+    }
     const ribbon = waterlineRibbonRef.current;
     if (!ribbon || ribbon.scrollWidth <= ribbon.clientWidth) return;
     waterlineRibbonDragRef.current = { startX: e.clientX, startScrollLeft: ribbon.scrollLeft };
-    ribbon.setPointerCapture(e.pointerId);
   };
 
   const handleWaterlineRibbonPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const ribbon = waterlineRibbonRef.current;
     const drag = waterlineRibbonDragRef.current;
     if (!ribbon || !drag) return;
-    ribbon.scrollLeft = drag.startScrollLeft - (e.clientX - drag.startX);
+    const dx = e.clientX - drag.startX;
+    if (Math.abs(dx) > 5) {
+      if (!ribbon.hasPointerCapture(e.pointerId)) {
+        try {
+          ribbon.setPointerCapture(e.pointerId);
+        } catch {}
+      }
+      ribbon.scrollLeft = drag.startScrollLeft - dx;
+    }
   };
 
   const handleWaterlineRibbonPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     waterlineRibbonDragRef.current = null;
     try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
     } catch {}
   };
 
@@ -1209,7 +1235,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     const validCount = Math.max(3, Math.min(25, Math.round(count)));
     const newLevels = generateWaterlinePresets(validCount, T, BWL, Cm);
     setWaterlineLevels(newLevels);
-    setActiveWlId(newLevels[0].id);
+    handleSelectWlId(newLevels[0].id);
     setDesiredWlCount(validCount);
 
     const newZoneSettings: Record<string, WaterlineZoneSetting> = {};
@@ -1288,7 +1314,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
 
     const nextLevels = [...waterlineLevels, newWl].sort((a, b) => b.draftFraction - a.draftFraction);
     setWaterlineLevels(nextLevels);
-    setActiveWlId(id);
+    handleSelectWlId(id);
 
     const targetArea = AWL_rancangan * newWl.awlFactor;
     const maxBreadth = (BWL / 2) * newWl.maxBreadthFactor;
@@ -1315,7 +1341,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
     const nextLevels = waterlineLevels.filter((w) => w.id !== idToDelete);
     setWaterlineLevels(nextLevels);
     if (activeWlId === idToDelete) {
-      setActiveWlId(nextLevels[0].id);
+      handleSelectWlId(nextLevels[0].id);
     }
     if (onUpdateWaterlineLevels) onUpdateWaterlineLevels(nextLevels);
   };
@@ -2390,7 +2416,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 return (
                   <button
                     key={`fs-wl-${wl.id}`}
-                    onClick={() => setActiveWlId(wl.id)}
+                    onClick={() => handleSelectWlId(wl.id)}
                     className={`flex items-center justify-center space-x-1.5 py-1 px-1.5 rounded-md text-sm font-sans font-semibold transition-colors cursor-pointer whitespace-nowrap border ${
                       isActive
                         ? "text-on-accent border-border-default ring-1 ring-focus-ring bg-accent-primary min-h-9"
@@ -2721,7 +2747,15 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         return (
                           <button
                             key={`compact-${wl.id}`}
-                            onClick={() => setActiveWlId(wl.id)}
+                            type="button"
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSelectWlId(wl.id);
+                            }}
                             className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
                               isActive
                                 ? "bg-accent-primary text-on-accent border-border-default ring-2 ring-focus-ring min-h-9"
@@ -2860,7 +2894,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         return (
                           <button
                             key={wl.id}
-                            onClick={() => setActiveWlId(wl.id)}
+                            onClick={() => handleSelectWlId(wl.id)}
                             className={`flex items-center space-x-2 py-1.5 px-2.5 rounded-md font-sans transition-colors cursor-pointer border relative group shrink-0 ${
                               isActive
                                 ? "text-on-accent border-border-default ring-2 ring-focus-ring bg-accent-primary min-h-9"
@@ -3745,7 +3779,7 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                         ) : (
                           <button
                             onClick={() => {
-                              setActiveWlId(s.id);
+                              handleSelectWlId(s.id);
                               window.scrollTo({ top: 350, behavior: "smooth" });
                             }}
                             className="px-2.5 py-1 bg-surface-secondary hover:bg-accent-hover hover:text-text-primary text-text-primary rounded-md text-sm font-semibold transition-colors cursor-pointer border border-border-default min-h-9"
@@ -3845,9 +3879,9 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
               </div>
             </div>
 
-            {/* 7 Waterlines Grid / Segmented Control Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-              {WATERLINE_LEVELS.map((wl) => {
+            {/* Dynamic Waterlines Grid / Segmented Control Bar */}
+            <div className="flex flex-wrap items-center gap-2">
+              {waterlineLevels.map((wl) => {
                 const isActive = wl.id === activeWlId;
                 const wlSummary = masterSummary.find((s) => s.id === wl.id);
                 const isWlValid = wlSummary?.isValid ?? false;
@@ -3856,8 +3890,8 @@ export const WaterPlaneCalculationSheet: React.FC<WaterPlaneCalculationProps> = 
                 return (
                   <button
                     key={`page2-wl-${wl.id}`}
-                    onClick={() => setActiveWlId(wl.id)}
-                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-md font-sans transition-colors cursor-pointer border relative group ${
+                    onClick={() => handleSelectWlId(wl.id)}
+                    className={`flex flex-col items-center justify-center py-2.5 px-2 rounded-md font-sans transition-colors cursor-pointer border relative group flex-1 min-w-[110px] ${
                       isActive
                         ? "text-on-accent border-border-default ring-2 ring-focus-ring bg-accent-primary min-h-9"
                         : "bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary border-border-default min-h-9"

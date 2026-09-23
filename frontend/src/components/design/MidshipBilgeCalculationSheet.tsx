@@ -2430,6 +2430,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       const deckY = oy - H * scaleZ;
       const dwlY = oy - T * scaleZ;
       const outerX = ox + halfB * scaleX;
+      const station10DisplaySteps = Array.from(
+        new Set([
+          0,
+          T,
+          ...effectiveWaterlineLevels.map((wl) => Number((wl.draftFraction * T).toFixed(3)))
+        ])
+      ).sort((a, b) => a - b);
 
       // Keep the projected waterline endpoints on the same editable curve
       // as the hull path. Mixing persisted waterline values with local draft
@@ -2452,7 +2459,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           : getTheoreticalOrdinateAtZ(curveZ, calculatedRadius);
       };
 
-      const curvePts = station10CurveSteps.map((z) => {
+      const curvePts = station10DisplaySteps.map((z) => {
         const val = getStation10CurveOrdinate(z);
 
         return {
@@ -2463,7 +2470,10 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
         };
       });
 
-      const smoothCurve = getSmoothPathD(curvePts);
+      // Station 10 is ordered by draft (vertical axis), so use the
+      // transverse interpolator. The horizontal interpolator can reverse
+      // its control handles when a bilge ordinate moves inward.
+      const smoothCurve = getSmoothTransversePathD(curvePts);
       const lastPt = curvePts[curvePts.length - 1];
 
       const hullPath = `

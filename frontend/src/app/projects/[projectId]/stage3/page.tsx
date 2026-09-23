@@ -95,6 +95,12 @@ export default function Stage3BasicDesignPage() {
   const [activeWlId, setActiveWlId] = useState<string>("WL6");
   const [waterplaneViewMode, setWaterplaneViewMode] = useState<WaterPlaneViewMode>("fullSheet");
 
+  useEffect(() => {
+    if (waterlineLevels && waterlineLevels.length > 0 && !waterlineLevels.some((w) => w.id === activeWlId)) {
+      setActiveWlId(waterlineLevels[0].id);
+    }
+  }, [waterlineLevels, activeWlId]);
+
   // Save State Management
   const [saving, setSaving] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");

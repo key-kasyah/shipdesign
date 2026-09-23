@@ -30,5 +30,6 @@ ship-design-platform/
 
 ## Dokumentasi Utama
 
-- **PRD Master & Modul**: Seluruh Product Requirements Document (PRD) berada pada folder [`docs/`](file:///d:/SHIP%20V1/ship-design-platform/docs).
+- **Panduan Cepat Arsitektur & AI Reference**: Dokumen ringkas arsitektur dan seluruh flow sistem tersedia pada [`SYSTEM_OVERVIEW.md`](file:///c:/Users/btrfa/.gemini/antigravity-ide/scratch/shipdesign/SYSTEM_OVERVIEW.md).
+- **PRD Master & Modul**: Seluruh Product Requirements Document (PRD) berada pada folder [`docs/`](file:///c:/Users/btrfa/.gemini/antigravity-ide/scratch/shipdesign/docs).
 - **Tata Kelola AI (Governance Pack)**: Aturan kerja AI, status tahapan pengembangan, dependen sistem, serta definisi penyelesaian tugas tersedia pada file governance di folder `docs/`.
