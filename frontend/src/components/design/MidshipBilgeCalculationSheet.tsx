@@ -2,7 +2,7 @@
 
 import { engineeringColor } from "./EngineeringPalette";
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   Activity,
@@ -31,9 +31,15 @@ import {
   FileText,
   Search,
   Filter,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Settings2,
+  CheckSquare,
+  Square,
+  Check,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
-import { WaterlineConfig, DEFAULT_WATERLINE_LEVELS, DEFAULT_STATIONS_CONFIG, DEFAULT_HULL_PROFILE, generateWaterlinePresets } from "./WaterPlaneCalculationSheet";
+import { WaterlineConfig, DEFAULT_WATERLINE_LEVELS, DEFAULT_STATIONS_CONFIG, DEFAULT_HULL_PROFILE, generateWaterlinePresets, StationVisibility, DEFAULT_ACTIVE_STATION, isStationVisible } from "./WaterPlaneCalculationSheet";
 import { FairingEngine, smoothPath } from "@/utils/fairingEngine";
 
 /**
@@ -171,6 +177,50 @@ export const getStationDisplayLabel = (st: number): string => {
   return `${st}`;
 };
 
+/**
+ * Standard Presets for Number of Stations / Frames (Gading) in Body Plan (Tanpa selisih 0.5)
+ */
+export const STATION_PRESETS: Record<"11" | "21", number[]> = {
+  // 11 Main Frames (Interval 2: 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20)
+  "11": [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+  // 21 Standard Frames (Standard 20 sections from AP to FP, Step seragam 1.0)
+  "21": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+};
+
+/**
+ * Generates custom station distribution of specified target count (Hanya gading bulat, tanpa selisih 0.5)
+ */
+export const generateCustomStationDistribution = (targetCount: number): number[] => {
+  const allSts = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+  const count = Math.max(3, Math.min(allSts.length, Math.round(targetCount)));
+  if (count >= allSts.length) return allSts;
+  if (count === 11) return STATION_PRESETS["11"];
+  if (count === 21) return STATION_PRESETS["21"];
+
+  // Priority anchors: AP (0.0), Midship (10.0), FP (20.0)
+  const chosen = new Set<number>([0.0, 10.0, 20.0]);
+  if (count <= 3) {
+    return allSts.filter((s) => chosen.has(s)).slice(0, count);
+  }
+
+  const candidates = allSts.filter((s) => !chosen.has(s));
+  const needed = count - chosen.size;
+  const step = candidates.length / needed;
+  for (let i = 0; i < needed; i++) {
+    const idx = Math.min(candidates.length - 1, Math.floor(i * step));
+    chosen.add(candidates[idx]);
+  }
+
+  if (chosen.size < count) {
+    for (const s of candidates) {
+      if (chosen.size >= count) break;
+      chosen.add(s);
+    }
+  }
+
+  return allSts.filter((s) => chosen.has(s));
+};
+
 interface MidshipBilgeCalculationProps {
   lbp_m: number;
   breadth_m: number;
@@ -192,6 +242,12 @@ interface MidshipBilgeCalculationProps {
   tablesOnly?: boolean;
   compact?: boolean;
   onOpenDualFullscreen?: () => void;
+  /** Shared active station (gading) synchronized with the Waterline editor. */
+  activeStation?: number;
+  onSelectStation?: (station: number) => void;
+  /** Shared station visibility filter synchronized with the Waterline editor. */
+  visibleStations?: StationVisibility;
+  onUpdateVisibleStations?: (visibility: StationVisibility) => void;
 }
 
 export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps> = ({
@@ -214,9 +270,30 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   visualOnly = false,
   tablesOnly = false,
   compact = false,
-  onOpenDualFullscreen
+  onOpenDualFullscreen,
+  activeStation: propActiveStation,
+  onSelectStation,
+  visibleStations: propVisibleStations,
+  onUpdateVisibleStations
 }) => {
   const { language } = useLanguage();
+
+  // Shared station selection & visibility (controlled by Stage 3 page, with local fallback).
+  // Phase 1: state wiring only — the Select Station UI & per-station editing come in later phases.
+  const [localActiveStation, setLocalActiveStation] = useState<number>(DEFAULT_ACTIVE_STATION);
+  const [localVisibleStations, setLocalVisibleStations] = useState<StationVisibility>("all");
+  const activeStation = propActiveStation ?? localActiveStation;
+  const visibleStations = propVisibleStations ?? localVisibleStations;
+  const handleSelectStation = useCallback((station: number) => {
+    setLocalActiveStation(station);
+    if (onSelectStation) onSelectStation(station);
+  }, [onSelectStation]);
+  const handleUpdateVisibleStations = useCallback((visibility: StationVisibility) => {
+    setLocalVisibleStations(visibility);
+    if (onUpdateVisibleStations) onUpdateVisibleStations(visibility);
+  }, [onUpdateVisibleStations]);
+  
+
   const LBP = Math.max(10, lbp_m);
   const B = Math.max(2, breadth_m);
   const T = Math.max(0.5, draft_m);
@@ -292,12 +369,78 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   // Handle / Node Display Mode: 'active' (Only active waterline), 'all' (Show draggable nodes on all waterlines), or 'none' (Clean curves only)
   const [handlesDisplayMode, setHandlesDisplayMode] = useState<"all" | "active" | "none">("none");
 
-  // Station Density Filter Mode: 'all' (36 Stations from Waterline Plan) or 'standard' (23 Main Stations)
-  const [localStationDensity, setLocalStationDensity] = useState<"all" | "standard">("all");
-  const stationDensity = propStationDensity || localStationDensity;
-  const handleDensityChange = (d: "all" | "standard") => {
-    setLocalStationDensity(d);
-    if (onUpdateStationDensity) onUpdateStationDensity(d);
+  // PMB Lock Toggle: when true, modifying Station 10 also propagates to Stations 6-15 (PMB)
+  const [lockPmb, setLockPmb] = useState<boolean>(true);
+
+  // Station Configuration & Presets: '11' | '21' | 'custom' (Tanpa gading selisih 0.5)
+  const [stationPreset, setStationPreset] = useState<"11" | "21" | "custom">("21");
+
+  const [selectedStationList, setSelectedStationList] = useState<number[]>(() => STATION_PRESETS["21"]);
+
+  // Modal state for Custom Station Count / Selection
+  const [isStationCustomModalOpen, setIsStationCustomModalOpen] = useState<boolean>(false);
+  const [customStationCountInput, setCustomStationCountInput] = useState<number>(21);
+  const [tempModalSelectedStations, setTempModalSelectedStations] = useState<number[]>(() => STATION_PRESETS["21"]);
+
+  const handleSelectStationPreset = useCallback((presetId: "11" | "21") => {
+    setStationPreset(presetId);
+    const list = STATION_PRESETS[presetId];
+    setSelectedStationList(list);
+    if (onUpdateStationDensity) {
+      onUpdateStationDensity("standard");
+    }
+    // If active station is not in the new list, switch to Midship (10) or first available
+    if (!list.some((s) => Math.abs(s - activeStation) < 1e-4)) {
+      handleSelectStation(list.includes(10) ? 10 : list[0]);
+    }
+  }, [activeStation, handleSelectStation, onUpdateStationDensity]);
+
+  const openCustomStationModal = () => {
+    setTempModalSelectedStations([...selectedStationList]);
+    setCustomStationCountInput(selectedStationList.length);
+    setIsStationCustomModalOpen(true);
+  };
+
+  const handleApplyCustomStationCount = (count: number) => {
+    const distributed = generateCustomStationDistribution(count);
+    setTempModalSelectedStations(distributed);
+    setCustomStationCountInput(distributed.length);
+  };
+
+  const handleToggleModalStation = (st: number) => {
+    setTempModalSelectedStations((prev) => {
+      const exists = prev.some((s) => Math.abs(s - st) < 1e-4);
+      if (exists) {
+        if (prev.length <= 1) return prev; // keep at least 1
+        return prev.filter((s) => Math.abs(s - st) >= 1e-4);
+      } else {
+        return [...prev, st].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const handleSaveCustomStationsModal = () => {
+    if (tempModalSelectedStations.length === 0) return;
+    const sorted = [...tempModalSelectedStations].filter((s) => Number.isInteger(s)).sort((a, b) => a - b);
+    setSelectedStationList(sorted);
+
+    // Identify if matches any preset exactly
+    const match11 = sorted.length === 11 && sorted.every((s, i) => Math.abs(s - STATION_PRESETS["11"][i]) < 1e-4);
+    const match21 = sorted.length === 21 && sorted.every((s, i) => Math.abs(s - STATION_PRESETS["21"][i]) < 1e-4);
+
+    if (match21) setStationPreset("21");
+    else if (match11) setStationPreset("11");
+    else setStationPreset("custom");
+
+    if (onUpdateStationDensity) {
+      onUpdateStationDensity("standard");
+    }
+
+    if (!sorted.some((s) => Math.abs(s - activeStation) < 1e-4)) {
+      handleSelectStation(sorted.includes(10) ? 10 : sorted[0]);
+    }
+
+    setIsStationCustomModalOpen(false);
   };
 
   // Custom Waterline Count state
@@ -405,6 +548,15 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const [showAreaResults, setShowAreaResults] = useState<boolean>(true);
   const [showWlAlignmentTable, setShowWlAlignmentTable] = useState<boolean>(true);
   const [showFormulasBox, setShowFormulasBox] = useState<boolean>(true);
+
+  const bodyPlanViewBox = useMemo(() => {
+    const width = 200 / zoomLevel;
+    const baseHeight = 158;
+    const height = baseHeight / zoomLevel;
+    const x = (200 - width) / 2;
+    const y = 6 + (baseHeight - height) / 2;
+    return `${x} ${y} ${width} ${height}`;
+  }, [zoomLevel]);
 
   // Ensure draftSteps is always sorted
   const sortedDraftSteps = useMemo(() => [...draftSteps].sort((a, b) => a - b), [draftSteps]);
@@ -739,21 +891,11 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const fullStationsConfig = DEFAULT_STATIONS_CONFIG;
   const stationSpacing_l = Number((LBP / 20).toFixed(4));
   
-  // Standard integer/main stations filter
-  const standardStationsConfig = useMemo(() => {
-    return fullStationsConfig.filter((cfg) => {
-      const s = cfg.station;
-      return (
-        s === -2 || s === -1 || s === 0 || s === 0.5 || s === 1 || s === 2 ||
-        s === 3 || s === 4 || s === 5 || s === 6 || s === 7 || s === 8 ||
-        s === 9 || s === 10 || s === 11 || s === 12 || s === 13 || s === 14 ||
-        s === 15 || s === 16 || s === 17 || s === 18 || s === 19 || s === 19.5 ||
-        s === 20 || s === 20.5 || s === 21
-      );
-    });
-  }, [fullStationsConfig]);
-
-  const activeStationsConfig = stationDensity === "all" ? fullStationsConfig : standardStationsConfig;
+  // Dynamic synchronized active stations configuration filtered by active presets or custom list (Tanpa selisih 0.5)
+  const activeStationsConfig = useMemo(() => {
+    const allowed = new Set(selectedStationList);
+    return DEFAULT_STATIONS_CONFIG.filter((cfg) => allowed.has(cfg.station) && Number.isInteger(cfg.station));
+  }, [selectedStationList]);
 
   // Sorted Waterline levels from baseline to DWL
   const sortedWaterlines = useMemo(() => {
@@ -1035,6 +1177,86 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       .map((cfg) => cfg.station);
   }, [activeStationsConfig]);
 
+  // =========================================================================
+  // STATION SELECTION & VISIBILITY MANAGEMENT (PHASE 2)
+  // =========================================================================
+  const isStVisible = useCallback((st: number): boolean => {
+    return isStationVisible(st, visibleStations, activeStation);
+  }, [visibleStations, activeStation]);
+
+  const toggleStationVisibility = useCallback((st: number) => {
+    if (!visibleStations || visibleStations === "all") {
+      const allStations = activeStationsConfig.map((c) => c.station);
+      const remaining = allStations.filter((s) => Math.abs(s - st) > 1e-6);
+      handleUpdateVisibleStations(remaining.length === 0 ? "all" : remaining);
+    } else if (Array.isArray(visibleStations)) {
+      const exists = visibleStations.some((s) => Math.abs(s - st) < 1e-6);
+      if (exists) {
+        if (Math.abs(st - activeStation) < 1e-6) {
+          const other = visibleStations.find((s) => Math.abs(s - st) > 1e-6);
+          if (other !== undefined) handleSelectStation(other);
+        }
+        const updated = visibleStations.filter((s) => Math.abs(s - st) > 1e-6);
+        handleUpdateVisibleStations(updated.length === 0 ? "all" : updated);
+      } else {
+        const updated = [...visibleStations, st];
+        if (updated.length >= activeStationsConfig.length) {
+          handleUpdateVisibleStations("all");
+        } else {
+          handleUpdateVisibleStations(updated);
+        }
+      }
+    }
+  }, [visibleStations, activeStation, activeStationsConfig, handleUpdateVisibleStations, handleSelectStation]);
+
+  const handleStationChipClick = useCallback((st: number) => {
+    handleSelectStation(st);
+    if (Array.isArray(visibleStations) && !visibleStations.some((s) => Math.abs(s - st) < 1e-6)) {
+      handleUpdateVisibleStations([...visibleStations, st]);
+    }
+  }, [handleSelectStation, visibleStations, handleUpdateVisibleStations]);
+
+  const showAllStations = useCallback(() => {
+    handleUpdateVisibleStations("all");
+  }, [handleUpdateVisibleStations]);
+
+  const showOnlyActiveStation = useCallback(() => {
+    handleUpdateVisibleStations([activeStation]);
+  }, [activeStation, handleUpdateVisibleStations]);
+
+  const showAfterbodyStations = useCallback(() => {
+    const after = AFTERBODY_STATIONS;
+    handleUpdateVisibleStations(after);
+    if (!after.some((s) => Math.abs(s - activeStation) < 1e-6) && after.length > 0) {
+      handleSelectStation(after[Math.floor(after.length / 2)]);
+    }
+  }, [AFTERBODY_STATIONS, activeStation, handleUpdateVisibleStations, handleSelectStation]);
+
+  const showForebodyStations = useCallback(() => {
+    const fore = FOREBODY_STATIONS;
+    handleUpdateVisibleStations(fore);
+    if (!fore.some((s) => Math.abs(s - activeStation) < 1e-6) && fore.length > 0) {
+      handleSelectStation(fore[Math.floor(fore.length / 2)]);
+    }
+  }, [FOREBODY_STATIONS, activeStation, handleUpdateVisibleStations, handleSelectStation]);
+
+  const visibleStationCount = useMemo(() => {
+    return activeStationsConfig.filter((cfg) => isStVisible(cfg.station)).length;
+  }, [activeStationsConfig, isStVisible]);
+
+  const activeStationIndex = useMemo(() => {
+    return activeStationsConfig.findIndex((c) => Math.abs(c.station - activeStation) < 1e-4);
+  }, [activeStationsConfig, activeStation]);
+
+  const handleStepStation = useCallback((delta: number) => {
+    if (activeStationsConfig.length === 0) return;
+    const currentIndex = activeStationsConfig.findIndex((c) => Math.abs(c.station - activeStation) < 1e-4);
+    const targetIndex = Math.max(0, Math.min(activeStationsConfig.length - 1, (currentIndex >= 0 ? currentIndex : 0) + delta));
+    const targetStation = activeStationsConfig[targetIndex].station;
+    handleStationChipClick(targetStation);
+  }, [activeStationsConfig, activeStation, handleStationChipClick]);
+
+
   // Helper to construct smooth 2D curve points for any station frame in the Body Plan (NS Savannah style)
   const getStationFramePoints = (
     st: number,
@@ -1060,39 +1282,33 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       });
     }
 
-    if (engine && engine.offsetTable[st]) {
-      return engine.getFramePoints(st, ox, oy, scaleX, scaleZ, isAfterbody);
-    }
-
     const sign = isAfterbody ? -1 : 1;
     const isMid = st === 10.0;
-    const isPMB = st >= 6.0 && st <= 15.0;
-    const flatB = isMid || isPMB ? Math.max(0, halfB - calculatedRadius) : 0;
+    const isPMB = st >= 6.0 && st <= 14.5;
     const localDeckZ = H;
 
-    // Stem / Stern Perpendiculars (AP & FP) run down CL
-    if (st === 0.0 || st === 20.0) {
-      return [
-        { x: ox, y: oy, z: 0, wlId: "WL0" },
-        { x: ox, y: oy - localDeckZ * scaleZ, z: localDeckZ, wlId: "DECK" }
-      ];
-    }
+    // Calculate flat of bottom tangent only when within PMB and strictly bounded by the lowest waterline breadth
+    const sortedWls = [...effectiveWaterlineLevels].sort((a, b) => a.draftFraction - b.draftFraction);
+    const lowestWl = sortedWls.find((w) => w.draftFraction * T > 0.001);
+    const lowestHalfB = lowestWl ? getStationHalfB(st, lowestWl.id, lowestWl.draftFraction * T) : 0;
+    const rawFlatB = isMid || isPMB ? Math.max(0, halfB - calculatedRadius) : 0;
+    const effectiveFlatB = Math.min(rawFlatB, lowestHalfB);
 
     const pts: { x: number; y: number; z: number; wlId?: string }[] = [];
     // 1. Keel CL (0,0)
     pts.push({ x: ox, y: oy, z: 0, wlId: "WL0" });
 
     // 2. PMB flat of bottom tangent point on baseline (Z = 0)
-    if (flatB > 0.05) {
+    if (effectiveFlatB > 0.05) {
       pts.push({
-        x: ox + sign * (flatB * scaleX),
+        x: ox + sign * (effectiveFlatB * scaleX),
         y: oy,
-        z: 0
+        z: 0,
+        wlId: "FLAT_BOTTOM"
       });
     }
 
     // 3. Waterline level points (WL0 s.d. DWL)
-    const sortedWls = [...effectiveWaterlineLevels].sort((a, b) => a.draftFraction - b.draftFraction);
     sortedWls.forEach((wl) => {
       const z = wl.draftFraction * T;
       if (z <= 0.001) return;
@@ -1124,24 +1340,17 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
   const fairFramePath = (pts: { x: number; y: number; z: number; wlId?: string }[]) => {
     if (pts.length === 0) return "";
     if (pts.length === 1) return `M ${pts[0].x.toFixed(3)},${pts[0].y.toFixed(3)}`;
+    if (pts.length === 2) {
+      return `M ${pts[0].x.toFixed(3)},${pts[0].y.toFixed(3)} L ${pts[1].x.toFixed(3)},${pts[1].y.toFixed(3)}`;
+    }
 
-    // A small horizontal fairing pass prevents abrupt in/out movements at
-    // isolated waterline ordinates while leaving the vertical levels intact.
-    const fairPts = pts.map((point, index) => {
-      if (index === 0 || index === pts.length - 1) return point;
-      return {
-        ...point,
-        x: point.x * 0.68 + ((pts[index - 1].x + pts[index + 1].x) * 0.16)
-      };
-    });
-
-    let d = `M ${fairPts[0].x.toFixed(3)},${fairPts[0].y.toFixed(3)}`;
-    const tension = 0.58;
-    for (let i = 0; i < fairPts.length - 1; i++) {
-      const p0 = fairPts[Math.max(0, i - 1)];
-      const p1 = fairPts[i];
-      const p2 = fairPts[i + 1];
-      const p3 = fairPts[Math.min(fairPts.length - 1, i + 2)];
+    let d = `M ${pts[0].x.toFixed(3)},${pts[0].y.toFixed(3)}`;
+    const tension = 0.5;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
       const c1x = p1.x + ((p2.x - p0.x) * tension) / 6;
       const c1y = p1.y + ((p2.y - p0.y) * tension) / 6;
       const c2x = p2.x - ((p3.x - p1.x) * tension) / 6;
@@ -1198,11 +1407,112 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     }
   };
 
-  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (!svgRef.current) return;
-    if (!draggingWlId && draggingDraft === null && draggingStation === null) return;
+  // Phase 3: Interactive Handle Pointer Down for any selected station
+  const handleStationHandlePointerDown = (
+    e: React.PointerEvent,
+    st: number,
+    wlId: string,
+    z: number
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      (e.target as Element).setPointerCapture(e.pointerId);
+    } catch (err) {}
+    setDraggingStation(st);
+    setDraggingWlId(wlId);
+    setDraggingDraft(z);
+    handleSelectStation(st);
+    if (onSelectWlId) {
+      onSelectWlId(wlId);
+    }
+  };
 
-    const svg = svgRef.current;
+  // Phase 3: Precision step nudging for active station & active waterline
+  const handleNudgeStationHalfB = (delta: number) => {
+    const activeZ = (effectiveWaterlineLevels.find((w) => w.id === activeWlId)?.draftFraction ?? 1.0) * T;
+    const currentVal = getStationHalfB(activeStation, activeWlId, activeZ);
+    let newVal = currentVal + delta;
+    newVal = Number(Math.max(0, Math.min(halfB * 1.15, newVal)).toFixed(3));
+
+    const prevWl = waterlinesData?.[activeWlId] || {};
+    const updatedWl = { ...prevWl, [activeStation]: newVal };
+
+    if (lockPmb && activeStation === 10.0) {
+      DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
+        if (cfg.station >= 6.0 && cfg.station <= 15.0) {
+          updatedWl[cfg.station] = newVal;
+        }
+      });
+    }
+
+    const updatedAll = {
+      ...(waterlinesData || {}),
+      [activeWlId]: updatedWl
+    };
+
+    if (onUpdateWaterlinesData) onUpdateWaterlinesData(updatedAll);
+
+    if (activeStation === 10.0) {
+      const roundedZ = Number(activeZ.toFixed(3));
+      setDraftOrdinates((prev) => ({
+        ...prev,
+        [roundedZ]: newVal
+      }));
+    }
+  };
+
+  // Phase 3: Direct numerical input for active station & active waterline
+  const handleDirectStationHalfBChange = (valStr: string) => {
+    const val = parseFloat(valStr);
+    if (isNaN(val)) return;
+    const clampedVal = Number(Math.max(0, Math.min(halfB * 1.15, val)).toFixed(3));
+    const activeZ = (effectiveWaterlineLevels.find((w) => w.id === activeWlId)?.draftFraction ?? 1.0) * T;
+
+    const prevWl = waterlinesData?.[activeWlId] || {};
+    const updatedWl = { ...prevWl, [activeStation]: clampedVal };
+
+    if (lockPmb && activeStation === 10.0) {
+      DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
+        if (cfg.station >= 6.0 && cfg.station <= 15.0) {
+          updatedWl[cfg.station] = clampedVal;
+        }
+      });
+    }
+
+    const updatedAll = {
+      ...(waterlinesData || {}),
+      [activeWlId]: updatedWl
+    };
+
+    if (onUpdateWaterlinesData) onUpdateWaterlinesData(updatedAll);
+
+    if (activeStation === 10.0) {
+      const roundedZ = Number(activeZ.toFixed(3));
+      setDraftOrdinates((prev) => ({
+        ...prev,
+        [roundedZ]: clampedVal
+      }));
+    }
+  };
+
+  // Phase 3: Reset active station back to theoretical FairingEngine curve
+  const handleResetCurrentStation = () => {
+    if (!waterlinesData) return;
+    const updatedAll: Record<string, Record<number, number>> = {};
+    Object.entries(waterlinesData).forEach(([wlKey, stationsMap]) => {
+      const newMap = { ...stationsMap };
+      delete newMap[activeStation];
+      updatedAll[wlKey] = newMap;
+    });
+    if (onUpdateWaterlinesData) onUpdateWaterlinesData(updatedAll);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (!draggingWlId && draggingDraft === null && draggingStation === null) return;
+    const svg = (e.currentTarget as SVGSVGElement) || svgRef.current;
+    if (!svg) return;
+
     const pt = svg.createSVGPoint();
     pt.x = e.clientX;
     pt.y = e.clientY;
@@ -1210,14 +1520,14 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
 
     let ox = 100;
-    let scaleX = 86 / (halfB || 7.5);
+    let scaleX = 82 / (halfB || 7.5);
 
     if (studioMode === "midshipDetail") {
       ox = isFullHullView ? 82 : 35;
       scaleX = isFullHullView ? 56 / (halfB || 7.5) : 80 / (halfB || 7.5);
     } else {
       ox = 100;
-      scaleX = 86 / (halfB || 7.5);
+      scaleX = 82 / (halfB || 7.5);
     }
 
     const distFromCL = Math.abs(svgP.x - ox);
@@ -1228,7 +1538,8 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       const prevWl = waterlinesData?.[draggingWlId] || {};
       const updatedWl = { ...prevWl, [draggingStation]: newHalfB };
 
-      if (draggingStation === 10.0) {
+      // Phase 3: Only propagate to PMB stations if lockPmb is active and station is 10
+      if (lockPmb && draggingStation === 10.0) {
         DEFAULT_STATIONS_CONFIG.forEach((cfg) => {
           if (cfg.station >= 6.0 && cfg.station <= 15.0) {
             updatedWl[cfg.station] = newHalfB;
@@ -1559,19 +1870,24 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   const isHovered = hoveredStation === row.station;
                   const isMid = row.station === 10.0;
                   const isAfter = row.station <= 10.0;
+                  const isActiveSt = activeStation !== undefined && Math.abs(row.station - activeStation) < 1e-4;
 
                   return (
                     <tr
                       key={`mat-row-${row.station}`}
+                      onClick={() => handleStationChipClick(row.station)}
                       onMouseEnter={() => setHoveredStation(row.station)}
                       onMouseLeave={() => setHoveredStation(null)}
-                      className={`transition-colors duration-100 ${
-                        isHovered
+                      className={`transition-colors duration-100 cursor-pointer ${
+                        isActiveSt
+                          ? "bg-surface-selected/80 text-text-primary border-l-4 border-accent-primary ring-1 ring-focus-ring font-semibold"
+                          : isHovered
                           ? "bg-surface-selected text-text-primary"
                           : isMid
                           ? "bg-status-warning-subtle font-semibold"
                           : "hover:bg-surface-canvas"
                       } `}
+                      title={`Klik untuk memilih Gading ${row.stationLabel} (${row.station})`}
                     >
                       <td
                         className={`py-2 px-3 text-center border-r border-border-default sticky left-0 z-10 font-semibold ${
@@ -1740,25 +2056,59 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       <g className="body-plan-group">
         {/* AFTERBODY TRANSVERSE STATION CURVES (Port / Buritan - Left of CL) - St <= 10 */}
         {AFTERBODY_STATIONS.filter((st) => st <= 10.0).map((st) => {
+          if (!isStVisible(st)) return null;
+
           const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, true);
           const isInteger = st % 1 === 0;
+          const isSelected = Math.abs(activeStation - st) < 1e-6;
           const isHovered = hoveredStation === st || draggingStation === st;
           const pathD = fairFramePath(pts);
+          const topPt = pts[pts.length - 1];
+          const label = getStationDisplayLabel(st);
+
+          const strokeColor = isSelected
+            ? "#38bdf8"
+            : isHovered
+            ? "#f59e0b"
+            : "#a78bfa";
+
+          const strokeWidth = isSelected
+            ? 3.2
+            : isHovered
+            ? 2.5
+            : isInteger
+            ? 1.4
+            : 0.8;
+
+          const opacity = isSelected
+            ? 1.0
+            : isHovered
+            ? 1.0
+            : (activeStation !== undefined ? 0.55 : 0.85);
 
           return (
             <g
               key={`body-after-st-${st}`}
-              className="transition-colors cursor-pointer"
+              className="transition-all cursor-pointer group"
+              onClick={() => handleStationChipClick(st)}
               onPointerEnter={() => setHoveredStation(st)}
               onPointerLeave={() => setHoveredStation(null)}
             >
+              <title>{`Gading ${label} (Buritan / Port) — Klik untuk Pilih & Edit`}</title>
+              {/* Wide transparent stroke for reliable hit testing */}
               <path
                 d={pathD}
                 fill="none"
-                stroke={engineeringColor(isHovered ? "#f59e0b" : "#8b5cf6")}
-                strokeWidth={isHovered ? 2.5 : isInteger ? 1.3 : 0.75}
+                stroke="transparent"
+                strokeWidth={14}
+              />
+              <path
+                d={pathD}
+                fill="none"
+                stroke={engineeringColor(strokeColor)}
+                strokeWidth={strokeWidth}
                 strokeDasharray="none"
-                opacity={isHovered ? 1.0 : isInteger ? 0.95 : 0.75}
+                opacity={opacity}
               />
             </g>
           );
@@ -1766,29 +2116,176 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
 
         {/* FOREBODY TRANSVERSE STATION CURVES (Starboard / Haluan - Right of CL) - St >= 10 */}
         {FOREBODY_STATIONS.filter((st) => st >= 10.0).map((st) => {
+          if (!isStVisible(st)) return null;
+
           const pts = getStationFramePoints(st, ox, oy, scaleX, scaleZ, false);
           const isInteger = st % 1 === 0;
+          const isSelected = Math.abs(activeStation - st) < 1e-6;
           const isHovered = hoveredStation === st || draggingStation === st;
           const pathD = fairFramePath(pts);
+          const topPt = pts[pts.length - 1];
+          const label = getStationDisplayLabel(st);
+
+          const strokeColor = isSelected
+            ? "#38bdf8"
+            : isHovered
+            ? "#f59e0b"
+            : "#22d3ee";
+
+          const strokeWidth = isSelected
+            ? 3.2
+            : isHovered
+            ? 2.5
+            : isInteger
+            ? 1.4
+            : 0.8;
+
+          const opacity = isSelected
+            ? 1.0
+            : isHovered
+            ? 1.0
+            : (activeStation !== undefined ? 0.55 : 0.85);
 
           return (
             <g
               key={`body-fore-st-${st}`}
-              className="transition-colors cursor-pointer"
+              className="transition-all cursor-pointer group"
+              onClick={() => handleStationChipClick(st)}
               onPointerEnter={() => setHoveredStation(st)}
               onPointerLeave={() => setHoveredStation(null)}
             >
+              <title>{`Gading ${label} (Haluan / Starboard) — Klik untuk Pilih & Edit`}</title>
+              {/* Wide transparent stroke for reliable hit testing */}
               <path
                 d={pathD}
                 fill="none"
-                stroke={engineeringColor(isHovered ? "#f59e0b" : "#06b6d4")}
-                strokeWidth={isHovered ? 2.5 : isInteger ? 1.3 : 0.75}
+                stroke="transparent"
+                strokeWidth={14}
+              />
+              <path
+                d={pathD}
+                fill="none"
+                stroke={engineeringColor(strokeColor)}
+                strokeWidth={strokeWidth}
                 strokeDasharray="none"
-                opacity={isHovered ? 1.0 : isInteger ? 0.95 : 0.75}
+                opacity={opacity}
               />
             </g>
           );
         })}
+
+        {/* Floating HUD banner for current active/hovered station identification */}
+        <g className="body-plan-hud-banner" style={{ pointerEvents: "none" }}>
+          <rect
+            x={ox - 48}
+            y={oy - H * scaleZ - 21}
+            width={96}
+            height={13}
+            rx={3}
+            fill="rgba(15, 23, 42, 0.92)"
+            stroke={engineeringColor(hoveredStation !== null && hoveredStation !== activeStation ? "#f59e0b" : "#38bdf8")}
+            strokeWidth="0.8"
+          />
+          <text
+            x={ox}
+            y={oy - H * scaleZ - 12.5}
+            textAnchor="middle"
+            fontSize="5.2"
+            fontWeight="bold"
+            fill={engineeringColor(hoveredStation !== null && hoveredStation !== activeStation ? "#f59e0b" : "#38bdf8")}
+          >
+            {hoveredStation !== null && hoveredStation !== activeStation
+              ? `Hover: Gading ${getStationDisplayLabel(hoveredStation)} (Klik untuk Pilih)`
+              : `Sedang Diedit: Gading ${getStationDisplayLabel(activeStation)} (${activeStation <= 10 ? "Buritan" : "Haluan"})`}
+          </text>
+        </g>
+
+        {/* ========================================================================= */}
+        {/* PHASE 3: INTERACTIVE CONTROL POINTS (HANDLES) ON ACTIVE STATION            */}
+        {/* ========================================================================= */}
+        {!isPreviewMode && activeStation !== undefined && isStVisible(activeStation) && (
+          <g className="active-station-handles-group">
+            {sortedWaterlines.map((wl) => {
+              const z = wl.draftFraction * T;
+              if (z <= 0.001) return null;
+              const b = getStationHalfB(activeStation, wl.id, z);
+              const isAfter = activeStation <= 10.0;
+              const sign = isAfter ? -1 : 1;
+              const ptX = ox + sign * b * scaleX;
+              const ptY = oy - z * scaleZ;
+              const isWlActive = wl.id === activeWlId;
+              const isDragging = draggingStation === activeStation && draggingWlId === wl.id;
+              const isHovered = (hoverWlId === wl.id && hoveredStation === activeStation) || isDragging;
+
+              return (
+                <g key={`active-st-${activeStation}-wl-${wl.id}`}>
+                  {/* Guideline connecting to Centerline - purely visual, pointerEvents: none */}
+                  {(isWlActive || isHovered) && (
+                    <line
+                      x1={ox}
+                      y1={ptY}
+                      x2={ptX}
+                      stroke={engineeringColor(isDragging ? "#f59e0b" : "#38bdf8")}
+                      strokeWidth="0.5"
+                      strokeDasharray="1.5 1"
+                      opacity="0.85"
+                      style={{ pointerEvents: "none" }}
+                    />
+                  )}
+
+                  {/* Outer pulse/selection ring - purely visual, pointerEvents: none */}
+                  {(isWlActive || isHovered) && (
+                    <circle
+                      cx={ptX}
+                      cy={ptY}
+                      r={isDragging ? 3.6 : 3.0}
+                      fill="none"
+                      stroke={engineeringColor(isDragging ? "#f59e0b" : "#38bdf8")}
+                      strokeWidth="0.6"
+                      opacity="0.9"
+                      style={{ pointerEvents: "none" }}
+                    />
+                  )}
+
+                  {/* Visible Circle Node - purely visual, pointerEvents: none */}
+                  <circle
+                    cx={ptX}
+                    cy={ptY}
+                    r={isDragging ? 2.6 : isHovered ? 2.3 : isWlActive ? 2.1 : 1.7}
+                    fill={engineeringColor(isDragging ? "#f59e0b" : isWlActive ? "#38bdf8" : (wl.color || "#06b6d4"))}
+                    stroke="#ffffff"
+                    strokeWidth={isWlActive || isDragging ? 0.6 : 0.4}
+                    style={{ pointerEvents: "none" }}
+                  />
+
+                  {/* Invisible generous hit target (r=5.5) - guarantees 100% stable hover & drag without any flickering */}
+                  <circle
+                    cx={ptX}
+                    cy={ptY}
+                    r={5.5}
+                    fill="transparent"
+                    stroke="none"
+                    className="cursor-ew-resize"
+                    style={{ touchAction: "none" }}
+                    onPointerDown={(e) => handleStationHandlePointerDown(e, activeStation, wl.id, z)}
+                    onPointerEnter={() => {
+                      setHoverWlId(wl.id);
+                      setHoverDraft(z);
+                      setHoveredStation(activeStation);
+                    }}
+                    onPointerLeave={() => {
+                      setHoverWlId(null);
+                      setHoverDraft(null);
+                      setHoveredStation(null);
+                    }}
+                  >
+                    <title>{`Gading ${getStationDisplayLabel(activeStation)} @ ${wl.shortName} (Z=${z.toFixed(2)}m) -> 0.5B = ${b.toFixed(3)}m (Drag horizontal)`}</title>
+                  </circle>
+                </g>
+              );
+            })}
+          </g>
+        )}
       </g>
     );
   };
@@ -1987,13 +2484,13 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
     // Default 'bodyPlan' Mode: Full Canvas NS Savannah Style Transverse Sections
     return (
       <g>
-        {renderBodyPlanSvg(100, 132, 82 / (halfB || 7.5), 104 / Math.max(H, 7.0))}
+        {renderBodyPlanSvg(100, 142, 82 / (halfB || 7.5), 104 / Math.max(H, 7.0))}
       </g>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <div className={compact ? "w-full flex flex-col flex-1 min-h-0 h-full overflow-hidden" : "space-y-6"}>
       {/* ========================================================= */}
       {/* FULLSCREEN STUDIO OVERLAY FOR RADIUS BILGA & BODY PLAN     */}
       {/* ========================================================= */}
@@ -2052,21 +2549,6 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                       ? `${activeStationsConfig.length}`
                       : "0"}
                   </span>
-                </button>
-
-                {/* Station Density Switcher */}
-                <button
-                  type="button"
-                  onClick={() => handleDensityChange(stationDensity === "all" ? "standard" : "all")}
-                  className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer flex items-center space-x-1 ${
-                    stationDensity === "all"
-                      ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
-                      : "bg-surface-secondary text-text-primary border-border-default hover:text-text-primary min-h-9"
-                  } `}
-                  title="Toggle between all frames (36 points) and standard frames (23 points)"
-                 aria-label="Toggle between all frames (36 points) and standard frames (23 points)">
-                  <SlidersHorizontal size={12} className="text-accent-primary" />
-                  <span>{stationDensity === "all" ? "All Frames (36)" : "Standard Frames (23)"}</span>
                 </button>
 
                 {/* Mode Switcher Pills */}
@@ -2149,56 +2631,321 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               </div>
             </div>
 
-            {/* Waterlines Quick-Switch & Presets Bar in Fullscreen */}
-            <div className="flex flex-wrap items-center justify-between gap-1 pt-1.5 border-t border-border-default text-sm">
-              <div className="flex flex-wrap items-center gap-1">
-                <span className="text-xs font-mono text-text-secondary mr-1 font-semibold">
-                  Waterline Count:
+            {/* Station Count Presets & Custom Station Bar in Fullscreen */}
+            <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-border-default text-xs">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs font-mono text-text-secondary mr-1 font-semibold flex items-center space-x-1">
+                  <SlidersHorizontal size={12} className="text-accent-primary" />
+                  <span>Jumlah Gading:</span>
                 </span>
-                {[4, 7, 11, 13, 21].map((cnt) => (
-                  <button
-                    key={`fs-mid-cnt-${cnt}`}
-                    type="button"
-                    onClick={() => handleApplyWaterlinePreset(cnt)}
-                    className={`px-2 py-0.5 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer ${
-                      effectiveWaterlineLevels.length === cnt
-                        ? "bg-surface-selected text-accent-primary border-border-default min-h-9"
-                        : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary min-h-9"
-                    } `}
-                    title={`Terapkan ${cnt} Garis Air`}
-                   aria-label={`Terapkan ${cnt} Garis Air`}>
-                    {cnt} WL {cnt === 7 ? "(Std)" : ""}
-                  </button>
-                ))}
-              </div>
-
-              {/* Active WL Selector Chips */}
-              <div className="flex flex-wrap items-center gap-1">
-                <span className="text-xs font-mono text-text-secondary mr-1 font-semibold">
-                  Active WL:
-                </span>
-                {effectiveWaterlineLevels.map((wl) => {
-                  const isActive = wl.id === activeWlId;
-                  const zVal = wl.draftFraction * T;
+                {[
+                  { id: "11" as const, label: "11 Gading", desc: "11 Gading Utama (Interval 2: 0, 2, 4... 20)" },
+                  { id: "21" as const, label: "21 Gading (Std)", desc: "21 Gading Standar (AP - FP, Interval 1.0)" },
+                ].map((p) => {
+                  const isActive = stationPreset === p.id;
                   return (
                     <button
-                      key={`fs-mid-wl-tab-${wl.id}`}
+                      key={`fs-st-preset-${p.id}`}
                       type="button"
-                      onClick={() => onSelectWlId?.(wl.id)}
-                      className={`px-2 py-0.5 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1 cursor-pointer ${
+                      onClick={() => handleSelectStationPreset(p.id)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-sans font-semibold transition-colors border cursor-pointer ${
                         isActive
-                          ? "bg-accent-primary text-on-accent border-border-default min-h-9"
-                          : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary min-h-9"
-                      } `}
-                      title={`${wl.name} (${zVal.toFixed(2)}m)`}
-                     aria-label={`${wl.name} (${zVal.toFixed(2)}m)`}>
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
-                      <span>{wl.shortName}</span>
+                          ? "bg-accent-primary text-on-accent border-accent-primary shadow-xs font-bold"
+                          : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary"
+                      }`}
+                      title={p.desc}
+                    >
+                      {p.label}
                     </button>
                   );
                 })}
+
+                {/* Kostum Gading Button */}
+                <button
+                  type="button"
+                  onClick={openCustomStationModal}
+                  className={`px-2.5 py-1 rounded-md text-xs font-sans font-semibold transition-colors border cursor-pointer flex items-center space-x-1 ${
+                    stationPreset === "custom"
+                      ? "bg-accent-primary text-on-accent border-accent-primary shadow-xs font-bold"
+                      : "bg-surface-inset text-accent-primary border-border-default hover:bg-surface-secondary"
+                  }`}
+                  title="Kostum mau berapa gading atau pilih gading tertentu"
+                >
+                  <Settings2 size={12} />
+                  <span>Kostum Gading{stationPreset === "custom" ? ` (${activeStationsConfig.length})` : "..."}</span>
+                </button>
+              </div>
+
+              {/* Quick stats / summary */}
+              <div className="flex items-center space-x-2 font-mono text-xs text-text-secondary">
+                <span>Aktif: <strong className="text-text-primary">{activeStationsConfig.length}</strong> gading</span>
+                <span className="text-text-primary">•</span>
+                <span>Tampil: <strong className="text-accent-primary">{visibleStationCount}</strong> gading</span>
               </div>
             </div>
+
+            {/* Station Quick-Switch & Visibility Ribbon in Fullscreen */}
+            {studioMode === "bodyPlan" && (
+              <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1.5 border-t border-border-default text-xs">
+                {/* Direct Section Dropdown & Stepper */}
+                <div className="flex items-center space-x-1.5 bg-surface-primary border border-border-default rounded-md px-2 py-0.5 shrink-0">
+                  <span className="text-[11px] font-mono text-text-secondary font-semibold">Pilih:</span>
+                  <select
+                    value={activeStation}
+                    onChange={(e) => handleStationChipClick(parseFloat(e.target.value))}
+                    className="bg-surface-canvas text-accent-primary font-mono text-xs font-bold border border-border-default rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer"
+                    title="Pilih section / gading yang mau diedit langsung"
+                  >
+                    {activeStationsConfig.map((cfg) => {
+                      const isAfter = cfg.station <= 10.0;
+                      const side = isAfter ? "Buritan" : "Haluan";
+                      return (
+                        <option key={`fs-sel-st-${cfg.station}`} value={cfg.station}>
+                          Gading {getStationDisplayLabel(cfg.station)} — {side}
+                        </option>
+                      );
+                    })}
+                  </select>
+
+                  <div className="flex items-center space-x-0.5 border-l border-border-default pl-1">
+                    <button
+                      type="button"
+                      onClick={() => handleStepStation(-1)}
+                      disabled={activeStationIndex <= 0}
+                      className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                      title="Gading sebelumnya"
+                    >
+                      <ChevronLeft size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStepStation(1)}
+                      disabled={activeStationIndex >= activeStationsConfig.length - 1}
+                      className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                      title="Gading berikutnya"
+                    >
+                      <ChevronRight size={13} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-1.5 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800 flex-1 min-w-0">
+                  <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1 shrink-0 pr-1">
+                    <Layers size={12} className="text-accent-primary" />
+                    <span>Semua Gading ({activeStationsConfig.length}):</span>
+                  </span>
+                  {activeStationsConfig.map((cfg) => {
+                    const st = cfg.station;
+                    const isActive = Math.abs(activeStation - st) < 1e-6;
+                    const isVisible = isStVisible(st);
+                    const label = getStationDisplayLabel(st);
+
+                    return (
+                      <div
+                        key={`fs-station-chip-${st}`}
+                        className={`inline-flex items-center rounded-md text-xs font-mono transition-all border shrink-0 ${
+                          isActive
+                            ? "bg-accent-primary text-on-accent border-accent-primary font-bold shadow-xs ring-1 ring-focus-ring"
+                            : isVisible
+                            ? "bg-surface-inset text-text-primary border-border-default hover:bg-surface-secondary hover:border-border-strong font-medium"
+                            : "bg-surface-inset/50 text-text-tertiary border-dashed border-border-subtle hover:bg-surface-inset opacity-60"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleStationChipClick(st)}
+                          className="px-2 py-0.5 flex items-center space-x-1 cursor-pointer"
+                          title={`Pilih Gading ${label}`}
+                        >
+                          <span>St {label}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStationVisibility(st);
+                          }}
+                          className="p-0.5 pr-1.5 hover:text-accent-primary transition-colors cursor-pointer"
+                          title={isVisible ? `Sembunyikan Gading ${label}` : `Tampilkan Gading ${label}`}
+                        >
+                          {isVisible ? <Eye size={11} /> : <EyeOff size={11} />}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0">
+                  <div className="flex items-center space-x-1 bg-surface-inset p-0.5 rounded-md border border-border-default">
+                    <button
+                      type="button"
+                      onClick={showAllStations}
+                      className="px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary hover:text-text-primary cursor-pointer"
+                    >
+                      Semua
+                    </button>
+                    <button
+                      type="button"
+                      onClick={showOnlyActiveStation}
+                      className="px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary hover:text-text-primary cursor-pointer"
+                    >
+                      Hanya Aktif
+                    </button>
+                    <button
+                      type="button"
+                      onClick={showAfterbodyStations}
+                      className="px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary hover:text-text-primary cursor-pointer"
+                    >
+                      Buritan
+                    </button>
+                    <button
+                      type="button"
+                      onClick={showForebodyStations}
+                      className="px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary hover:text-text-primary cursor-pointer"
+                    >
+                      Haluan
+                    </button>
+                  </div>
+                  <div className="font-mono text-[11px] bg-surface-selected/60 border border-border-default px-2 py-0.5 rounded text-text-secondary">
+                    Gading <strong className="text-accent-primary">{getStationDisplayLabel(activeStation)}</strong> &bull;{" "}
+                    <strong>{visibleStationCount}</strong>/{activeStationsConfig.length}
+                  </div>
+                </div>
+
+                {/* PHASE 3: Precision CAD Nudge & Reset Toolbar in Fullscreen */}
+                <div className="w-full flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border-subtle/70 bg-surface-inset/40 px-2 py-1 rounded-md">
+                  <div className="flex items-center space-x-2 text-xs">
+                    <span className="text-text-secondary font-medium flex items-center space-x-1.5">
+                      <span>Edit Section:</span>
+                      <select
+                        value={activeStation}
+                        onChange={(e) => handleStationChipClick(parseFloat(e.target.value))}
+                        className="bg-surface-primary text-accent-primary font-mono text-xs font-bold border border-border-default rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer"
+                        title="Pilih section / gading yang ingin diedit"
+                      >
+                        {activeStationsConfig.map((cfg) => {
+                          const isAfter = cfg.station <= 10.0;
+                          const side = isAfter ? "Buritan" : "Haluan";
+                          return (
+                            <option key={`fs-cad-st-${cfg.station}`} value={cfg.station}>
+                              Gading {getStationDisplayLabel(cfg.station)} ({side})
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="flex items-center space-x-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleStepStation(-1)}
+                          disabled={activeStationIndex <= 0}
+                          className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                          title="Gading sebelumnya"
+                        >
+                          <ChevronLeft size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStepStation(1)}
+                          disabled={activeStationIndex >= activeStationsConfig.length - 1}
+                          className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                          title="Gading berikutnya"
+                        >
+                          <ChevronRight size={12} />
+                        </button>
+                      </div>
+                      <span>@ Elevasi:</span>
+                      <select
+                        value={activeWlId}
+                        onChange={(e) => onSelectWlId?.(e.target.value)}
+                        className="bg-surface-primary text-text-primary border border-border-default rounded px-1.5 py-0.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer"
+                        title="Pilih elevasi Z / garis air yang diedit pada gading ini"
+                      >
+                        {effectiveWaterlineLevels.map((w) => {
+                          const zVal = w.draftFraction * T;
+                          return (
+                            <option key={w.id} value={w.id}>
+                              {w.shortName} ({zVal.toFixed(2)}m)
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </span>
+                    <div className="flex items-center space-x-1">
+                      <span className="text-text-secondary font-mono text-[11px]">0.5B:</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={(halfB * 1.15).toFixed(2)}
+                        value={(getStationHalfB(activeStation, activeWlId, (effectiveWaterlineLevels.find(w => w.id === activeWlId)?.draftFraction ?? 1.0) * T)).toFixed(3)}
+                        onChange={(e) => handleDirectStationHalfBChange(e.target.value)}
+                        className="w-20 px-2 py-0.5 text-xs font-mono bg-surface-primary border border-border-default rounded text-text-primary font-semibold text-center focus:outline-none focus:ring-1 focus:ring-focus-ring"
+                      />
+                      <span className="text-text-secondary text-xs">m</span>
+                    </div>
+                    <div className="flex items-center space-x-0.5 font-mono text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(-0.1)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Kurangi 0.1 meter"
+                      >
+                        -0.1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(-0.01)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Kurangi 0.01 meter (1 cm)"
+                      >
+                        -0.01
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(0.01)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Tambah 0.01 meter (1 cm)"
+                      >
+                        +0.01
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(0.1)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Tambah 0.1 meter"
+                      >
+                        +0.1
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setLockPmb(!lockPmb)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-sans font-medium transition-colors border cursor-pointer flex items-center space-x-1 ${
+                        lockPmb
+                          ? "bg-surface-selected text-accent-primary border-border-default font-semibold shadow-2xs"
+                          : "bg-surface-secondary text-text-secondary border-border-default hover:text-text-primary"
+                      }`}
+                      title={lockPmb ? "Kunci PMB Aktif: Edit Gading 10 otomatis selaras ke Gading 6-15" : "Kunci PMB Bebas: Tiap gading dapat diedit mandiri"}
+                    >
+                      <span>Kunci PMB (St 6–15):</span>
+                      <strong className={lockPmb ? "text-accent-primary" : "text-text-secondary"}>{lockPmb ? "ON" : "OFF"}</strong>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetCurrentStation}
+                      className="px-2 py-0.5 bg-surface-secondary hover:bg-status-danger-subtle text-text-secondary hover:text-status-danger border border-border-default rounded text-[11px] font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1"
+                      title="Kembalikan ordinat gading ini ke rancangan teoritis FairingEngine"
+                    >
+                      <RotateCcw size={11} />
+                      <span>Reset Gading</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Fullscreen Canvas or XYZ Table */}
@@ -2241,7 +2988,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <svg
                   ref={svgRef}
                   className="w-full h-full select-none cursor-crosshair"
-                  viewBox={studioMode === "bodyPlan" ? "0 0 200 144" : studioMode === "midshipDetail" ? "28 10 100 80" : "0 0 200 144"}
+                  viewBox={studioMode === "bodyPlan" ? bodyPlanViewBox : studioMode === "midshipDetail" ? "28 10 100 80" : "0 0 200 144"}
                   preserveAspectRatio="xMidYMid meet"
                   style={{ touchAction: "none" }}
                   onPointerMove={handlePointerMove}
@@ -2420,9 +3167,138 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
       {/* ========================================================= */}
       {!tablesOnly && (
         <div className={`w-full flex flex-col ${
-          compact ? "p-0 space-y-2 flex-1 min-h-0 h-full border-0 bg-transparent" : "bg-surface-primary border border-border-default rounded-lg p-5 space-y-4"
+          compact ? "p-0 space-y-1 flex-1 min-h-0 h-full border-0 bg-transparent overflow-hidden" : "bg-surface-primary border border-border-default rounded-lg p-5 space-y-4"
         } `}>
-          {/* Header Bar: Sleek Unified 2-Tier Studio Control */}
+          {/* Header Bar: Sleek Unified Studio Control */}
+          {compact ? (
+            /* SLIM UNIFIED COCKPIT TOOLBAR (Single clean row, ~36px) */
+            <div className="bg-surface-secondary/70 border border-border-default rounded-md px-2 py-1 flex items-center justify-between gap-1.5 shrink-0 select-none text-xs">
+              {/* Left: Section Selector, Stepper, Elevation & 0.5B */}
+              <div className="flex items-center space-x-1.5 min-w-0">
+                <span className="text-[11px] font-mono text-text-secondary font-semibold shrink-0">Gading:</span>
+                <select
+                  value={activeStation}
+                  onChange={(e) => handleStationChipClick(parseFloat(e.target.value))}
+                  className="bg-surface-canvas text-accent-primary font-mono text-xs font-bold border border-border-default rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer max-w-[95px]"
+                >
+                  {activeStationsConfig.map((cfg) => (
+                    <option key={`c-st-${cfg.station}`} value={cfg.station}>
+                      St. {getStationDisplayLabel(cfg.station)}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex items-center space-x-0.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleStepStation(-1)}
+                    disabled={activeStationIndex <= 0}
+                    className="p-0.5 hover:bg-surface-primary text-text-secondary hover:text-text-primary disabled:opacity-30 rounded cursor-pointer"
+                    title="Gading Sebelumnya"
+                  >
+                    <ChevronLeft size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStepStation(1)}
+                    disabled={activeStationIndex >= activeStationsConfig.length - 1}
+                    className="p-0.5 hover:bg-surface-primary text-text-secondary hover:text-text-primary disabled:opacity-30 rounded cursor-pointer"
+                    title="Gading Berikutnya"
+                  >
+                    <ChevronRight size={12} />
+                  </button>
+                </div>
+
+                <span className="text-border-default hidden sm:inline">|</span>
+
+                {/* Elevation selector */}
+                <div className="flex items-center space-x-1 shrink-0">
+                  <span className="text-text-secondary font-mono text-[11px]">Z:</span>
+                  <select
+                    value={activeWlId}
+                    onChange={(e) => onSelectWlId?.(e.target.value)}
+                    className="bg-surface-canvas text-text-primary border border-border-default rounded px-1.5 py-0.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer max-w-[85px]"
+                  >
+                    {effectiveWaterlineLevels.map((w) => (
+                      <option key={`c-wl-elev-${w.id}`} value={w.id}>
+                        {w.shortName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 0.5B Input & Nudge */}
+                <div className="flex items-center space-x-1 font-mono text-xs bg-surface-primary px-1.5 py-0.5 rounded border border-border-default shrink-0">
+                  <span className="text-text-secondary text-[11px]">0.5B:</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max={(halfB * 1.15).toFixed(2)}
+                    value={(getStationHalfB(activeStation, activeWlId, (effectiveWaterlineLevels.find(w => w.id === activeWlId)?.draftFraction ?? 1.0) * T)).toFixed(3)}
+                    onChange={(e) => handleDirectStationHalfBChange(e.target.value)}
+                    className="w-16 px-1 py-0.5 text-xs font-mono bg-surface-canvas border border-border-default rounded text-accent-primary font-bold text-center focus:outline-none focus:ring-1 focus:ring-focus-ring"
+                  />
+                  <div className="flex items-center space-x-0.5 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={() => handleNudgeStationHalfB(-0.01)}
+                      className="px-1 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary cursor-pointer"
+                      title="-1 cm"
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleNudgeStationHalfB(0.01)}
+                      className="px-1 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary cursor-pointer"
+                      title="+1 cm"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: PMB Lock, Buttock, Reset */}
+              <div className="flex items-center space-x-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setLockPmb(!lockPmb)}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-sans border cursor-pointer flex items-center space-x-1 ${
+                    lockPmb
+                      ? "bg-surface-selected text-accent-primary border-border-default font-semibold"
+                      : "bg-surface-primary text-text-secondary border-border-default hover:text-text-primary"
+                  }`}
+                  title={lockPmb ? "Kunci PMB Aktif (St 6–15)" : "Kunci PMB Bebas"}
+                >
+                  <span>PMB:</span>
+                  <strong className={lockPmb ? "text-accent-primary" : "text-text-secondary"}>{lockPmb ? "ON" : "OFF"}</strong>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowButtocks(!showButtocks)}
+                  className={`px-1.5 py-0.5 rounded text-[11px] font-sans border cursor-pointer ${
+                    showButtocks
+                      ? "bg-surface-selected text-accent-primary border-border-default font-semibold"
+                      : "bg-surface-primary text-text-secondary border-border-default hover:text-text-primary"
+                  }`}
+                  title="Tampilkan garis buttock"
+                >
+                  Buttock
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetCurrentStation}
+                  className="p-1 text-text-secondary hover:text-status-danger hover:bg-status-danger-subtle rounded border border-border-default cursor-pointer"
+                  title="Reset gading aktif ke kurva teoritis"
+                >
+                  <RotateCcw size={11} />
+                </button>
+              </div>
+            </div>
+          ) : (
           <div className="bg-surface-canvas border border-border-default rounded-lg p-1.5 select-none shrink-0 space-y-1.5">
             {/* TIER 1: Primary Controls & Actions Bar */}
             <div className="flex flex-nowrap items-center justify-between gap-1.5 overflow-x-auto">
@@ -2472,63 +3348,6 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                    aria-label="Station 10 midship detail">
                     <span>Station 10 Section</span>
                   </button>
-                </div>
-
-                {/* Subtle Divider */}
-                <div className="h-5 w-px bg-surface-secondary shrink-0 hidden sm:block" />
-
-                {/* Waterline Preset Group */}
-                <div className="flex items-center space-x-1 bg-surface-primary p-1 rounded-lg border border-border-default shrink-0">
-                  <span className="text-xs font-mono text-text-secondary px-1.5 font-semibold flex items-center space-x-1">
-                    <Layers size={12} className="text-accent-primary" />
-                    <span className="hidden md:inline">Preset:</span>
-                  </span>
-                  {[4, 7, 11, 13, 21].map((cnt) => (
-                    <button
-                      key={`emb-mid-cnt-${cnt}`}
-                      type="button"
-                      onClick={() => handleApplyWaterlinePreset(cnt)}
-                      className={`px-2 py-1 rounded-md text-sm font-sans font-semibold transition-colors border cursor-pointer ${
-                        effectiveWaterlineLevels.length === cnt
-                          ? "bg-surface-selected text-accent-primary border-border-default font-semibold min-h-9"
-                          : "bg-transparent text-text-secondary border-transparent hover:text-text-primary hover:bg-surface-secondary min-h-9"
-                      } `}
-                      title={`Apply ${cnt} waterlines`}
-                     aria-label={`Apply ${cnt} waterlines`}>
-                      {cnt}
-                    </button>
-                  ))}
-
-                  {/* Compact Stepper */}
-                  <div className="flex items-center pl-1 border-l border-border-default space-x-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = Math.max(3, desiredWlCount - 1);
-                        setDesiredWlCount(next);
-                        handleApplyWaterlinePreset(next);
-                      }}
-                      className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer min-h-9 min-w-9"
-                      title="Kurangi 1 WL"
-                     aria-label="Kurangi 1 WL">
-                      -
-                    </button>
-                    <span className="w-5 text-center text-xs font-mono font-semibold text-accent-primary">
-                      {desiredWlCount}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = Math.min(25, desiredWlCount + 1);
-                        setDesiredWlCount(next);
-                        handleApplyWaterlinePreset(next);
-                      }}
-                      className="h-5 flex items-center justify-center rounded bg-surface-secondary hover:bg-surface-secondary text-text-primary hover:text-text-primary font-semibold text-sm cursor-pointer min-h-9 min-w-9"
-                      title="Add 1 WL"
-                     aria-label="Add 1 WL">
-                      +
-                    </button>
-                  </div>
                 </div>
               </div>
 
@@ -2607,36 +3426,49 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               </div>
             </div>
 
-            {/* TIER 2: Waterline Navigation Ribbon */}
-            <div className="flex items-center justify-between gap-1 pt-1 border-t border-border-default">
-              <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center space-x-2 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800">
-                <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1.5 shrink-0 pr-1">
-                  <Compass size={12} className="text-accent-primary" />
-                  <span>Select Waterline ({effectiveWaterlineLevels.length}):</span>
+            {/* TIER 2: Station Count Presets & Custom Station Bar */}
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-border-default">
+              <div tabIndex={0} role="region" aria-label="Preset dan Kostum Jumlah Gading" className="flex items-center space-x-1.5 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800">
+                <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1 shrink-0 pr-1">
+                  <SlidersHorizontal size={12} className="text-accent-primary" />
+                  <span>Jumlah Gading:</span>
                 </span>
-                {effectiveWaterlineLevels.map((wl) => {
-                  const isActive = wl.id === activeWlId;
-                  const zVal = wl.draftFraction * T;
+                {[
+                  { id: "11" as const, label: "11", desc: "11 Gading Utama (Interval 2)" },
+                  { id: "21" as const, label: "21 (Std)", desc: "21 Gading Standar (AP - FP, Interval 1.0)" },
+                ].map((p) => {
+                  const isActive = stationPreset === p.id;
                   return (
                     <button
-                      key={`emb-mid-wl-tab-${wl.id}`}
+                      key={`emb-st-preset-${p.id}`}
                       type="button"
-                      onClick={() => onSelectWlId?.(wl.id)}
-                      className={`px-2.5 py-1 rounded-md text-sm font-sans font-semibold transition-colors border flex items-center space-x-1.5 cursor-pointer shrink-0 ${
+                      onClick={() => handleSelectStationPreset(p.id)}
+                      className={`px-2 py-0.5 rounded-md text-xs font-sans font-semibold transition-colors border cursor-pointer shrink-0 ${
                         isActive
-                          ? "text-accent-primary border-border-default ring-1 ring-focus-ring bg-accent-primary min-h-9"
-                          : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary min-h-9"
-                      } `}
-                      title={`${wl.name} (${zVal.toFixed(2)}m)`}
-                     aria-label={`${wl.name} (${zVal.toFixed(2)}m)`}>
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: engineeringColor(wl.color) }} />
-                      <span>{wl.shortName}</span>
-                      <span className={isActive ? "text-accent-primary" : "text-text-secondary font-normal"}>
-                        {zVal.toFixed(2)}m
-                      </span>
+                          ? "bg-accent-primary text-on-accent border-accent-primary shadow-xs font-bold"
+                          : "bg-surface-inset text-text-secondary border-border-default hover:text-text-primary hover:bg-surface-secondary"
+                      }`}
+                      title={p.desc}
+                    >
+                      {p.label}
                     </button>
                   );
                 })}
+
+                {/* Kostum Gading Button */}
+                <button
+                  type="button"
+                  onClick={openCustomStationModal}
+                  className={`px-2 py-0.5 rounded-md text-xs font-sans font-semibold transition-colors border cursor-pointer shrink-0 flex items-center space-x-1 ${
+                    stationPreset === "custom"
+                      ? "bg-accent-primary text-on-accent border-accent-primary shadow-xs font-bold"
+                      : "bg-surface-inset text-accent-primary border-border-default hover:bg-surface-secondary"
+                  }`}
+                  title="Kostum mau berapa gading atau pilih gading tertentu"
+                >
+                  <Settings2 size={11} />
+                  <span>Kostum Gading{stationPreset === "custom" ? ` (${activeStationsConfig.length})` : "..."}</span>
+                </button>
               </div>
 
               {/* Quick Vessel Parameters Strip */}
@@ -2650,7 +3482,304 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                 <span>Am: <strong className="text-status-success">{Am_calc.toFixed(1)}m²</strong></span>
               </div>
             </div>
+            {/* TIER 3: Station Selection & Frame Visibility Ribbon (Body Plan Mode) */}
+            {studioMode === "bodyPlan" && (
+              <div className="flex flex-col gap-1.5 pt-1.5 border-t border-border-default text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 min-w-0">
+                  {/* Direct Section Dropdown & Stepper */}
+                  <div className="flex items-center space-x-1.5 bg-surface-primary border border-border-default rounded-md px-2 py-0.5 shrink-0">
+                    <span className="text-[11px] font-mono text-text-secondary font-semibold">Pilih:</span>
+                    <select
+                      value={activeStation}
+                      onChange={(e) => handleStationChipClick(parseFloat(e.target.value))}
+                      className="bg-surface-canvas text-accent-primary font-mono text-xs font-bold border border-border-default rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer"
+                      title="Pilih section / gading yang mau diedit langsung"
+                    >
+                      {activeStationsConfig.map((cfg) => {
+                        const isAfter = cfg.station <= 10.0;
+                        const side = isAfter ? "Buritan" : "Haluan";
+                        return (
+                          <option key={`emb-sel-st-${cfg.station}`} value={cfg.station}>
+                            Gading {getStationDisplayLabel(cfg.station)} — {side}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <div className="flex items-center space-x-0.5 border-l border-border-default pl-1">
+                      <button
+                        type="button"
+                        onClick={() => handleStepStation(-1)}
+                        disabled={activeStationIndex <= 0}
+                        className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                        title="Gading sebelumnya"
+                      >
+                        <ChevronLeft size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleStepStation(1)}
+                        disabled={activeStationIndex >= activeStationsConfig.length - 1}
+                        className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                        title="Gading berikutnya"
+                      >
+                        <ChevronRight size={13} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Station Chips Ribbon */}
+                  <div
+                    tabIndex={0}
+                    role="region"
+                    aria-label="Pilih Gading Ribbon"
+                    className="flex items-center space-x-1.5 overflow-x-auto py-0.5 scrollbar-thin scrollbar-thumb-slate-800 flex-1 min-w-0"
+                  >
+                    <span className="text-xs font-mono text-text-secondary font-semibold flex items-center space-x-1 shrink-0 pr-1">
+                      <Layers size={12} className="text-accent-primary" />
+                      <span>Semua Gading ({activeStationsConfig.length}):</span>
+                    </span>
+                    {activeStationsConfig.map((cfg) => {
+                      const st = cfg.station;
+                      const isActive = Math.abs(activeStation - st) < 1e-6;
+                      const isVisible = isStVisible(st);
+                      const label = getStationDisplayLabel(st);
+
+                      return (
+                        <div
+                          key={`station-chip-${st}`}
+                          className={`inline-flex items-center rounded-md text-xs font-mono transition-all border shrink-0 ${
+                            isActive
+                              ? "bg-accent-primary text-on-accent border-accent-primary font-bold shadow-xs ring-1 ring-focus-ring"
+                              : isVisible
+                              ? "bg-surface-inset text-text-primary border-border-default hover:bg-surface-secondary hover:border-border-strong font-medium"
+                              : "bg-surface-inset/50 text-text-tertiary border-dashed border-border-subtle hover:bg-surface-inset opacity-60"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleStationChipClick(st)}
+                            className="px-2 py-0.5 flex items-center space-x-1 cursor-pointer"
+                            title={`Pilih Gading ${label}`}
+                            aria-label={`Gading ${label}`}
+                          >
+                            <span>St {label}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleStationVisibility(st);
+                            }}
+                            className={`p-0.5 pr-1.5 hover:text-accent-primary transition-colors cursor-pointer ${
+                              isVisible ? "text-text-secondary" : "text-text-tertiary"
+                            }`}
+                            title={isVisible ? `Sembunyikan Gading ${label}` : `Tampilkan Gading ${label}`}
+                            aria-label={isVisible ? `Sembunyikan Gading ${label}` : `Tampilkan Gading ${label}`}
+                          >
+                            {isVisible ? <Eye size={11} /> : <EyeOff size={11} />}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Quick Visibility Filter Presets & Info Counter */}
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <div className="flex items-center space-x-1 bg-surface-inset p-0.5 rounded-md border border-border-default">
+                      <button
+                        type="button"
+                        onClick={showAllStations}
+                        className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                          visibleStations === "all"
+                            ? "bg-surface-primary text-accent-primary font-semibold shadow-2xs"
+                            : "text-text-secondary hover:text-text-primary"
+                        }`}
+                        title="Tampilkan semua gading"
+                      >
+                        Semua
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showOnlyActiveStation}
+                        className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                          Array.isArray(visibleStations) && visibleStations.length === 1 && Math.abs(visibleStations[0] - activeStation) < 1e-6
+                            ? "bg-surface-primary text-accent-primary font-semibold shadow-2xs"
+                            : "text-text-secondary hover:text-text-primary"
+                        }`}
+                        title="Hanya tampilkan gading yang aktif dipilih"
+                      >
+                        Hanya Aktif
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showAfterbodyStations}
+                        className="px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                        title="Tampilkan gading buritan (Station 0–10)"
+                      >
+                        Buritan (0–10)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showForebodyStations}
+                        className="px-2 py-0.5 rounded text-[11px] font-medium text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                        title="Tampilkan gading haluan (Station 10–20)"
+                      >
+                        Haluan (10–20)
+                      </button>
+                    </div>
+
+                    <div className="font-mono text-[11px] bg-surface-selected/60 border border-border-default px-2.5 py-1 rounded-md text-text-secondary">
+                      Gading <strong className="text-accent-primary">{getStationDisplayLabel(activeStation)}</strong> &bull;{" "}
+                      <strong className="text-text-primary">{visibleStationCount}</strong> dari {activeStationsConfig.length} tampil
+                    </div>
+                  </div>
+                </div>
+
+                {/* PHASE 3: Precision CAD Nudge & Reset Toolbar for Active Station */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border-subtle/70 bg-surface-inset/40 px-2 py-1 rounded-md">
+                  <div className="flex items-center space-x-2 text-xs">
+                    <span className="text-text-secondary font-medium flex items-center space-x-1.5">
+                      <span>Edit Section:</span>
+                      <select
+                        value={activeStation}
+                        onChange={(e) => handleStationChipClick(parseFloat(e.target.value))}
+                        className="bg-surface-primary text-accent-primary font-mono text-xs font-bold border border-border-default rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer"
+                        title="Pilih section / gading yang ingin diedit"
+                      >
+                        {activeStationsConfig.map((cfg) => {
+                          const isAfter = cfg.station <= 10.0;
+                          const side = isAfter ? "Buritan" : "Haluan";
+                          return (
+                            <option key={`emb-cad-st-${cfg.station}`} value={cfg.station}>
+                              Gading {getStationDisplayLabel(cfg.station)} ({side})
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <div className="flex items-center space-x-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleStepStation(-1)}
+                          disabled={activeStationIndex <= 0}
+                          className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                          title="Gading sebelumnya"
+                        >
+                          <ChevronLeft size={12} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStepStation(1)}
+                          disabled={activeStationIndex >= activeStationsConfig.length - 1}
+                          className="p-0.5 hover:bg-surface-secondary text-text-secondary hover:text-text-primary disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors cursor-pointer"
+                          title="Gading berikutnya"
+                        >
+                          <ChevronRight size={12} />
+                        </button>
+                      </div>
+                      <span>@ Elevasi:</span>
+                      <select
+                        value={activeWlId}
+                        onChange={(e) => onSelectWlId?.(e.target.value)}
+                        className="bg-surface-primary text-text-primary border border-border-default rounded px-1.5 py-0.5 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-focus-ring cursor-pointer"
+                        title="Pilih elevasi Z / garis air yang diedit pada gading ini"
+                      >
+                        {effectiveWaterlineLevels.map((w) => {
+                          const zVal = w.draftFraction * T;
+                          return (
+                            <option key={w.id} value={w.id}>
+                              {w.shortName} ({zVal.toFixed(2)}m)
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </span>
+
+                    {/* Numeric Input */}
+                    <div className="flex items-center space-x-1">
+                      <span className="text-text-secondary font-mono text-[11px]">0.5B:</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max={(halfB * 1.15).toFixed(2)}
+                        value={(getStationHalfB(activeStation, activeWlId, (effectiveWaterlineLevels.find(w => w.id === activeWlId)?.draftFraction ?? 1.0) * T)).toFixed(3)}
+                        onChange={(e) => handleDirectStationHalfBChange(e.target.value)}
+                        className="w-20 px-2 py-0.5 text-xs font-mono bg-surface-primary border border-border-default rounded text-text-primary font-semibold text-center focus:outline-none focus:ring-1 focus:ring-focus-ring"
+                      />
+                      <span className="text-text-secondary text-xs">m</span>
+                    </div>
+
+                    {/* Step Nudge Buttons */}
+                    <div className="flex items-center space-x-0.5 font-mono text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(-0.1)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Kurangi 0.1 meter"
+                      >
+                        -0.1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(-0.01)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Kurangi 0.01 meter (1 cm)"
+                      >
+                        -0.01
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(0.01)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Tambah 0.01 meter (1 cm)"
+                      >
+                        +0.01
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNudgeStationHalfB(0.1)}
+                        className="px-1.5 py-0.5 bg-surface-secondary hover:bg-surface-selected border border-border-default rounded text-text-primary transition-colors cursor-pointer"
+                        title="Tambah 0.1 meter"
+                      >
+                        +0.1
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {/* PMB Lock Toggle */}
+                    <button
+                      type="button"
+                      onClick={() => setLockPmb(!lockPmb)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-sans font-medium transition-colors border cursor-pointer flex items-center space-x-1 ${
+                        lockPmb
+                          ? "bg-surface-selected text-accent-primary border-border-default font-semibold shadow-2xs"
+                          : "bg-surface-secondary text-text-secondary border-border-default hover:text-text-primary"
+                      }`}
+                      title={lockPmb ? "Kunci PMB Aktif: Edit Gading 10 otomatis selaras ke Gading 6-15" : "Kunci PMB Bebas: Tiap gading dapat diedit mandiri"}
+                    >
+                      <span>Kunci PMB (St 6–15):</span>
+                      <strong className={lockPmb ? "text-accent-primary" : "text-text-secondary"}>{lockPmb ? "ON" : "OFF"}</strong>
+                    </button>
+
+                    {/* Reset Station Button */}
+                    <button
+                      type="button"
+                      onClick={handleResetCurrentStation}
+                      className="px-2 py-0.5 bg-surface-secondary hover:bg-status-danger-subtle text-text-secondary hover:text-status-danger border border-border-default rounded text-[11px] font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1"
+                      title="Kembalikan ordinat gading ini ke rancangan teoritis FairingEngine"
+                    >
+                      <RotateCcw size={11} />
+                      <span>Reset Gading</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
+          )}
 
           {/* SVG Blueprint Canvas or XYZ Table in Embedded View */}
           {studioMode === "xyzTable" ? (
@@ -2658,52 +3787,52 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
           ) : showVisualPlot ? (
             <div className={`bg-surface-canvas rounded-lg relative overflow-hidden border border-border-default flex items-center justify-center group select-none ${
               compact
-                ? "w-full flex-1 min-h-0 h-full max-w-none p-1 mx-auto"
+                ? "w-full h-full flex-1 min-h-0 relative p-1.5"
                 : "w-full h-96 sm:h-[440px] md:h-[480px] p-3"
             } `}>
               {/* Floating Blueprint Controls Overlay */}
-              <div className={`absolute top-2 right-2 z-20 flex items-center space-x-1 bg-surface-primary border border-border-default rounded-lg ${
-                compact ? "p-0.5 scale-90 origin-top-right" : "p-1"
-              } `}>
-                {/* Readout Pill */}
-                <div className="flex items-center space-x-1.5 bg-surface-selected border border-border-default px-2.5 py-1 rounded-md font-mono text-xs">
-                  <span className="text-accent-primary font-semibold">0.5B: <strong className="text-text-primary">{activeHoverHalfB.toFixed(2)}m</strong></span>
-                  <span className="text-text-secondary">|</span>
-                  <span className="text-status-warning font-semibold">R: <strong className="text-text-primary">{R.toFixed(2)}m</strong></span>
+              {!compact && (
+                <div className="absolute top-2 right-2 z-20 flex items-center space-x-1 bg-surface-primary border border-border-default rounded-lg p-1">
+                  {/* Readout Pill */}
+                  <div className="flex items-center space-x-1.5 bg-surface-selected border border-border-default px-2.5 py-1 rounded-md font-mono text-xs">
+                    <span className="text-accent-primary font-semibold">0.5B: <strong className="text-text-primary">{activeHoverHalfB.toFixed(2)}m</strong></span>
+                    <span className="text-text-secondary">|</span>
+                    <span className="text-status-warning font-semibold">R: <strong className="text-text-primary">{R.toFixed(2)}m</strong></span>
+                  </div>
+
+                  {/* Buttock */}
+                  <button
+                    onClick={() => setShowButtocks(!showButtocks)}
+                    className={`px-2 py-1 rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 ${
+                      showButtocks
+                        ? "bg-surface-selected border border-border-default text-accent-primary min-h-9"
+                        : "bg-surface-secondary hover:bg-surface-secondary text-text-secondary hover:text-text-primary min-h-9"
+                    } `}
+                    title="Show / hide buttock lines"
+                   aria-pressed={showButtocks} aria-label="Show / hide buttock lines">
+                    <Layers size={13} />
+                    <span>Buttock</span>
+                  </button>
+
+                  {/* Edit / Preview Mode */}
+                  <button
+                    onClick={() => setIsPreviewMode(!isPreviewMode)}
+                    className="p-1.5 hover:bg-surface-secondary rounded text-text-secondary hover:text-accent-primary transition-colors cursor-pointer min-h-9"
+                    title={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}
+                   aria-pressed={isPreviewMode} aria-label={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}>
+                    {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+
+                  {/* Fullscreen */}
+                  <button
+                    onClick={() => setIsFullscreenPlot(true)}
+                    className="px-2 py-1 bg-surface-selected hover:bg-surface-selected border border-border-default text-accent-primary hover:text-accent-primary rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 min-h-9"
+                    title="Fullscreen"
+                   aria-label="Fullscreen">
+                    <Maximize size={13} />
+                  </button>
                 </div>
-
-                {/* Buttock */}
-                <button
-                  onClick={() => setShowButtocks(!showButtocks)}
-                  className={`px-2 py-1 rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 ${
-                    showButtocks
-                      ? "bg-surface-selected border border-border-default text-accent-primary min-h-9"
-                      : "bg-surface-secondary hover:bg-surface-secondary text-text-secondary hover:text-text-primary min-h-9"
-                  } `}
-                  title="Show / hide buttock lines"
-                 aria-pressed={showButtocks} aria-label="Show / hide buttock lines">
-                  <Layers size={13} />
-                  <span>Buttock</span>
-                </button>
-
-                {/* Edit / Preview Mode */}
-                <button
-                  onClick={() => setIsPreviewMode(!isPreviewMode)}
-                  className="p-1.5 hover:bg-surface-secondary rounded text-text-secondary hover:text-accent-primary transition-colors cursor-pointer min-h-9"
-                      title={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}
-                 aria-pressed={isPreviewMode} aria-label={isPreviewMode ? "Show points & construction guides (Edit Mode)" : "Hide points & construction guides (Preview Mode)"}>
-                  {isPreviewMode ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
-
-                {/* Fullscreen */}
-                <button
-                  onClick={() => setIsFullscreenPlot(true)}
-                  className="px-2 py-1 bg-surface-selected hover:bg-surface-selected border border-border-default text-accent-primary hover:text-accent-primary rounded text-sm font-sans font-medium transition-colors cursor-pointer flex items-center space-x-1 min-h-9"
-                  title="Fullscreen"
-                 aria-label="Fullscreen">
-                  <Maximize size={13} />
-                </button>
-              </div>
+              )}
 
               {/* Dynamic HUD Coordinate Banner */}
               {draggingStation !== null && draggingWlId ? (
@@ -2740,7 +3869,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               {/* Zoom Controls at bottom-right */}
               <div className="absolute right-3 bottom-3 flex items-center space-x-1 bg-surface-primary p-1 rounded-lg border border-border-default z-10 opacity-70 group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => setZoomLevel((z) => Math.max(z - 0.5, 1))}
+                  onClick={() => setZoomLevel((z) => Math.max(Number((z - 0.1).toFixed(2)), 0.75))}
                   className="p-1 hover:bg-surface-secondary text-text-secondary rounded transition-colors flex justify-center items-center cursor-pointer min-h-9"
                   title="Zoom Out"
                  aria-label="Zoom Out">
@@ -2754,7 +3883,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
                   {Math.round(zoomLevel * 100)}%
                 </button>
                 <button
-                  onClick={() => setZoomLevel((z) => Math.min(z + 0.5, 4))}
+                  onClick={() => setZoomLevel((z) => Math.min(Number((z + 0.1).toFixed(2)), 3))}
                   className="p-1 hover:bg-surface-secondary text-text-secondary rounded transition-colors flex justify-center items-center cursor-pointer min-h-9"
                   title="Zoom In"
                  aria-label="Zoom In">
@@ -2765,7 +3894,7 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
               <svg
                 ref={svgRef}
                 className="w-full h-full cursor-crosshair transition-colors duration-300 ease-in-out select-none"
-                viewBox={studioMode === "bodyPlan" ? "0 0 200 144" : studioMode === "midshipDetail" ? "28 10 100 80" : "0 0 200 144"}
+                viewBox={studioMode === "bodyPlan" ? bodyPlanViewBox : studioMode === "midshipDetail" ? "28 10 100 80" : "0 0 200 144"}
                 preserveAspectRatio="xMidYMid meet"
                 style={{ touchAction: "none" }}
                 onPointerMove={handlePointerMove}
@@ -3280,6 +4409,231 @@ export const MidshipBilgeCalculationSheet: React.FC<MidshipBilgeCalculationProps
             )}
           </div>
         </>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CUSTOM STATION COUNT & SELECTION MODAL                                     */}
+      {/* ========================================================================= */}
+      {isStationCustomModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 overflow-y-auto animate-in fade-in"
+          onClick={() => setIsStationCustomModalOpen(false)}
+        >
+          <div
+            className="bg-surface-primary border border-border-default rounded-xl shadow-2xl max-w-2xl w-full p-5 space-y-4 text-text-primary my-auto select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border-default pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-lg bg-surface-selected text-accent-primary border border-border-default">
+                  <SlidersHorizontal size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-text-primary tracking-tight">
+                    Kostumisasi Jumlah &amp; Pilihan Gading
+                  </h3>
+                  <p className="text-xs text-text-secondary">
+                    Tentukan berapa banyak gading dan gading mana saja yang aktif pada Body Plan
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsStationCustomModalOpen(false)}
+                className="p-1.5 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors cursor-pointer"
+                title="Tutup dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Quick Presets Strip */}
+            <div className="space-y-1.5 bg-surface-canvas p-3 rounded-lg border border-border-default">
+              <span className="text-xs font-mono text-text-secondary font-semibold uppercase tracking-wider block">
+                1. Pilih Preset Standar:
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "11" as const, label: "11 Gading", sub: "Interval 2 (Gading Genap 0-20)" },
+                  { id: "21" as const, label: "21 Gading", sub: "Standar Utama (St. 0 s.d 20)" },
+                ].map((p) => {
+                  const isMatching =
+                    tempModalSelectedStations.length === STATION_PRESETS[p.id].length &&
+                    tempModalSelectedStations.every((s, i) => Math.abs(s - STATION_PRESETS[p.id][i]) < 1e-4);
+                  return (
+                    <button
+                      key={`modal-preset-${p.id}`}
+                      type="button"
+                      onClick={() => {
+                        setTempModalSelectedStations([...STATION_PRESETS[p.id]]);
+                        setCustomStationCountInput(STATION_PRESETS[p.id].length);
+                      }}
+                      className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                        isMatching
+                          ? "bg-accent-primary text-on-accent border-accent-primary shadow-xs font-bold ring-1 ring-focus-ring"
+                          : "bg-surface-primary hover:bg-surface-secondary text-text-secondary hover:text-text-primary border-border-default"
+                      }`}
+                    >
+                      <div className="font-semibold text-xs">{p.label}</div>
+                      <div className={`text-[10px] ${isMatching ? "text-on-accent/80" : "text-text-tertiary"}`}>
+                        {p.sub}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Custom Count Stepper & Auto-Distribute */}
+            <div className="space-y-1.5 bg-surface-canvas p-3 rounded-lg border border-border-default">
+              <span className="text-xs font-mono text-text-secondary font-semibold uppercase tracking-wider block">
+                2. Kostum Mau Berapa Gading (Distribusi Otomatis):
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center space-x-1.5 bg-surface-primary border border-border-default rounded-lg px-2.5 py-1">
+                  <span className="text-xs text-text-secondary font-mono">Jumlah:</span>
+                  <input
+                    type="number"
+                    min="3"
+                    max="21"
+                    value={customStationCountInput}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 3;
+                      setCustomStationCountInput(Math.max(3, Math.min(21, val)));
+                    }}
+                    className="w-16 px-1.5 py-0.5 text-xs font-mono bg-surface-canvas border border-border-default rounded text-center text-text-primary font-bold focus:outline-none focus:ring-1 focus:ring-focus-ring"
+                  />
+                  <span className="text-xs text-text-secondary">gading</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleApplyCustomStationCount(customStationCountInput)}
+                  className="px-3 py-1.5 bg-surface-secondary hover:bg-surface-selected text-text-primary hover:text-accent-primary border border-border-default rounded-lg text-xs font-sans font-semibold transition-colors cursor-pointer flex items-center space-x-1"
+                >
+                  <Wand2 size={12} className="text-accent-primary" />
+                  <span>Distribusikan Otomatis ({customStationCountInput} Gading)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Interactive Station Checklist Grid */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-text-secondary font-semibold uppercase tracking-wider">
+                  3. Pilihan Gading Individual ({tempModalSelectedStations.length} Terpilih):
+                </span>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempModalSelectedStations([...STATION_PRESETS["21"]]);
+                      setCustomStationCountInput(21);
+                    }}
+                    className="text-[11px] text-accent-primary hover:underline cursor-pointer font-semibold"
+                  >
+                    Pilih Semua (21 Gading)
+                  </button>
+                  <span className="text-text-tertiary">•</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempModalSelectedStations([...STATION_PRESETS["11"]]);
+                      setCustomStationCountInput(11);
+                    }}
+                    className="text-[11px] text-text-secondary hover:text-text-primary cursor-pointer"
+                  >
+                    Gading Genap (11)
+                  </button>
+                  <span className="text-text-tertiary">•</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempModalSelectedStations([0.0, 10.0, 20.0]);
+                      setCustomStationCountInput(3);
+                    }}
+                    className="text-[11px] text-text-secondary hover:text-status-danger cursor-pointer"
+                  >
+                    Reset Minimal (3)
+                  </button>
+                </div>
+              </div>
+
+              {/* Station Chips Matrix */}
+              <div className="max-h-56 overflow-y-auto p-2.5 bg-surface-canvas rounded-lg border border-border-default space-y-3 scrollbar-thin scrollbar-thumb-slate-700">
+                {[
+                  { title: "Buritan & Afterbody (St 0 s.d 5)", minSt: 0.0, maxSt: 5.0, color: "text-chart-secondary" },
+                  { title: "Parallel Middle Body / Midship (St 6 s.d 15)", minSt: 6.0, maxSt: 15.0, color: "text-accent-primary" },
+                  { title: "Haluan & Forebody (St 16 s.d 20)", minSt: 16.0, maxSt: 20.0, color: "text-status-success" },
+                ].map((grp) => {
+                  const grpStations = DEFAULT_STATIONS_CONFIG.filter(
+                    (c) => Number.isInteger(c.station) && c.station >= grp.minSt && c.station <= grp.maxSt
+                  );
+                  return (
+                    <div key={grp.title} className="space-y-1.5">
+                      <div className={`text-[11px] font-mono font-semibold ${grp.color} flex items-center space-x-1`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        <span>{grp.title}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {grpStations.map((cfg) => {
+                          const st = cfg.station;
+                          const isSelected = tempModalSelectedStations.some((s) => Math.abs(s - st) < 1e-4);
+                          const label = getStationDisplayLabel(st);
+                          return (
+                            <button
+                              key={`modal-chk-st-${st}`}
+                              type="button"
+                              onClick={() => handleToggleModalStation(st)}
+                              className={`px-2 py-1 rounded text-xs font-mono transition-all border flex items-center space-x-1.5 cursor-pointer ${
+                                isSelected
+                                  ? "bg-accent-primary text-on-accent border-accent-primary font-bold shadow-xs"
+                                  : "bg-surface-primary text-text-tertiary border-border-subtle hover:bg-surface-secondary hover:text-text-primary"
+                              }`}
+                            >
+                              <span className="w-3 h-3 flex items-center justify-center text-[10px]">
+                                {isSelected ? "✓" : "○"}
+                              </span>
+                              <span>St {label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between border-t border-border-default pt-3">
+              <div className="font-mono text-xs text-text-secondary">
+                Total Gading Aktif:{" "}
+                <strong className="text-accent-primary text-sm font-bold">
+                  {tempModalSelectedStations.length}
+                </strong>{" "}
+                dari 36 gading
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsStationCustomModalOpen(false)}
+                  className="px-3 py-1.5 bg-surface-secondary hover:bg-surface-primary text-text-secondary hover:text-text-primary border border-border-default rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCustomStationsModal}
+                  className="px-4 py-1.5 bg-accent-primary hover:bg-accent-primary-hover text-on-accent rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer flex items-center space-x-1.5"
+                >
+                  <Check size={14} />
+                  <span>Terapkan Konfigurasi ({tempModalSelectedStations.length} Gading)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

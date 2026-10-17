@@ -1,4 +1,154 @@
 {
+  "side_profile": {
+    "stern": [
+      {
+        "id": "st-1",
+        "name": "Aft Keel",
+        "category": "stern",
+        "x": 7.02584,
+        "y": 0,
+        "description": "Aft keel base"
+      },
+      {
+        "id": "st-2",
+        "name": "Lengkung Skeg Poros",
+        "category": "stern",
+        "x": 2.6346899999999995,
+        "y": 1.3,
+        "description": "Lengkung bawah sarat"
+      },
+      {
+        "id": "st-3",
+        "name": "Poros Propeller",
+        "category": "stern",
+        "x": 0.702584,
+        "y": 2.6,
+        "description": "Pusat bossing baling-baling"
+      },
+      {
+        "id": "st-4",
+        "name": "Aft Waterline (DWL)",
+        "category": "stern",
+        "x": 0,
+        "y": 5.2,
+        "locked": true,
+        "description": "AP intersection at DWL (fixed LBP reference)"
+      },
+      {
+        "id": "st-5",
+        "name": "Lengkung Cruiser Stern",
+        "category": "stern",
+        "x": -3.51292,
+        "y": 6.2476,
+        "description": "Bulatan cruiser stern melengkung"
+      },
+      {
+        "id": "st-6",
+        "name": "Puncak Geladak Poop",
+        "category": "stern",
+        "x": -3.9520349999999995,
+        "y": 8.427999999999999,
+        "description": "Geladak buritan tanker"
+      }
+    ],
+    "bow": [
+      {
+        "id": "bw-1",
+        "name": "Forefoot Tangent (Dasar)",
+        "category": "bow",
+        "x": 80.79715999999999,
+        "y": 0,
+        "description": "Dasar sebelum bulb"
+      },
+      {
+        "id": "bw-2",
+        "name": "Bawah Bulbous Bow",
+        "category": "bow",
+        "x": 86.94476999999999,
+        "y": 0.78,
+        "description": "Dasar bulbous bow"
+      },
+      {
+        "id": "bw-3",
+        "name": "Ujung Depan Bulbous Bow",
+        "category": "bow",
+        "x": 90.89680499999999,
+        "y": 2.3400000000000003,
+        "description": "Hidung terdepan bulb bawah air"
+      },
+      {
+        "id": "bw-4",
+        "name": "Cekungan Atas Bulb (DWL)",
+        "category": "bow",
+        "x": 87.823,
+        "y": 5.2,
+        "locked": true,
+        "description": "Intersep FP pada sarat muat DWL (Acuan Statis Konstan LBP)"
+      },
+      {
+        "id": "bw-5",
+        "name": "Vertical Bow Stem",
+        "category": "bow",
+        "x": 89.14034499999998,
+        "y": 6.5968,
+        "description": "Upper stem rake"
+      },
+      {
+        "id": "bw-6",
+        "name": "Forecastle Bow Peak",
+        "category": "bow",
+        "x": 90.45769,
+        "y": 9.128,
+        "description": "Tanker bow peak"
+      }
+    ],
+    "sheer": [
+      {
+        "id": "sh-1",
+        "name": "Aft Sheer (AP)",
+        "category": "sheer",
+        "x": -3.073805,
+        "y": 8.628,
+        "description": "Aft stern sheer height"
+      },
+      {
+        "id": "sh-2",
+        "name": "Sheer 1/6 LBP",
+        "category": "sheer",
+        "x": 14.578618,
+        "y": 7.827999999999999,
+        "description": "Aft sheer transition curve"
+      },
+      {
+        "id": "sh-3",
+        "name": "Midship Sheer (St. 10)",
+        "category": "sheer",
+        "x": 43.9115,
+        "y": 7.528,
+        "description": "Lowest sheer point at midship"
+      },
+      {
+        "id": "sh-4",
+        "name": "Sheer 5/6 LBP",
+        "category": "sheer",
+        "x": 73.15655899999999,
+        "y": 8.078,
+        "description": "Bow sheer transition curve"
+      },
+      {
+        "id": "sh-5",
+        "name": "Fore Sheer (FP)",
+        "category": "sheer",
+        "x": 91.77503499999999,
+        "y": 9.328,
+        "description": "Forecastle sheer height"
+      }
+    ],
+    "preset": "tanker",
+    "exactLoa": 95.727,
+    "foreOverhang": 3.952,
+    "aftOverhang": 3.952
+  },
   "waterlines_data": {
     "WL3": {
       "0": 7.311,
@@ -195,9 +345,11 @@
       "badge": "Garis Lunas (0.00 m)"
     }
   ],
+  "active_station": 10,
+  "visible_stations": "all",
   "exact_loa": 95.727,
-  "fore_overhang": null,
-  "aft_overhang": null,
+  "fore_overhang": 3.952,
+  "aft_overhang": 3.952,
   "lbp_m": 87.823,
   "breadth_m": 15.16,
   "draft_m": 5.2,
@@ -205,6 +357,6 @@
   "cb": 0.75,
   "cm": 0.98,
   "vessel_type": "TANKER",
-  "updated_at": "2026-08-31T11:01:00.000000+00:00",
+  "updated_at": "2026-10-06T08:03:56.930916+00:00",
   "project_id": "PRJ-2026-6039"
 }

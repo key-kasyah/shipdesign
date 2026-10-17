@@ -179,9 +179,7 @@ function getMonotoneWaterplanePath(points: Point2D[]): string {
 // ══════════════════════════════════════════════════════════════════════════
 const STATIONS = [
   { id: 0, name: "St. 0 (AP)", xFrac: 0.0, isMain: true, isAP: true },
-  { id: 0.5, name: "St. 0.5", xFrac: 0.5 / 20, isMain: false },
   { id: 1, name: "St. 1", xFrac: 1.0 / 20, isMain: true },
-  { id: 1.5, name: "St. 1.5", xFrac: 1.5 / 20, isMain: false },
   { id: 2, name: "St. 2", xFrac: 2.0 / 20, isMain: true },
   { id: 3, name: "St. 3", xFrac: 3.0 / 20, isMain: true },
   { id: 4, name: "St. 4", xFrac: 4.0 / 20, isMain: true },
@@ -199,9 +197,7 @@ const STATIONS = [
   { id: 16, name: "St. 16", xFrac: 16.0 / 20, isMain: true },
   { id: 17, name: "St. 17", xFrac: 17.0 / 20, isMain: true },
   { id: 18, name: "St. 18", xFrac: 18.0 / 20, isMain: true },
-  { id: 18.5, name: "St. 18.5", xFrac: 18.5 / 20, isMain: false },
   { id: 19, name: "St. 19", xFrac: 19.0 / 20, isMain: true },
-  { id: 19.5, name: "St. 19.5", xFrac: 19.5 / 20, isMain: false },
   { id: 20, name: "St. 20 (FP)", xFrac: 1.0, isMain: true, isFP: true }
 ];
 

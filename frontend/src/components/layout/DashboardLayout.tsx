@@ -258,10 +258,10 @@ export default function DashboardLayout({
         }  ${
           sidebarCollapsed
             ? "lg:invisible lg:-translate-x-full lg:w-0 lg:opacity-0 lg:border-r-0 lg:pointer-events-none"
-            : "lg:visible lg:translate-x-0 lg:w-[216px] lg:opacity-100"
+            : "lg:visible lg:translate-x-0 lg:w-[280px] lg:opacity-100"
         } w-72 sm:w-80 shrink-0 overflow-hidden`}
       >
-        <div className="w-72 sm:w-80 lg:w-[216px] flex flex-col h-full shrink-0">
+        <div className="w-72 sm:w-80 lg:w-[280px] flex flex-col h-full shrink-0">
           {/* Sidebar Header with Ship Design Logo */}
           <div className="h-14 flex items-center justify-between pl-4 pr-2 border-b border-border-default shrink-0">
             <Link href="/" className="flex items-center gap-2 group min-w-0 flex-1 overflow-hidden">

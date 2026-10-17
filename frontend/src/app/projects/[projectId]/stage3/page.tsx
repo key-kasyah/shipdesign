@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { api } from "../../../../services/api";
 import { SideProfileNurbsEditor } from "../../../../components/design/SideProfileNurbsEditor";
-import { WaterPlaneCalculationSheet, WaterPlanePageTabs, WaterlineConfig, DEFAULT_WATERLINE_LEVELS, generateWaterlinePresets, WaterPlaneViewMode } from "../../../../components/design/WaterPlaneCalculationSheet";
+import { WaterPlaneCalculationSheet, WaterPlanePageTabs, WaterlineConfig, DEFAULT_WATERLINE_LEVELS, generateWaterlinePresets, WaterPlaneViewMode, StationVisibility, DEFAULT_ACTIVE_STATION } from "../../../../components/design/WaterPlaneCalculationSheet";
 import { MidshipBilgeCalculationSheet } from "../../../../components/design/MidshipBilgeCalculationSheet";
 import { LinesPlanThreeView } from "../../../../components/design/LinesPlanThreeView";
 import { useLanguage } from "../../../../context/LanguageContext";
@@ -83,8 +83,8 @@ export default function Stage3BasicDesignPage() {
   // Dynamic Custom Waterlines Configuration (Synchronized across Tab 2 and Tab 3)
   const [waterlineLevels, setWaterlineLevels] = useState<WaterlineConfig[]>(DEFAULT_WATERLINE_LEVELS);
 
-  // Synchronized Station Density (All 36 stations vs Standard 23 stations)
-  const [stationDensity, setStationDensity] = useState<"all" | "standard">("all");
+  // Synchronized Station Density (All 36 stations vs Standard 21 stations)
+  const [stationDensity, setStationDensity] = useState<"all" | "standard">("standard");
 
   // Synchronized Multi-Waterline Offsets Data (Shared between Tab 2 and Tab 4)
   const [waterlinesData, setWaterlinesData] = useState<
@@ -94,6 +94,10 @@ export default function Stage3BasicDesignPage() {
   // Synchronized Active Waterline selection between Waterplane Plan (Tab 2) and Midship Section (Tab 3)
   const [activeWlId, setActiveWlId] = useState<string>("WL6");
   const [waterplaneViewMode, setWaterplaneViewMode] = useState<WaterPlaneViewMode>("fullSheet");
+
+  // Synchronized Active Station (gading) & station visibility between Body Plan and Waterline editors
+  const [activeStation, setActiveStation] = useState<number>(DEFAULT_ACTIVE_STATION);
+  const [visibleStations, setVisibleStations] = useState<StationVisibility>("all");
 
   useEffect(() => {
     if (waterlineLevels && waterlineLevels.length > 0 && !waterlineLevels.some((w) => w.id === activeWlId)) {
@@ -151,6 +155,8 @@ export default function Stage3BasicDesignPage() {
             if (res3.fore_overhang) setForeOverhang(res3.fore_overhang);
             if (res3.aft_overhang) setAftOverhang(res3.aft_overhang);
             if (res3.draft_m) setSavedDraftSnapshot(res3.draft_m);
+            if (typeof res3.active_station === "number") setActiveStation(res3.active_station);
+            if (res3.visible_stations === "all" || Array.isArray(res3.visible_stations)) setVisibleStations(res3.visible_stations);
             if (res3.updated_at) {
               const dt = new Date(res3.updated_at);
               setLastSaved(dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -172,6 +178,8 @@ export default function Stage3BasicDesignPage() {
               if (parsed.fore_overhang) setForeOverhang(parsed.fore_overhang);
               if (parsed.aft_overhang) setAftOverhang(parsed.aft_overhang);
               if (parsed.draft_m) setSavedDraftSnapshot(parsed.draft_m);
+              if (typeof parsed.active_station === "number") setActiveStation(parsed.active_station);
+              if (parsed.visible_stations === "all" || Array.isArray(parsed.visible_stations)) setVisibleStations(parsed.visible_stations);
               if (parsed.updated_at) {
                 const dt = new Date(parsed.updated_at);
                 setLastSaved(dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
@@ -229,6 +237,8 @@ export default function Stage3BasicDesignPage() {
         side_profile: sideProfileData,
         waterlines_data: waterlinesData,
         waterline_levels: waterlineLevels,
+        active_station: activeStation,
+        visible_stations: visibleStations,
         exact_loa: exactLoa,
         fore_overhang: foreOverhang,
         aft_overhang: aftOverhang,
@@ -297,7 +307,7 @@ export default function Stage3BasicDesignPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [waterlinesData, exactLoa, foreOverhang, aftOverhang, lbp, breadth, draft, depth, cb, cm, vesselType]);
+  }, [waterlinesData, waterlineLevels, sideProfileData, activeStation, visibleStations, exactLoa, foreOverhang, aftOverhang, lbp, breadth, draft, depth, cb, cm, vesselType]);
 
   // Keyboard shortcut (Escape) to close dual fullscreen mode
   useEffect(() => {
@@ -397,95 +407,64 @@ export default function Stage3BasicDesignPage() {
   return (
     <div className="atelier-stage3 flex min-w-0 flex-col min-h-full bg-surface-canvas text-text-primary font-sans relative">
       {/* Top Header Bar */}
-      <header className="border-b border-border-default bg-surface-primary shrink-0 px-4 md:px-6 2xl:px-8 py-6">
-        <div className="flex flex-col justify-between gap-5 min-w-0">
-          {/* Left: Navigation and Title Block */}
+      <header className="border-b border-border-default bg-surface-primary shrink-0 px-4 md:px-6 2xl:px-8 py-3 space-y-2.5">
+        {/* Tier 1: Main Identification & Primary Actions */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 min-w-0">
+          {/* Left: Navigation, Compass, Stage Title, & Project ID */}
           <div className="flex items-center space-x-3 min-w-0">
             <button
               onClick={() => router.push(`/projects/${projectId}/stage2`)}
-              className="px-2.5 py-1.5 rounded-md bg-surface-secondary hover:bg-surface-secondary border border-border-default text-text-primary hover:text-text-primary transition-colors cursor-pointer flex items-center space-x-1.5 text-sm font-semibold shrink-0 min-h-9"
+              className="px-2.5 py-1.5 rounded-md bg-surface-secondary hover:bg-surface-secondary border border-border-default text-text-primary hover:text-text-primary transition-colors cursor-pointer flex items-center space-x-1.5 text-xs font-semibold shrink-0"
               title={language === "en" ? "Back to Stage 2 Preliminary Design" : "Kembali ke Tahap 2 Pra-Rancangan"}
-             aria-label={language === "en" ? "Back to Stage 2 Preliminary Design" : "Kembali ke Tahap 2 Pra-Rancangan"}>
+              aria-label={language === "en" ? "Back to Stage 2 Preliminary Design" : "Kembali ke Tahap 2 Pra-Rancangan"}
+            >
               <ArrowLeft size={14} className="text-text-secondary" />
-              <span className="hidden sm:inline">{language === "en" ? "Stage 2" : "Tahap 2"}</span>
+              <span>{language === "en" ? "Stage 2" : "Tahap 2"}</span>
             </button>
 
-            <div className="h-6 w-px bg-surface-secondary shrink-0 hidden sm:block" />
+            <div className="h-5 w-px bg-border-default shrink-0" />
 
             <div className="flex items-center space-x-2.5 min-w-0">
-              <div className="text-text-secondary shrink-0">
-                <Compass size={16} />
+              <div className="text-accent-primary shrink-0">
+                <Compass size={18} />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
-                  <h1 className="font-semibold text-[22px] leading-7 tracking-[-0.02em] text-text-primary">
-                    {language === "en" ? "Stage 3 — Basic Design & Lines Plan" : "Tahap 3 — Desain Awal (Basic Design & Lines Plan)"}
-                  </h1>
-                  <span className="text-[13px] font-mono text-text-secondary px-2 py-1 rounded shrink-0">
-                    {projectId}
-                  </span>
-                </div>
-                <p className="text-sm text-text-secondary max-w-[72ch] mt-2">
-                  {language === "en"
-                    ? "Lines plan studio, waterplane calculations, bilge radius & CSA section projection."
-                    : "Studio rencana garis, kalkulasi bidang garis air, radius bilga & proyeksi luasan CSA."}
-                </p>
-              </div>
+              <h1 className="font-semibold text-base sm:text-lg text-text-primary truncate tracking-tight">
+                {language === "en" ? "Stage 3 — Basic Design & Lines Plan" : "Tahap 3 — Desain Awal (Basic Design & Lines Plan)"}
+              </h1>
+              <span className="text-xs font-mono font-medium text-text-secondary bg-surface-secondary px-2 py-0.5 rounded border border-border-subtle shrink-0">
+                {projectId}
+              </span>
             </div>
           </div>
 
-          {/* Right: Key Metric Badges & Save Button */}
-          <div className="flex w-full min-w-0 flex-wrap items-center gap-x-6 gap-y-3">
-            {/* Instrument Telemetry Strip */}
-            <div tabIndex={0} role="region" aria-label="Scrollable engineering workspace" className="flex items-center divide-x divide-border-subtle py-1 text-sm font-mono tabular-nums overflow-x-auto max-w-full mr-auto">
-              <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-text-secondary text-xs tracking-normal font-semibold">LBP</span>
-                <span className="text-text-primary font-medium text-sm">{lbp.toFixed(2)}m</span>
-              </div>
-              <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-text-secondary text-xs tracking-normal font-semibold">LOA</span>
-                <span className="text-text-primary font-medium text-sm">{currentLoa.toFixed(2)}m</span>
-              </div>
-              <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-text-secondary text-xs tracking-normal font-semibold">B</span>
-                <span className="text-text-primary font-medium text-sm">{breadth.toFixed(2)}m</span>
-              </div>
-              <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-text-secondary text-xs tracking-normal font-semibold">T</span>
-                <span className="text-text-primary font-medium text-sm">{draft.toFixed(2)}m</span>
-              </div>
-              <div className="px-2.5 py-0.5 flex items-center space-x-1.5 shrink-0">
-                <span className="text-text-secondary text-xs tracking-normal font-semibold">Cb</span>
-                <span className="text-text-primary font-medium text-sm">{cb.toFixed(3)}</span>
-              </div>
-            </div>
-
+          {/* Right: Last Saved Indicator & Save Button */}
+          <div className="flex items-center space-x-2.5 shrink-0 ml-auto sm:ml-0">
             {lastSaved && (
-              <span className="hidden 2xl:flex items-center space-x-1.5 text-xs font-mono text-text-secondary bg-surface-secondary px-2.5 py-1.5 rounded-lg border border-border-default" title="Waktu terakhir data tersimpan aman">
-                <Clock size={11} className="text-status-success" />
+              <span className="hidden sm:flex items-center space-x-1.5 text-xs font-mono text-text-secondary bg-surface-secondary px-2.5 py-1 rounded-md border border-border-default" title="Waktu terakhir data tersimpan aman">
+                <Clock size={12} className="text-status-success" />
                 <span>{lastSaved}</span>
               </span>
             )}
 
-            {/* Permanent Save Button with Live Status */}
             <button
               onClick={() => handleSaveAll(true)}
               disabled={saving}
-              className={`min-h-9 px-3.5 rounded-md text-sm font-semibold transition-colors cursor-pointer flex items-center space-x-2 shrink-0 ${
+              className={`min-h-8 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1.5 shrink-0 ${
                 saving
-                  ? "bg-status-warning-subtle text-status-warning border border-status-warning-border animate-pulse cursor-wait min-h-9"
+                  ? "bg-status-warning-subtle text-status-warning border border-status-warning-border animate-pulse cursor-wait"
                   : hasUnsavedChanges
-                  ? "text-on-accent border border-border-default bg-accent-primary min-h-9"
-                  : "text-on-accent border border-status-success-border bg-accent-primary min-h-9"
+                  ? "text-on-accent border border-border-default bg-accent-primary hover:bg-accent-hover"
+                  : "text-on-accent border border-status-success-border bg-accent-primary hover:bg-accent-hover"
               } `}
               title={language === "en" ? "Save all Stage 3 design data permanently to server & storage (Ctrl+S)" : "Simpan semua data perancangan Tahap 3 secara permanen ke server & penyimpanan (Ctrl+S)"}
-             aria-label={language === "en" ? "Save all Stage 3 design data permanently to server & storage (Ctrl+S)" : "Simpan semua data perancangan Tahap 3 secara permanen ke server & penyimpanan (Ctrl+S)"}>
+              aria-label={language === "en" ? "Save all Stage 3 design data permanently to server & storage (Ctrl+S)" : "Simpan semua data perancangan Tahap 3 secara permanen ke server & penyimpanan (Ctrl+S)"}
+            >
               {saving ? (
                 <RefreshCw size={13} className="animate-spin text-status-warning" />
               ) : hasUnsavedChanges ? (
-                <Save size={16} />
+                <Save size={14} />
               ) : (
-                <CheckCircle2 size={16} />
+                <CheckCircle2 size={14} />
               )}
               <span>
                 {saving
@@ -494,10 +473,48 @@ export default function Stage3BasicDesignPage() {
                   ? (language === "en" ? "Save Changes" : "Simpan Perubahan")
                   : (language === "en" ? "Save Design" : "Simpan Desain")}
               </span>
-              <span className="hidden sm:inline-block text-xs font-mono px-1.5 py-0.5 rounded border border-current font-medium">
+              <span className="hidden md:inline-block text-[10px] font-mono px-1 py-0.2 rounded border border-current font-medium opacity-85">
                 Ctrl+S
               </span>
             </button>
+          </div>
+        </div>
+
+        {/* Tier 2: Subtitle Description & Hull Dimension Telemetry Strip */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-border-subtle/60 min-w-0">
+          <p className="text-xs text-text-secondary truncate max-w-[65ch]">
+            {language === "en"
+              ? "Lines plan studio, waterplane calculations, bilge radius & CSA section projection."
+              : "Studio rencana garis, kalkulasi bidang garis air, radius bilga & proyeksi luasan CSA."}
+          </p>
+
+          {/* Hull Dimensions Telemetry Strip */}
+          <div
+            tabIndex={0}
+            role="region"
+            aria-label="Hull Principal Dimensions"
+            className="flex items-center divide-x divide-border-subtle bg-surface-secondary/70 border border-border-default rounded-md px-1 py-0.5 text-xs font-mono tabular-nums shrink-0 overflow-x-auto self-start sm:self-auto max-w-full"
+          >
+            <div className="px-2 py-0.5 flex items-center space-x-1 shrink-0">
+              <span className="text-text-secondary text-[11px] font-medium">LBP</span>
+              <span className="text-text-primary font-semibold">{lbp.toFixed(2)}m</span>
+            </div>
+            <div className="px-2 py-0.5 flex items-center space-x-1 shrink-0">
+              <span className="text-text-secondary text-[11px] font-medium">LOA</span>
+              <span className="text-text-primary font-semibold">{currentLoa.toFixed(2)}m</span>
+            </div>
+            <div className="px-2 py-0.5 flex items-center space-x-1 shrink-0">
+              <span className="text-text-secondary text-[11px] font-medium">B</span>
+              <span className="text-text-primary font-semibold">{breadth.toFixed(2)}m</span>
+            </div>
+            <div className="px-2 py-0.5 flex items-center space-x-1 shrink-0">
+              <span className="text-text-secondary text-[11px] font-medium">T</span>
+              <span className="text-text-primary font-semibold">{draft.toFixed(2)}m</span>
+            </div>
+            <div className="px-2 py-0.5 flex items-center space-x-1 shrink-0">
+              <span className="text-text-secondary text-[11px] font-medium">Cb</span>
+              <span className="text-text-primary font-semibold">{cb.toFixed(3)}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -516,7 +533,7 @@ export default function Stage3BasicDesignPage() {
       )}
 
       {/* Sub Navigation Tabs */}
-      <nav aria-label={language === "en" ? "Basic design workspaces" : "Ruang kerja desain dasar"} className="bg-surface-primary border-b border-border-default flex w-full min-w-0 px-4 md:px-6 2xl:px-8 gap-6 overflow-x-auto items-stretch shrink-0">
+      <nav aria-label={language === "en" ? "Basic design workspaces" : "Ruang kerja desain dasar"} className="bg-surface-primary border-b border-border-default flex w-full min-w-0 px-4 md:px-6 2xl:px-8 gap-2 overflow-x-auto items-stretch shrink-0">
         {navTabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -524,7 +541,7 @@ export default function Stage3BasicDesignPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               aria-pressed={isActive}
-              className={`flex min-h-12 shrink-0 justify-center items-center gap-2 px-1 py-3 text-sm font-medium whitespace-nowrap cursor-pointer border-b-2 ${
+              className={`flex min-h-12 shrink-0 justify-center items-center gap-2 px-1 py-3 text-center text-sm leading-tight font-medium whitespace-nowrap cursor-pointer border-b-2 md:flex-1 md:min-w-0 md:whitespace-normal md:px-2 ${
                 isActive
                   ? "text-accent-primary border-accent-primary font-semibold"
                   : "text-text-secondary hover:text-text-primary border-transparent"
@@ -646,13 +663,17 @@ export default function Stage3BasicDesignPage() {
                       }}
                       activeWlId={activeWlId}
                       onSelectWlId={setActiveWlId}
+                      activeStation={activeStation}
+                      onSelectStation={setActiveStation}
+                      visibleStations={visibleStations}
+                      onUpdateVisibleStations={setVisibleStations}
                       stationDensity={stationDensity}
                       onUpdateStationDensity={setStationDensity}
                       onSave={() => handleSaveAll(true)}
                       isSaving={saving}
                       lastSaved={lastSaved}
                       visualOnly={true}
-                      compact={true}
+                      compact={false}
                       onOpenDualFullscreen={() => setIsDualFullscreen(true)}
                     />
                   </div>
@@ -697,10 +718,14 @@ export default function Stage3BasicDesignPage() {
                       sideProfileData={sideProfileData}
                       activeWlId={activeWlId}
                       onSelectWlId={setActiveWlId}
+                      activeStation={activeStation}
+                      onSelectStation={setActiveStation}
+                      visibleStations={visibleStations}
+                      onUpdateVisibleStations={setVisibleStations}
                       stationDensity={stationDensity}
                       onUpdateStationDensity={setStationDensity}
                       visualOnly={true}
-                      compact={true}
+                      compact={false}
                       onOpenDualFullscreen={() => setIsDualFullscreen(true)}
                     />
                   </div>
@@ -859,6 +884,10 @@ export default function Stage3BasicDesignPage() {
                 }}
                 activeWlId={activeWlId}
                 onSelectWlId={setActiveWlId}
+                activeStation={activeStation}
+                onSelectStation={setActiveStation}
+                visibleStations={visibleStations}
+                onUpdateVisibleStations={setVisibleStations}
                 stationDensity={stationDensity}
                 onUpdateStationDensity={setStationDensity}
                 onSave={() => handleSaveAll(true)}
@@ -944,6 +973,10 @@ export default function Stage3BasicDesignPage() {
                 sideProfileData={sideProfileData}
                 activeWlId={activeWlId}
                 onSelectWlId={setActiveWlId}
+                activeStation={activeStation}
+                onSelectStation={setActiveStation}
+                visibleStations={visibleStations}
+                onUpdateVisibleStations={setVisibleStations}
                 stationDensity={stationDensity}
                 onUpdateStationDensity={setStationDensity}
                 tablesOnly={true}
@@ -1153,59 +1186,54 @@ export default function Stage3BasicDesignPage() {
 
       {/* DUAL FULLSCREEN OVERLAY: WATERLINE (ATAS) & BILGA (BAWAH) SIMULTANEOUSLY */}
       {isDualFullscreen && (
-        <div className="fixed inset-0 z-50 bg-surface-primary flex flex-col p-2 sm:p-4 overflow-hidden select-none duration-200">
+        <div className="fixed inset-0 z-50 bg-surface-primary flex flex-col p-1.5 sm:p-2 overflow-hidden select-none duration-200">
           {/* Top Cockpit Header */}
-          <div className="w-full bg-surface-primary border border-border-default rounded-lg p-3 mb-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
-            <div className="flex items-center space-x-3">
-              <div className="text-text-secondary shrink-0">
-                <Sparkles size={20} />
+          <div className="w-full bg-surface-primary border border-border-default rounded-lg px-2.5 py-1.5 mb-1.5 flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center space-x-2.5">
+              <Sparkles size={16} className="text-accent-primary shrink-0" />
+              <div className="flex items-center space-x-2">
+                <h2 className="text-xs sm:text-sm font-semibold text-text-primary flex items-center space-x-2">
+                  <span>{language === "en" ? "Dual Visual Studio" : "Studio Visual Terpadu"}</span>
+                </h2>
+                <span className="px-1.5 py-0.2 rounded bg-surface-selected text-accent-primary border border-border-default text-[10px] font-mono font-semibold">
+                  DUAL COCKPIT
+                </span>
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h2 className="text-sm sm:text-base font-semibold text-text-primary flex items-center space-x-2">
-                    <span>{language === "en" ? "Dual Visual Studio (Simultaneous Fullscreen)" : "Studio Visual Terpadu: Garis Air & Radius Bilga"}</span>
-                  </h2>
-                  <span className="px-2 py-0.5 rounded-full bg-surface-selected text-accent-primary border border-border-default text-xs font-mono font-semibold">
-                    DUAL COCKPIT
-                  </span>
-                </div>
-                <div className="text-xs font-mono text-text-secondary flex flex-wrap items-center gap-2 mt-0.5">
-                  <span>LBP: <strong className="text-text-primary">{lbp.toFixed(2)}m</strong></span>
-                  <span>•</span>
-                  <span>B: <strong className="text-text-primary">{breadth.toFixed(2)}m</strong></span>
-                  <span>•</span>
-                  <span>T: <strong className="text-text-primary">{draft.toFixed(2)}m</strong></span>
-                  <span>•</span>
-                  <span>Cm: <strong className="text-status-warning">{cm}</strong></span>
-                  <span>•</span>
-                  <span>{waterlineLevels.length} WL Aktif</span>
-                </div>
+              <div className="hidden md:flex items-center gap-2 font-mono text-xs text-text-secondary pl-2 border-l border-border-default">
+                <span>LBP: <strong className="text-text-primary">{lbp.toFixed(2)}m</strong></span>
+                <span>•</span>
+                <span>B: <strong className="text-text-primary">{breadth.toFixed(2)}m</strong></span>
+                <span>•</span>
+                <span>T: <strong className="text-text-primary">{draft.toFixed(2)}m</strong></span>
+                <span>•</span>
+                <span>Cm: <strong className="text-status-warning">{cm}</strong></span>
               </div>
             </div>
 
             {/* Dual Studio Layout Indicator & Close */}
-            <div className="flex items-center space-x-2.5">
-              <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-surface-selected border border-border-default text-accent-primary text-sm font-mono font-semibold">
-                <span className="w-2 h-2 rounded-full bg-accent-primary" />
-                <span>⬌ {language === "en" ? "Side by Side (Left & Right)" : "Berdampingan (Kiri & Kanan)"}</span>
+            <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-surface-selected border border-border-default text-accent-primary text-xs font-mono font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent-primary" />
+                <span>⬌ {language === "en" ? "Side by Side" : "Berdampingan"}</span>
               </div>
 
               <button
                 type="button"
                 onClick={() => setIsDualFullscreen(false)}
-                className="p-2 bg-surface-secondary hover:bg-status-danger text-text-primary hover:text-text-primary rounded-md transition-colors cursor-pointer border border-border-default min-h-9"
+                className="p-1.5 bg-surface-secondary hover:bg-status-danger text-text-primary hover:text-white rounded-md transition-colors cursor-pointer border border-border-default"
                 title="Keluar Layar Penuh (Esc)"
-               aria-label="Keluar Layar Penuh (Esc)">
-                <X size={18} />
+                aria-label="Keluar Layar Penuh (Esc)"
+              >
+                <X size={16} />
               </button>
             </div>
           </div>
 
           {/* Split Dual Workspaces (Side-by-Side: Left & Right) */}
-          <div className="flex-1 w-full min-h-0 gap-4 overflow-auto grid grid-cols-1 lg:grid-cols-2 h-full auto-rows-[minmax(560px,1fr)] lg:auto-rows-auto">
+          <div className="flex-1 w-full min-h-0 gap-1.5 grid grid-cols-1 lg:grid-cols-2 h-full overflow-hidden">
             {/* TOP / LEFT: Waterplane Visual Studio */}
-            <div className="h-full min-h-0 bg-surface-primary border border-border-default rounded-lg p-2 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between text-xs font-semibold text-accent-primary pb-1 mb-1 border-b border-border-default shrink-0">
+            <div className="h-full min-h-0 bg-surface-primary border border-border-default rounded-lg p-1.5 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between text-xs font-semibold text-accent-primary pb-0.5 mb-0.5 border-b border-border-default shrink-0">
                 <span className="flex items-center space-x-1.5">
                   <span className="w-2 h-2 rounded-full bg-accent-primary" />
                   <span>▲ STUDIO GARIS AIR (WATERPLANE PLAN 0.5B)</span>
@@ -1235,6 +1263,10 @@ export default function Stage3BasicDesignPage() {
                   }}
                   activeWlId={activeWlId}
                   onSelectWlId={setActiveWlId}
+                  activeStation={activeStation}
+                  onSelectStation={setActiveStation}
+                  visibleStations={visibleStations}
+                  onUpdateVisibleStations={setVisibleStations}
                   stationDensity={stationDensity}
                   onUpdateStationDensity={setStationDensity}
                   onSave={() => handleSaveAll(true)}
@@ -1247,8 +1279,8 @@ export default function Stage3BasicDesignPage() {
             </div>
 
             {/* BOTTOM / RIGHT: Midship Bilge Visual Studio */}
-            <div className="h-full min-h-0 bg-surface-primary border border-border-default rounded-lg p-2 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between text-xs font-semibold text-status-warning pb-1 mb-1 border-b border-border-default shrink-0">
+            <div className="h-full min-h-0 bg-surface-primary border border-border-default rounded-lg p-1.5 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between text-xs font-semibold text-status-warning pb-0.5 mb-0.5 border-b border-border-default shrink-0">
                 <span className="flex items-center space-x-1.5">
                   <span className="w-2 h-2 rounded-full bg-status-warning" />
                   <span>▼ STUDIO PENAMPANG MIDSHIP & RADIUS BILGA (SECTION 10)</span>
@@ -1277,6 +1309,10 @@ export default function Stage3BasicDesignPage() {
                   sideProfileData={sideProfileData}
                   activeWlId={activeWlId}
                   onSelectWlId={setActiveWlId}
+                  activeStation={activeStation}
+                  onSelectStation={setActiveStation}
+                  visibleStations={visibleStations}
+                  onUpdateVisibleStations={setVisibleStations}
                   stationDensity={stationDensity}
                   onUpdateStationDensity={setStationDensity}
                   visualOnly={true}
